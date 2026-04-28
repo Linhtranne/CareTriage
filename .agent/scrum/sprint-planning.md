@@ -24,9 +24,9 @@
 | Sprint 11 | Week 11 | Testing & Polish | Testing | 20 |
 | Sprint 12 | Week 12 | Docker & CI/CD Production | Epic 8 | 20 |
 | Sprint 13 | Week 13 | Documentation & Final Review | Docs | 10 |
-| Sprint 14 | Week 14 | EHR — AI NER Service (Python) ⭐ | Epic 9 | 17 |
-| Sprint 15 | Week 15 | EHR — Backend Entities & APIs ⭐ | Epic 9 | 24 |
-| Sprint 16 | Week 16 | EHR — Search & Frontend UI ⭐ | Epic 9 | 26 |
+| Sprint 14 | Week 14 | EHR — AI NER Service (Python)  | Epic 9 | 17 |
+| Sprint 15 | Week 15 | EHR — Backend Entities & APIs  | Epic 9 | 24 |
+| Sprint 16 | Week 16 | EHR — Search & Frontend UI  | Epic 9 | 26 |
 
 ---
 
