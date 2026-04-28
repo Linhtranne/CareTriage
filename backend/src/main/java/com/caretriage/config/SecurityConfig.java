@@ -34,6 +34,10 @@ public class SecurityConfig {
             "/api/doctors",
             "/api/doctors/**",
             "/ws/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
     @Bean

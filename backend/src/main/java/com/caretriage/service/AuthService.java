@@ -6,6 +6,7 @@ import com.caretriage.dto.response.AuthResponse;
 import com.caretriage.entity.Role;
 import com.caretriage.entity.User;
 import com.caretriage.repository.UserRepository;
+import com.caretriage.repository.RoleRepository;
 import com.caretriage.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
@@ -28,22 +30,27 @@ public class AuthService {
             throw new RuntimeException("Email đã được sử dụng");
         }
 
-        Role role = Role.PATIENT;
+        String roleName = "PATIENT";
         if (request.getRole() != null) {
-            try {
-                role = Role.valueOf(request.getRole().toUpperCase());
-            } catch (IllegalArgumentException ignored) {
-                // Default to PATIENT
-            }
+            roleName = request.getRole().toUpperCase();
         }
 
+        final String finalRoleName = roleName;
+        Role role = roleRepository.findByName(finalRoleName)
+                .orElseGet(() -> roleRepository.save(Role.builder()
+                        .name(finalRoleName)
+                        .description("Default " + finalRoleName + " role")
+                        .build()));
+
         User user = User.builder()
+                .username(request.getEmail()) // Use email as username for now
                 .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .phone(request.getPhone())
-                .role(role)
+                .roles(new java.util.HashSet<>(java.util.List.of(role)))
                 .isActive(true)
+                .deleted(false)
                 .build();
 
         user = userRepository.save(user);
@@ -96,7 +103,9 @@ public class AuthService {
                         .fullName(user.getFullName())
                         .email(user.getEmail())
                         .phone(user.getPhone())
-                        .role(user.getRole().name())
+                        .role(user.getRoles().stream()
+                                .map(Role::getName)
+                                .collect(java.util.stream.Collectors.joining(", ")))
                         .avatarUrl(user.getAvatarUrl())
                         .build())
                 .build();
