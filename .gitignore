@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+target/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Build
+dist/
+build/
+*.jar
+
+# IDE
+.idea/
+.vscode/
+*.iml
+.project
+.settings/
+.classpath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+mysql_data/

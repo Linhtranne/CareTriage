@@ -1,0 +1,434 @@
+TÀI LIỆU SRS DỰ ÁN CARETRIAGE
+(Software Requirements Specification)
+Version: 2.0 | Date: 2026-04-28
+
+
+1. Giới thiệu (Introduction)
+1. Mục đích (Purpose)
+   * Mục đích của hệ thống CareTriage là:
+      * Xây dựng hệ thống quản lý bệnh viện thông minh (Smart Hospital Management System) kết hợp AI, nhằm số hóa toàn bộ quy trình khám chữa bệnh
+      * Tích hợp module AI Sơ chẩn và Phân luồng Bệnh nhân: cho phép bệnh nhân mô tả triệu chứng qua chatbot AI, hệ thống tự động phân tích, hỏi thêm câu hỏi phụ, và đề xuất chuyên khoa phù hợp
+      * Tích hợp module Trích xuất Thông tin Bệnh án Điện tử (EHR Data Extraction): sử dụng AI để đọc, hiểu và chuẩn hóa ghi chú lâm sàng của bác sĩ thành dữ liệu có cấu trúc (tên thuốc, liều lượng, triệu chứng, bệnh lý)
+      * Hỗ trợ quản lý thông tin người dùng bao gồm: bệnh nhân, bác sĩ, y tá, nhân viên quản trị
+      * Quản lý hồ sơ bệnh án điện tử, tiền sử bệnh nhân, đơn thuốc, lịch hẹn một cách tập trung
+      * Đảm bảo an toàn và bảo mật dữ liệu thông qua phân quyền người dùng (RBAC), JWT authentication
+      * Nâng cao trải nghiệm bệnh nhân: đặt lịch hẹn trực tuyến, chat AI kiểm tra triệu chứng, xem hồ sơ y tế
+      * Hỗ trợ bác sĩ: tra cứu bệnh án nhanh, tìm kiếm bệnh nhân theo triệu chứng/thuốc/bệnh lý
+   * Tóm lại, CareTriage là nền tảng quản lý bệnh viện tích hợp AI, giúp nâng cao chất lượng dịch vụ y tế, tự động hóa quy trình sơ chẩn và chuẩn hóa dữ liệu y tế
+
+
+2. Phạm vi hệ thống (System scope)
+   * CareTriage được thiết kế bao quát các hoạt động chính của quy trình khám chữa bệnh, kết hợp AI thông minh
+   * Các chức năng chính trong phạm vi hệ thống:
+      * Quản lý người dùng & phân quyền
+         * Tạo tài khoản cho bệnh nhân, bác sĩ, admin
+         * Quản lý vai trò (Role): PATIENT, DOCTOR, ADMIN
+         * Đăng nhập/đăng xuất với JWT authentication
+         * Phân quyền truy cập theo role (RBAC)
+      * Quản lý bệnh nhân & hồ sơ y tế
+         * Lưu trữ thông tin cá nhân và profile
+         * Quản lý hồ sơ bệnh án điện tử (Medical Records)
+         * Quản lý tiền sử bệnh, dị ứng
+      * Quản lý khoa/phòng & bác sĩ
+         * CRUD khoa/phòng (departments)
+         * Quản lý bác sĩ theo chuyên khoa
+         * Xem danh sách bác sĩ công khai
+      * Hệ thống đặt lịch hẹn
+         * Đặt lịch khám trực tuyến (chọn khoa → bác sĩ → ngày giờ)
+         * Quản lý trạng thái: PENDING → CONFIRMED → IN_PROGRESS → COMPLETED
+         * Phát hiện xung đột time slot
+      * AI Sơ chẩn & Phân luồng (AI Triage)
+         * Chat real-time với AI qua WebSocket
+         * AI phân tích triệu chứng, hỏi câu hỏi phụ
+         * Đề xuất chuyên khoa và mức độ ưu tiên
+         * Tự động tạo Triage Ticket gửi đến bác sĩ
+      * Trích xuất Bệnh án Điện tử (EHR Data Extraction) ⭐ MỚI
+         * Upload file PDF/Word hoặc nhập text ghi chú lâm sàng
+         * AI tự động trích xuất: thuốc, liều lượng, triệu chứng, bệnh lý, xét nghiệm
+         * Chuẩn hóa dữ liệu vào các bảng có cấu trúc
+         * Tìm kiếm nâng cao (VD: "Tìm bệnh nhân có triệu chứng X dùng thuốc Y")
+      * Dashboard theo role
+         * Patient: lịch hẹn, bệnh án, triage history
+         * Doctor: lịch hôm nay, ticket pending, thống kê
+         * Admin: user count, appointment stats
+   * Ngoài phạm vi hệ thống (Out of Scope):
+      * Quản lý kho thuốc và vật tư y tế chi tiết
+      * Tích hợp thanh toán trực tuyến
+      * Quản lý xét nghiệm & cận lâm sàng
+      * Chức năng riêng cho y tá
+      * Ứng dụng mobile native
+      * Đa ngôn ngữ (chỉ hỗ trợ tiếng Việt)
+
+
+3. Mục tiêu hệ thống (System objective)
+   * Mục tiêu chính:
+      * Tự động hóa sơ chẩn bằng AI
+         * Giảm thời gian chờ đợi của bệnh nhân
+         * Phân luồng chính xác đến đúng chuyên khoa
+         * Xác định mức độ ưu tiên (bình thường/khẩn/cấp cứu)
+      * Chuẩn hóa dữ liệu y tế
+         * Chuyển đổi ghi chú tự do thành dữ liệu có cấu trúc
+         * Hỗ trợ tìm kiếm và thống kê hiệu quả
+         * Giảm sai sót do ghi chép thủ công
+      * Tập trung hóa hồ sơ bệnh nhân
+         * Lưu trữ toàn bộ thông tin trong một hệ thống duy nhất
+         * Bác sĩ tra cứu nhanh lịch sử bệnh nhân
+      * Nâng cao trải nghiệm bệnh nhân
+         * Đặt lịch khám trực tuyến
+         * Chat AI kiểm tra triệu chứng 24/7
+         * Xem hồ sơ y tế cá nhân
+      * Đảm bảo an toàn dữ liệu
+         * JWT authentication + role-based access
+         * Dữ liệu bệnh nhân chỉ patient + doctor xem được
+
+
+2. Mô tả tổng quan về dự án (System Overview)
+1. Kiến trúc hệ thống (System architecture)
+      * CareTriage được phát triển theo kiến trúc Microservices gồm 3 services chính, giao tiếp qua REST API và WebSocket
+      * 3 Services chính:
+
+         * Frontend (React + Vite)
+            * Framework: React 18 + Vite
+            * UI Library: MUI v6 + TailwindCSS
+            * State Management: Zustand
+            * HTTP Client: Axios (với JWT interceptor)
+            * WebSocket: SockJS + STOMP
+            * Cung cấp giao diện cho bệnh nhân, bác sĩ, admin
+            * Tương tác với backend qua RESTful API và WebSocket
+
+         * Backend (Java Spring Boot)
+            * Java 17 + Spring Boot 3.3
+            * Mô hình Controller – Service – Repository
+               * Controller: nhận request, trả response
+               * Service: xử lý logic nghiệp vụ
+               * Repository: giao tiếp với database qua Spring Data JPA/Hibernate
+            * Spring Security + JWT: xác thực & phân quyền
+            * Spring WebSocket: chat real-time
+            * Spring WebFlux (WebClient): gọi AI Service
+            * Spring Validation: validate dữ liệu đầu vào
+
+         * AI Service (Python FastAPI)
+            * Python 3.11 + FastAPI
+            * Google Gemini API: xử lý ngôn ngữ tự nhiên
+            * LangChain: conversation chain management
+            * Module 1 - Triage: sơ chẩn triệu chứng, phân luồng bệnh nhân
+            * Module 2 - EHR Extraction: trích xuất thực thể y tế (NER)
+            * PyPDF2/pdfplumber: đọc file PDF
+            * python-docx: đọc file Word
+
+         * Database Layer
+            * MySQL 8.0: lưu trữ dữ liệu quan hệ
+            * Quan hệ chặt chẽ bằng FK và Constraints
+            * JSON columns cho dữ liệu bán cấu trúc (metadata, extraction results)
+
+      * Kiến trúc triển khai (Deployment)
+         * Docker + docker-compose cho tất cả services
+         * GitHub Actions CI/CD
+         * Môi trường: Dev (localhost) → Production (Docker)
+
+
+2. Các yếu tố bên ngoài tác động đến hệ thống (External factors)
+   * Yếu tố con người (Human Factors)
+         * Bệnh nhân: sử dụng hệ thống để chat AI, đặt lịch khám, xem hồ sơ
+         * Bác sĩ: nhập ghi chú lâm sàng, upload bệnh án, review triage tickets
+         * Admin: quản lý users, departments, giám sát hệ thống
+         * Hệ thống cần đơn giản, dễ sử dụng cho mọi đối tượng
+
+   * Yếu tố công nghệ (Technological Factors)
+         * Google Gemini API: phụ thuộc vào API key và quota
+         * Kết nối internet: cần ổn định cho WebSocket và AI calls
+         * Docker: yêu cầu môi trường chạy container
+         * SSL/TLS: bảo mật truyền tải dữ liệu
+
+   * Yếu tố pháp lý (Legal Factors)
+         * Tuân thủ quy định bảo mật dữ liệu y tế
+         * AI không đưa ra chẩn đoán chính thức, chỉ gợi ý
+         * Disclaimer rõ ràng: "Không thay thế chẩn đoán bác sĩ"
+
+
+3. Yêu cầu chức năng (Functional Requirements)
+1. Chức năng không cần xác thực (Public)
+	Chức năng
+	Trang chủ & Giới thiệu
+	Hero section với CTA "Kiểm tra triệu chứng"
+	Giới thiệu dịch vụ, chuyên khoa
+	Thông tin khẩn cấp, số cấp cứu
+	Tra cứu thông tin
+	Xem danh sách chuyên khoa (khoa/phòng)
+	Xem danh sách bác sĩ (tên, ảnh, chuyên khoa)
+	Lọc bác sĩ theo khoa/phòng
+	Xem chi tiết profile bác sĩ
+	Trang thông tin
+	About page: sứ mệnh, tầm nhìn
+	Department detail page
+	Emergency info page
+	Contact form
+
+
+2. Chức năng dành cho admin (Admin)
+	Chức năng
+	Quản lý người dùng & phân quyền
+	Xem danh sách tất cả users (DataGrid với search/filter)
+	Tạo, chỉnh sửa tài khoản người dùng
+	Đổi role (PATIENT, DOCTOR, ADMIN)
+	Khoá/mở khoá tài khoản
+	Quản lý khoa/phòng
+	CRUD departments (tên, mô tả, hình ảnh)
+	Assign/unassign bác sĩ vào khoa
+	Quản lý bác sĩ
+	Xem và quản lý thông tin bác sĩ
+	Gán bác sĩ vào chuyên khoa
+	Dashboard Admin
+	Tổng quan: số users, appointments, tickets
+	Charts thống kê
+	Xem tất cả lịch hẹn trong hệ thống
+
+
+3. Chức năng dành cho bác sĩ (Doctor)
+	Chức năng
+	Quản lý lịch hẹn
+	Xem lịch hẹn hôm nay, sắp tới
+	Xác nhận / bắt đầu / hoàn thành lịch hẹn
+	Cập nhật trạng thái: PENDING → CONFIRMED → IN_PROGRESS → COMPLETED
+	Khám và chẩn đoán
+	Tra cứu hồ sơ bệnh nhân trước khi khám
+	Tạo bệnh án điện tử (chẩn đoán, triệu chứng, đơn thuốc, ghi chú)
+	Xem lại tiền sử bệnh nhân
+	Review Triage Tickets
+	Xem inbox ticket từ AI Triage
+	Xem toàn bộ chat history của bệnh nhân với AI
+	Chuyển ticket thành lịch hẹn
+	⭐ Trích xuất EHR (MỚI)
+	Upload file PDF/Word ghi chú lâm sàng
+	Nhập trực tiếp text ghi chú
+	Xem kết quả trích xuất AI (thuốc, triệu chứng, bệnh lý)
+	Chỉnh sửa/xác nhận entities đã trích xuất
+	Tìm kiếm nâng cao bệnh nhân theo triệu chứng, thuốc, bệnh lý
+	Dashboard Bác sĩ
+	Lịch hôm nay
+	Ticket pending
+	Thống kê nhanh
+
+
+4. Chức năng dành cho bệnh nhân (Patient)
+	Chức năng
+	Quản lý tài khoản
+	Đăng ký tài khoản (email, password, họ tên, SĐT)
+	Đăng nhập / đăng xuất (JWT)
+	Quản lý profile cá nhân (tên, SĐT, ngày sinh, giới tính, nhóm máu, dị ứng)
+	Đặt lịch hẹn
+	Chọn khoa → bác sĩ → ngày giờ
+	Xem danh sách lịch hẹn và trạng thái
+	Hủy lịch hẹn
+	Chat AI Triage
+	Nhập triệu chứng bằng text
+	Chat real-time với AI qua WebSocket
+	AI hỏi thêm câu hỏi phụ (2-4 lượt)
+	Nhận khuyến nghị: chuyên khoa, mức độ ưu tiên, tình trạng có thể
+	Xem kết quả triage và ticket status
+	Xem hồ sơ bệnh án
+	Xem lịch sử khám bệnh (timeline)
+	Xem chi tiết chẩn đoán, đơn thuốc
+	⭐ Xem dữ liệu EHR đã chuẩn hóa (MỚI)
+	Xem danh sách thuốc đang dùng
+	Xem danh sách bệnh lý, triệu chứng đã ghi nhận
+	Dashboard Bệnh nhân
+	Tổng quan lịch hẹn, bệnh án, triage history
+
+
+5. ⭐ Chức năng Trích xuất Bệnh án Điện tử - EHR Data Extraction (MỚI)
+	Chức năng
+	Upload & Nhập liệu
+	Upload file PDF ghi chú lâm sàng (max 10MB)
+	Upload file Word (.docx) ghi chú lâm sàng (max 10MB)
+	Nhập trực tiếp text ghi chú vào form
+	Hỗ trợ ghi chú bằng tiếng Việt và tiếng Anh
+	Trích xuất AI (NER)
+	AI đọc và phân tích nội dung ghi chú
+	Trích xuất tự động các thực thể y tế:
+	   - Tên thuốc (Medications): VD: Paracetamol, Amoxicillin
+	   - Liều lượng (Dosages): VD: 500mg, 2 viên/ngày
+	   - Triệu chứng (Symptoms): VD: đau đầu, sốt, ho
+	   - Bệnh lý (Conditions): VD: viêm phổi, tiểu đường type 2
+	   - Xét nghiệm (Lab Tests): VD: công thức máu, X-quang ngực
+	   - Thủ thuật (Procedures): VD: nội soi, tiểu phẫu
+	Mỗi entity kèm confidence score (độ tin cậy)
+	Đánh dấu vị trí entity trong text gốc (highlight)
+	Chuẩn hóa dữ liệu
+	Tự động điền vào bảng patient_medications (thuốc đang dùng)
+	Tự động điền vào bảng patient_conditions (bệnh lý)
+	Tự động điền vào bảng patient_symptoms (triệu chứng)
+	Bác sĩ có thể review và chỉnh sửa trước khi xác nhận
+	Tìm kiếm nâng cao
+	Tìm bệnh nhân theo triệu chứng: "đau đầu"
+	Tìm bệnh nhân theo thuốc: "paracetamol"
+	Tìm bệnh nhân theo bệnh lý: "tiểu đường"
+	Kết hợp nhiều điều kiện: "triệu chứng X VÀ thuốc Y"
+	Lọc theo thời gian, mức độ nghiêm trọng
+	Thống kê: thuốc kê nhiều nhất, bệnh lý phổ biến nhất
+
+
+4. Yêu cầu về cơ sở dữ liệu (Database Requirements)
+1. Sơ đồ tổng quan (Schema Overview)
+
+   Core Tables:
+   users ──┬── patient_profiles
+           ├── doctor_profiles ── departments
+           │
+   appointments ── medical_records
+           │
+   chat_sessions ── chat_messages
+           │
+   triage_tickets
+
+   EHR Tables (MỚI):
+   clinical_notes ── extracted_entities
+        │
+        ├── patient_medications
+        ├── patient_conditions
+        └── patient_symptoms
+
+2. Chi tiết bảng EHR (MỚI)
+
+   Bảng clinical_notes:
+   * id (BIGINT, PK, AUTO_INCREMENT)
+   * patient_id (BIGINT, FK → users.id)
+   * doctor_id (BIGINT, FK → users.id)
+   * note_type (ENUM: ADMISSION, PROGRESS, DISCHARGE, CONSULTATION, PRESCRIPTION)
+   * raw_text (TEXT) - nội dung ghi chú gốc
+   * file_path (VARCHAR 500) - đường dẫn file upload
+   * file_type (VARCHAR 20) - PDF, DOCX, TEXT
+   * extraction_status (ENUM: PENDING, PROCESSING, COMPLETED, FAILED)
+   * created_at (DATETIME)
+   * updated_at (DATETIME)
+
+   Bảng extracted_entities:
+   * id (BIGINT, PK, AUTO_INCREMENT)
+   * clinical_note_id (BIGINT, FK → clinical_notes.id)
+   * entity_type (ENUM: MEDICATION, SYMPTOM, CONDITION, DOSAGE, LAB_TEST, PROCEDURE)
+   * entity_value (VARCHAR 500) - giá trị gốc trong text
+   * normalized_value (VARCHAR 500) - giá trị chuẩn hóa
+   * confidence_score (DECIMAL 3,2) - độ tin cậy 0.00-1.00
+   * start_position (INT) - vị trí bắt đầu trong text
+   * end_position (INT) - vị trí kết thúc trong text
+   * metadata (JSON) - thông tin bổ sung
+   * created_at (DATETIME)
+
+   Bảng patient_medications:
+   * id (BIGINT, PK, AUTO_INCREMENT)
+   * patient_id (BIGINT, FK → users.id)
+   * clinical_note_id (BIGINT, FK → clinical_notes.id, NULLABLE)
+   * medication_name (VARCHAR 255)
+   * dosage (VARCHAR 100) - VD: "500mg"
+   * frequency (VARCHAR 100) - VD: "2 lần/ngày"
+   * route (VARCHAR 50) - VD: "uống", "tiêm"
+   * start_date (DATE)
+   * end_date (DATE, NULLABLE)
+   * prescribing_doctor_id (BIGINT, FK → users.id)
+   * status (ENUM: ACTIVE, DISCONTINUED, COMPLETED)
+   * created_at (DATETIME)
+
+   Bảng patient_conditions:
+   * id (BIGINT, PK, AUTO_INCREMENT)
+   * patient_id (BIGINT, FK → users.id)
+   * clinical_note_id (BIGINT, FK → clinical_notes.id, NULLABLE)
+   * condition_name (VARCHAR 255)
+   * icd_code (VARCHAR 20, NULLABLE) - mã ICD-10
+   * severity (ENUM: MILD, MODERATE, SEVERE)
+   * status (ENUM: ACTIVE, RESOLVED, CHRONIC)
+   * diagnosed_date (DATE)
+   * resolved_date (DATE, NULLABLE)
+   * notes (TEXT, NULLABLE)
+   * created_at (DATETIME)
+
+   Bảng patient_symptoms:
+   * id (BIGINT, PK, AUTO_INCREMENT)
+   * patient_id (BIGINT, FK → users.id)
+   * clinical_note_id (BIGINT, FK → clinical_notes.id, NULLABLE)
+   * symptom_name (VARCHAR 255)
+   * severity (ENUM: MILD, MODERATE, SEVERE)
+   * onset_date (DATE, NULLABLE)
+   * duration (VARCHAR 100) - VD: "3 ngày", "2 tuần"
+   * body_location (VARCHAR 100, NULLABLE)
+   * created_at (DATETIME)
+
+3. Ràng buộc & Index
+   * FK relationships đảm bảo tính toàn vẹn dữ liệu
+   * Index trên: patient_id, entity_type, medication_name, condition_name, symptom_name
+   * Composite index cho tìm kiếm nâng cao
+   * ON DELETE CASCADE cho extracted_entities khi xóa clinical_note
+
+
+5. Yêu cầu tích hợp hệ thống khác (Integration Requirements)
+1. Tích hợp AI Service (Python FastAPI)
+   * Mục tiêu:
+      * Backend (Spring Boot) giao tiếp với AI Service qua HTTP REST API
+      * AI Service xử lý 2 module: Triage + EHR Extraction
+
+   * Kiến trúc tích hợp:
+      * Spring Boot Backend:
+         * AiClientService: sử dụng WebClient (Spring WebFlux) để gọi AI
+         * Endpoints gọi đến Python service:
+            - POST http://ai-service:8000/api/triage/analyze → Sơ chẩn triệu chứng
+            - POST http://ai-service:8000/api/ehr/extract-text → Trích xuất từ text
+            - POST http://ai-service:8000/api/ehr/extract-file → Trích xuất từ file
+      * Python AI Service:
+         * Google Gemini API: xử lý NLP/NER
+         * Prompt Engineering: system prompts chuyên biệt cho từng task
+         * File parsing: PyPDF2 (PDF), python-docx (Word)
+
+   * Quy trình EHR Extraction:
+      * Bác sĩ upload file hoặc nhập text → Spring Boot nhận request
+      * Spring Boot gọi AI Service qua HTTP
+      * AI Service đọc file → extract text → gửi đến Gemini API
+      * Gemini trả về entities (JSON) → AI Service trả cho Spring Boot
+      * Spring Boot lưu entities vào database → Trả kết quả cho frontend
+
+   * Bảo mật:
+      * Giao tiếp nội bộ qua Docker network
+      * API key Gemini lưu trong environment variables
+      * File upload validation: chỉ chấp nhận PDF/DOCX, max 10MB
+
+
+6. Yêu cầu phi chức năng (Non-Functional Requirements)
+   * Performance
+      * Page load < 3 giây
+      * API response < 500ms (trừ AI calls)
+      * AI extraction: < 10 giây cho 1 clinical note
+      * WebSocket chat latency < 500ms round-trip
+   * Security
+      * JWT authentication với token refresh
+      * BCrypt password hashing
+      * CORS configuration
+      * SQL injection prevention (JPA parameterized queries)
+      * File upload validation (type + size)
+      * Role-based access control (RBAC)
+   * Responsive Design
+      * Mobile-first approach
+      * Hoạt động trên Chrome, Firefox, Safari
+   * Availability
+      * Docker containerized (tất cả services)
+      * Health check endpoints cho mỗi service
+   * Data Privacy
+      * Dữ liệu bệnh nhân chỉ patient (chính chủ) + doctor xem được
+      * Admin không xem được nội dung bệnh án
+      * EHR data chỉ doctor + admin có quyền upload
+   * Scalability
+      * Stateless backend (horizontal scale ready)
+      * Docker compose orchestration
+      * Separate AI service (scale independently)
+
+
+7. Thuật ngữ (Glossary)
+   * HMS: Hospital Management System - Hệ thống quản lý bệnh viện
+   * EHR: Electronic Health Record - Bệnh án điện tử
+   * NER: Named Entity Recognition - Nhận dạng thực thể có tên
+   * Triage: Sơ chẩn, phân luồng bệnh nhân theo mức độ ưu tiên
+   * NLP: Natural Language Processing - Xử lý ngôn ngữ tự nhiên
+   * JWT: JSON Web Token - Mã token xác thực
+   * RBAC: Role-Based Access Control - Kiểm soát truy cập dựa trên vai trò
+   * ICD-10: International Classification of Diseases 10th Revision
+   * CRUD: Create, Read, Update, Delete
+   * REST API: Representational State Transfer API
+   * WebSocket: Giao thức truyền thông hai chiều real-time
+   * STOMP: Simple Text Oriented Messaging Protocol
