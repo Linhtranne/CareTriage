@@ -55,10 +55,11 @@ public class AuthServiceImpl implements AuthService {
                 .deleted(false)
                 .build();
 
-        user = userRepository.save(user);
-
         String token = jwtTokenProvider.generateTokenFromEmail(user.getEmail());
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
+
+        user.setRefreshToken(refreshToken);
+        user = userRepository.save(user);
 
         return buildAuthResponse(user, token, refreshToken);
     }
@@ -79,6 +80,9 @@ public class AuthServiceImpl implements AuthService {
         String token = jwtTokenProvider.generateToken(authentication);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getEmail());
 
+        user.setRefreshToken(refreshToken);
+        userRepository.save(user);
+
         return buildAuthResponse(user, token, refreshToken);
     }
 
@@ -92,10 +96,33 @@ public class AuthServiceImpl implements AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
+            throw new RuntimeException("Refresh token has been revoked or is invalid");
+        }
+
         String newToken = jwtTokenProvider.generateTokenFromEmail(email);
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(email);
 
+        user.setRefreshToken(newRefreshToken);
+        userRepository.save(user);
+
         return buildAuthResponse(user, newToken, newRefreshToken);
+    }
+
+    @Override
+    public void logout(String refreshToken) {
+        if (!jwtTokenProvider.validateToken(refreshToken)) {
+            throw new RuntimeException("Refresh token không hợp lệ");
+        }
+
+        String email = jwtTokenProvider.getEmailFromToken(refreshToken);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (user.getRefreshToken() != null && user.getRefreshToken().equals(refreshToken)) {
+            user.setRefreshToken(null);
+            userRepository.save(user);
+        }
     }
 
     private AuthResponse buildAuthResponse(User user, String token, String refreshToken) {

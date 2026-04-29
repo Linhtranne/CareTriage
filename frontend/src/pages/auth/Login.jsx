@@ -1,22 +1,151 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   InputAdornment, IconButton, CircularProgress, Fade,
 } from '@mui/material'
-import { Visibility, VisibilityOff, MedicalServices } from '@mui/icons-material'
+import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import useAuthStore from '../../store/authStore'
+
+// Interactive Particle Visualizer (Canvas API)
+function InteractiveParticles({ color = '16, 185, 129' }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    let animationFrameId
+    let isVisible = true
+
+    const parent = canvas.parentElement
+
+    let width = (canvas.width = parent.clientWidth)
+    let height = (canvas.height = parent.clientHeight)
+
+    const handleResize = () => {
+      width = (canvas.width = parent.clientWidth)
+      height = (canvas.height = parent.clientHeight)
+    }
+    window.addEventListener('resize', handleResize)
+
+    const mouse = { x: null, y: null }
+    const handleMouseMove = (e) => {
+      const rect = parent.getBoundingClientRect()
+      mouse.x = e.clientX - rect.left
+      mouse.y = e.clientY - rect.top
+    }
+    const handleMouseLeave = () => {
+      mouse.x = null
+      mouse.y = null
+    }
+    parent.addEventListener('mousemove', handleMouseMove)
+    parent.addEventListener('mouseleave', handleMouseLeave)
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting
+    }, { threshold: 0.01 })
+    if (canvas) observer.observe(canvas)
+
+    const particles = []
+    const particleCount = 600
+    const connectionDistance = 80
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width
+        this.y = Math.random() * height
+        this.vx = (Math.random() - 0.5) * 0.5
+        this.vy = (Math.random() - 0.5) * 0.5
+        this.radius = Math.random() * 2 + 1
+      }
+
+      update() {
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - this.x
+          const dy = mouse.y - this.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 150) {
+            // Repel logic
+            this.x -= (dx / dist) * 3
+            this.y -= (dy / dist) * 3
+          }
+        }
+
+        this.x += this.vx
+        this.y += this.vy
+
+        if (this.x < 0 || this.x > width) this.vx *= -1
+        if (this.y < 0 || this.y > height) this.vy *= -1
+      }
+
+      draw() {
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${color}, 0.5)`
+        ctx.fill()
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle())
+    }
+
+    const animate = () => {
+      if (isVisible) {
+        ctx.clearRect(0, 0, width, height)
+        for (let i = 0; i < particles.length; i++) {
+          const p1 = particles[i]
+          p1.update()
+          p1.draw()
+
+          // Draw lines
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j]
+            const dx = p1.x - p2.x
+            const dy = p1.y - p2.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if (dist < connectionDistance) {
+              ctx.beginPath()
+              ctx.moveTo(p1.x, p1.y)
+              ctx.lineTo(p2.x, p2.y)
+              ctx.strokeStyle = `rgba(${color}, ${0.25 * (1 - dist / connectionDistance)})`
+              ctx.lineWidth = 1
+              ctx.stroke()
+            }
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      parent.removeEventListener('mousemove', handleMouseMove)
+      parent.removeEventListener('mouseleave', handleMouseLeave)
+      cancelAnimationFrame(animationFrameId)
+      if (canvas) observer.unobserve(canvas)
+    }
+  }, [color])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        zIndex: 0, pointerEvents: 'none', willChange: 'transform',
+      }}
+    />
+  )
+}
 
 const shake = keyframes`
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
   20%, 40%, 60%, 80% { transform: translateX(6px); }
-`
-
-const float = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
 `
 
 export default function Login() {
@@ -27,6 +156,47 @@ export default function Login() {
   const [isShaking, setIsShaking] = useState(false)
   const { login, isLoading } = useAuthStore()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
+  
+  const [tTitle, setTTitle] = useState('Đăng nhập')
+  const [tSubtitle, setTSubtitle] = useState('Hệ thống điều phối y tế CareTriage')
+  const [tPassword, setTPassword] = useState('MẬT KHẨU')
+  const [tBtn, setTBtn] = useState('ĐĂNG NHẬP')
+  const [tAsk, setTAsk] = useState('Chưa có tài khoản?')
+  const [tRegister, setTRegister] = useState('ĐĂNG KÝ NGAY')
+
+  useEffect(() => {
+    if (!i18n.language || i18n.language.startsWith('vi')) {
+      setTTitle('Đăng nhập')
+      setTSubtitle('Hệ thống điều phối y tế CareTriage')
+      setTPassword('MẬT KHẨU')
+      setTBtn('ĐĂNG NHẬP')
+      setTAsk('Chưa có tài khoản?')
+      setTRegister('ĐĂNG KÝ NGAY')
+      return
+    }
+
+    const translateText = async (text) => {
+      try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
+        const data = await res.json()
+        return data[0].map(item => item[0]).join('')
+      } catch (err) {
+        return text
+      }
+    }
+
+    const performTranslation = async () => {
+      setTTitle(await translateText('Đăng nhập'))
+      setTSubtitle(await translateText('Hệ thống điều phối y tế CareTriage'))
+      setTPassword(await translateText('MẬT KHẨU'))
+      setTBtn(await translateText('ĐĂNG NHẬP'))
+      setTAsk(await translateText('Chưa có tài khoản?'))
+      setTRegister(await translateText('ĐĂNG KÝ NGAY'))
+    }
+
+    performTranslation()
+  }, [i18n.language])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -47,138 +217,208 @@ export default function Login() {
   return (
     <Box
       sx={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #f0fdf4 100%)',
-        position: 'relative', overflow: 'hidden',
-        px: 2,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        background: 'linear-gradient(135deg, #f0fdf4 0%, #effefa 50%, #f8fafc 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        pr: { xs: 2, md: 10 },
+        pl: { xs: 2, md: 0 },
       }}
     >
-      {/* Animated Background SVGs */}
+      <InteractiveParticles color="16, 185, 129" />
+
+      {/* Massive Typography on the left */}
       <Box
         sx={{
-          position: 'absolute', top: '10%', left: '10%', opacity: 0.25,
-          animation: `${float} 6s ease-in-out infinite`,
+          position: 'absolute',
+          left: { xs: '-5%', md: '5%' },
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          zIndex: 1,
+          userSelect: 'none',
+          pointerEvents: 'none',
         }}
       >
-        <svg width="100" height="100" viewBox="0 0 24 24" fill="#059669">
-          <path d="M19 10.5h-5.5V5c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v5.5H5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5h5.5V19c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5v-5.5H19c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5z"/>
-        </svg>
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: '15vw', md: '12vw' },
+            lineHeight: 0.8,
+            color: '#064e3b',
+            fontFamily: 'system-ui, sans-serif',
+            letterSpacing: '-0.05em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Care
+        </Typography>
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: '15vw', md: '12vw' },
+            lineHeight: 0.8,
+            color: '#059669',
+            fontFamily: 'system-ui, sans-serif',
+            letterSpacing: '-0.05em',
+            textTransform: 'uppercase',
+            mt: { xs: 1, md: 2 },
+          }}
+        >
+          Triage
+        </Typography>
       </Box>
 
-      <Box
-        sx={{
-          position: 'absolute', bottom: '15%', right: '10%', opacity: 0.2,
-          animation: `${float} 8s ease-in-out infinite 1s`,
-        }}
-      >
-        <svg width="120" height="120" viewBox="0 0 24 24" fill="#059669">
-          <path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15z"/>
-          <path d="M10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z" opacity="0.5"/>
-        </svg>
-      </Box>
-
-      <Fade in timeout={1000}>
+      <Fade in timeout={800}>
         <Card
           sx={{
-            maxWidth: 440, width: '100%',
-            background: 'rgba(255, 255, 255, 0.55)',
+            maxWidth: 480,
+            width: '100%',
+            background: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
-            borderRadius: 6,
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            borderRadius: 4,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            zIndex: 2,
+            position: 'relative',
             animation: isShaking ? `${shake} 0.6s ease-in-out` : 'none',
           }}
         >
-          <CardContent sx={{ p: 5 }}>
-            <Box sx={{ textAlign: 'center', mb: 4 }}>
-              <Box
-                sx={{
-                  width: 64, height: 64, borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  mb: 2,
-                }}
-              >
-                <MedicalServices sx={{ fontSize: 36, color: '#059669' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: '#064e3b', mb: 0.5 }}>
-                Đăng nhập
+          <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: 900, color: '#064e3b', textTransform: 'uppercase', mb: 0.5, letterSpacing: '-0.02em' }}>
+                {tTitle}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Chào mừng trở lại CareTriage
+              <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                {tSubtitle}
               </Typography>
             </Box>
 
-            {/* Error Message above Inputs */}
             {error && (
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#dc2626', fontWeight: 600, mb: 2, textAlign: 'center',
-                  backgroundColor: 'rgba(220, 38, 38, 0.08)',
-                  py: 1, borderRadius: 2,
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  mb: 3,
+                  textAlign: 'center',
+                  backgroundColor: '#dc2626',
+                  borderRadius: 1,
+                  py: 1,
+                  animation: `${shake} 0.6s ease-in-out`,
                 }}
               >
-                ⚠️ {error}
+                {error}
               </Typography>
             )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
               <TextField
                 id="login-email"
-                label="Email"
+                label="EMAIL"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
+                InputProps={{
+                  sx: {
+                    borderRadius: 2,
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      borderColor: '#059669',
+                      transform: 'translateY(-2px)',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#059669',
+                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
+                    }
                   }
+                }}
+                InputLabelProps={{
+                  sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
                 }}
               />
               <TextField
                 id="login-password"
-                label="Mật khẩu"
+                label={tPassword}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.6)',
-                    '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.8)' },
-                  }
-                }}
                 InputProps={{
+                  sx: {
+                    borderRadius: 2,
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      borderColor: '#059669',
+                      transform: 'translateY(-2px)',
+                    },
+                    '&.Mui-focused': {
+                      borderColor: '#059669',
+                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
+                    }
+                  },
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#064e3b' }}>
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
+                InputLabelProps={{
+                  sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
+                }}
               />
-              
+
               <Button
-                type="submit" variant="contained" size="large" fullWidth
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
                 disabled={isLoading}
                 sx={{
-                  py: 1.5, mt: 1,
+                  py: 1.5,
+                  mt: 1,
+                  borderRadius: 2,
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  '&:hover': { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' },
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  }
                 }}
               >
-                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Đăng nhập'}
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : tBtn}
               </Button>
             </Box>
 
-            <Typography sx={{ mt: 3, textAlign: 'center' }} color="text.secondary">
-              Chưa có tài khoản?{' '}
-              <Link to="/register" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>
-                Đăng ký ngay
+            <Typography sx={{ mt: 3, textAlign: 'center', fontWeight: 600 }} color="text.secondary">
+              {tAsk}{' '}
+              <Link to="/register" style={{ color: '#059669', fontWeight: 800, textDecoration: 'none' }}>
+                {tRegister}
               </Link>
             </Typography>
           </CardContent>

@@ -1,22 +1,150 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   MenuItem, CircularProgress, Fade,
 } from '@mui/material'
-import { MedicalServices } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import useAuthStore from '../../store/authStore'
+
+// Interactive Particle Visualizer (Canvas API)
+function InteractiveParticles({ color = '16, 185, 129' }) {
+  const canvasRef = useRef(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    let animationFrameId
+    let isVisible = true
+
+    const parent = canvas.parentElement
+
+    let width = (canvas.width = parent.clientWidth)
+    let height = (canvas.height = parent.clientHeight)
+
+    const handleResize = () => {
+      width = (canvas.width = parent.clientWidth)
+      height = (canvas.height = parent.clientHeight)
+    }
+    window.addEventListener('resize', handleResize)
+
+    const mouse = { x: null, y: null }
+    const handleMouseMove = (e) => {
+      const rect = parent.getBoundingClientRect()
+      mouse.x = e.clientX - rect.left
+      mouse.y = e.clientY - rect.top
+    }
+    const handleMouseLeave = () => {
+      mouse.x = null
+      mouse.y = null
+    }
+    parent.addEventListener('mousemove', handleMouseMove)
+    parent.addEventListener('mouseleave', handleMouseLeave)
+
+    const observer = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting
+    }, { threshold: 0.01 })
+    if (canvas) observer.observe(canvas)
+
+    const particles = []
+    const particleCount = 600
+    const connectionDistance = 80
+
+    class Particle {
+      constructor() {
+        this.x = Math.random() * width
+        this.y = Math.random() * height
+        this.vx = (Math.random() - 0.5) * 0.5
+        this.vy = (Math.random() - 0.5) * 0.5
+        this.radius = Math.random() * 2 + 1
+      }
+
+      update() {
+        if (mouse.x !== null && mouse.y !== null) {
+          const dx = mouse.x - this.x
+          const dy = mouse.y - this.y
+          const dist = Math.sqrt(dx * dx + dy * dy)
+          if (dist < 150) {
+            // Repel logic
+            this.x -= (dx / dist) * 3
+            this.y -= (dy / dist) * 3
+          }
+        }
+
+        this.x += this.vx
+        this.y += this.vy
+
+        if (this.x < 0 || this.x > width) this.vx *= -1
+        if (this.y < 0 || this.y > height) this.vy *= -1
+      }
+
+      draw() {
+        ctx.beginPath()
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${color}, 0.5)`
+        ctx.fill()
+      }
+    }
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(new Particle())
+    }
+
+    const animate = () => {
+      if (isVisible) {
+        ctx.clearRect(0, 0, width, height)
+        for (let i = 0; i < particles.length; i++) {
+          const p1 = particles[i]
+          p1.update()
+          p1.draw()
+
+          // Draw lines
+          for (let j = i + 1; j < particles.length; j++) {
+            const p2 = particles[j]
+            const dx = p1.x - p2.x
+            const dy = p1.y - p2.y
+            const dist = Math.sqrt(dx * dx + dy * dy)
+            if (dist < connectionDistance) {
+              ctx.beginPath()
+              ctx.moveTo(p1.x, p1.y)
+              ctx.lineTo(p2.x, p2.y)
+              ctx.strokeStyle = `rgba(${color}, ${0.25 * (1 - dist / connectionDistance)})`
+              ctx.lineWidth = 1
+              ctx.stroke()
+            }
+          }
+        }
+      }
+      animationFrameId = requestAnimationFrame(animate)
+    }
+
+    animate()
+
+    return () => {
+      window.removeEventListener('resize', handleResize)
+      parent.removeEventListener('mousemove', handleMouseMove)
+      parent.removeEventListener('mouseleave', handleMouseLeave)
+      cancelAnimationFrame(animationFrameId)
+      if (canvas) observer.unobserve(canvas)
+    }
+  }, [color])
+
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+        zIndex: 0, pointerEvents: 'none', willChange: 'transform',
+      }}
+    />
+  )
+}
 
 const shake = keyframes`
   0%, 100% { transform: translateX(0); }
   10%, 30%, 50%, 70%, 90% { transform: translateX(-6px); }
   20%, 40%, 60%, 80% { transform: translateX(6px); }
-`
-
-const float = keyframes`
-  0%, 100% { transform: translateY(0px) rotate(0deg); }
-  50% { transform: translateY(-15px) rotate(5deg); }
 `
 
 export default function Register() {
@@ -26,12 +154,68 @@ export default function Register() {
   const [isShaking, setIsShaking] = useState(false)
   const { register, isLoading } = useAuthStore()
   const navigate = useNavigate()
+  const { i18n } = useTranslation()
+  
+  const [tTitle, setTTitle] = useState('Tạo tài khoản')
+  const [tSubtitle, setTSubtitle] = useState('Đăng ký thông tin để bắt đầu sử dụng CareTriage')
+  const [tFullName, setTFullName] = useState('HỌ VÀ TÊN')
+  const [tPhone, setTPhone] = useState('SỐ ĐIỆN THOẠI')
+  const [tRole, setTRole] = useState('VAI TRÒ')
+  const [tPassword, setTPassword] = useState('MẬT KHẨU')
+  const [tConfirmPassword, setTConfirmPassword] = useState('XÁC NHẬN MẬT KHẨU')
+  const [tBtn, setTBtn] = useState('ĐĂNG KÝ')
+  const [tAsk, setTAsk] = useState('Đã có tài khoản?')
+  const [tLogin, setTLogin] = useState('ĐĂNG NHẬP')
 
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value })
+  useEffect(() => {
+    if (!i18n.language || i18n.language.startsWith('vi')) {
+      setTTitle('Tạo tài khoản')
+      setTSubtitle('Đăng ký thông tin để bắt đầu sử dụng CareTriage')
+      setTFullName('HỌ VÀ TÊN')
+      setTPhone('SỐ ĐIỆN THOẠI')
+      setTRole('VAI TRÒ')
+      setTPassword('MẬT KHẨU')
+      setTConfirmPassword('XÁC NHẬN MẬT KHẨU')
+      setTBtn('ĐĂNG KÝ')
+      setTAsk('Đã có tài khoản?')
+      setTLogin('ĐĂNG NHẬP')
+      return
+    }
+
+    const translateText = async (text) => {
+      try {
+        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
+        const data = await res.json()
+        return data[0].map(item => item[0]).join('')
+      } catch (err) {
+        return text
+      }
+    }
+
+    const performTranslation = async () => {
+      setTTitle(await translateText('Tạo tài khoản'))
+      setTSubtitle(await translateText('Đăng ký thông tin để bắt đầu sử dụng CareTriage'))
+      setTFullName(await translateText('HỌ VÀ TÊN'))
+      setTPhone(await translateText('SỐ ĐIỆN THOẠI'))
+      setTRole(await translateText('VAI TRÒ'))
+      setTPassword(await translateText('MẬT KHẨU'))
+      setTConfirmPassword(await translateText('XÁC NHẬN MẬT KHẨU'))
+      setTBtn(await translateText('ĐĂNG KÝ'))
+      setTAsk(await translateText('Đã có tài khoản?'))
+      setTLogin(await translateText('ĐĂNG NHẬP'))
+    }
+
+    performTranslation()
+  }, [i18n.language])
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value })
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setSuccess('')
     setIsShaking(false)
 
     if (form.password !== form.confirmPassword) {
@@ -42,11 +226,12 @@ export default function Register() {
     }
 
     const result = await register(form)
+
     if (result.success) {
-      setSuccess('Đăng ký thành công! Đang chuyển đến trang đăng nhập...')
-      setTimeout(() => navigate('/login'), 1500)
+      setSuccess('Đăng ký thành công! Đang chuyển hướng...')
+      setTimeout(() => navigate('/login'), 2000)
     } else {
-      setError(result.message || 'Đăng ký thất bại')
+      setError(result.message || 'Đăng ký thất bại. Vui lòng thử lại')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
     }
@@ -55,147 +240,244 @@ export default function Register() {
   return (
     <Box
       sx={{
-        minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'linear-gradient(135deg, #d1fae5 0%, #a7f3d0 50%, #f0fdf4 100%)',
-        position: 'relative', overflow: 'hidden',
-        p: 2,
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'flex-end',
+        background: 'linear-gradient(135deg, #f0fdf4 0%, #effefa 50%, #f8fafc 100%)',
+        position: 'relative',
+        overflow: 'hidden',
+        pr: { xs: 2, md: 10 },
+        pl: { xs: 2, md: 0 },
+        py: 4,
       }}
     >
-      {/* Animated Background SVGs */}
+      <InteractiveParticles color="16, 185, 129" />
+
+      {/* Massive Typography on the left */}
       <Box
         sx={{
-          position: 'absolute', top: '15%', right: '15%', opacity: 0.2,
-          animation: `${float} 7s ease-in-out infinite`,
+          position: 'absolute',
+          left: { xs: '-5%', md: '5%' },
+          top: '50%',
+          transform: 'translateY(-50%)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          zIndex: 1,
+          userSelect: 'none',
+          pointerEvents: 'none',
         }}
       >
-        <svg width="120" height="120" viewBox="0 0 24 24" fill="#059669">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
-        </svg>
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: '15vw', md: '12vw' },
+            lineHeight: 0.8,
+            color: '#064e3b',
+            fontFamily: 'system-ui, sans-serif',
+            letterSpacing: '-0.05em',
+            textTransform: 'uppercase',
+          }}
+        >
+          Care
+        </Typography>
+        <Typography
+          variant="h1"
+          sx={{
+            fontWeight: 900,
+            fontSize: { xs: '15vw', md: '12vw' },
+            lineHeight: 0.8,
+            color: '#059669',
+            fontFamily: 'system-ui, sans-serif',
+            letterSpacing: '-0.05em',
+            textTransform: 'uppercase',
+            mt: { xs: 1, md: 2 },
+          }}
+        >
+          Triage
+        </Typography>
       </Box>
 
-      <Box
-        sx={{
-          position: 'absolute', bottom: '10%', left: '15%', opacity: 0.25,
-          animation: `${float} 5s ease-in-out infinite 0.5s`,
-        }}
-      >
-        <svg width="90" height="90" viewBox="0 0 24 24" fill="#059669">
-          <path d="M19.5 9.5c-1.03 0-1.94.52-2.5 1.31-.56-.79-1.47-1.31-2.5-1.31-1.66 0-3 1.34-3 3 0 .9.39 1.7.99 2.28L17 19l4.01-4.22c.6-.58.99-1.38.99-2.28 0-1.66-1.34-3-3-3z"/>
-        </svg>
-      </Box>
-
-      <Fade in timeout={1000}>
+      <Fade in timeout={800}>
         <Card
           sx={{
-            maxWidth: 480, width: '100%',
-            background: 'rgba(255, 255, 255, 0.55)',
+            maxWidth: 480,
+            width: '100%',
+            background: 'rgba(255, 255, 255, 0.8)',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.4)',
-            borderRadius: 6,
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.08)',
+            border: '1px solid rgba(16, 185, 129, 0.2)',
+            borderRadius: 4,
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+            zIndex: 2,
+            position: 'relative',
             animation: isShaking ? `${shake} 0.6s ease-in-out` : 'none',
           }}
         >
-          <CardContent sx={{ p: 4.5 }}>
-            <Box sx={{ textAlign: 'center', mb: 3 }}>
-              <Box
-                sx={{
-                  width: 64, height: 64, borderRadius: '50%',
-                  backgroundColor: 'rgba(16, 185, 129, 0.15)',
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  mb: 2,
-                }}
-              >
-                <MedicalServices sx={{ fontSize: 36, color: '#059669' }} />
-              </Box>
-              <Typography variant="h4" sx={{ fontWeight: 800, color: '#064e3b', mb: 0.5 }}>
-                Đăng ký
+          <CardContent sx={{ p: { xs: 3, md: 4.5 } }}>
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="h4" sx={{ fontWeight: 900, color: '#064e3b', textTransform: 'uppercase', mb: 0.5, letterSpacing: '-0.02em' }}>
+                {tBtn}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Tạo tài khoản CareTriage
+              <Typography variant="body2" sx={{ color: '#4b5563', fontWeight: 500 }}>
+                {tSubtitle}
               </Typography>
             </Box>
 
-            {/* Validation Error above Inputs */}
             {error && (
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#dc2626', fontWeight: 600, mb: 2, textAlign: 'center',
-                  backgroundColor: 'rgba(220, 38, 38, 0.08)',
-                  py: 1, borderRadius: 2,
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  mb: 2,
+                  textAlign: 'center',
+                  backgroundColor: '#dc2626',
+                  borderRadius: 1,
+                  py: 1,
+                  animation: `${shake} 0.6s ease-in-out`,
                 }}
               >
-                ⚠️ {error}
+                {error}
               </Typography>
             )}
 
-            {/* Success message */}
             {success && (
               <Typography
                 variant="body2"
                 sx={{
-                  color: '#059669', fontWeight: 600, mb: 2, textAlign: 'center',
-                  backgroundColor: 'rgba(5, 150, 105, 0.08)',
-                  py: 1, borderRadius: 2,
+                  color: '#ffffff',
+                  fontWeight: 600,
+                  mb: 2,
+                  textAlign: 'center',
+                  backgroundColor: '#059669',
+                  borderRadius: 1,
+                  py: 1,
                 }}
               >
-                🎉 {success}
+                {success}
               </Typography>
             )}
 
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <TextField
-                id="reg-name" label="Họ và tên" name="fullName"
+                id="reg-name" label={tFullName} name="fullName"
                 value={form.fullName} onChange={handleChange} required fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
-                id="reg-email" label="Email" name="email" type="email"
+                id="reg-email" label="EMAIL" name="email" type="email"
                 value={form.email} onChange={handleChange} required fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
-                id="reg-phone" label="Số điện thoại" name="phone"
+                id="reg-phone" label={tPhone} name="phone"
                 value={form.phone} onChange={handleChange} required fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
-                id="reg-role" label="Vai trò" name="role"
+                id="reg-role" label={tRole} name="role"
                 value={form.role} onChange={handleChange} select fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               >
-                <MenuItem value="PATIENT">Bệnh nhân</MenuItem>
-                <MenuItem value="DOCTOR">Bác sĩ</MenuItem>
+                <MenuItem value="PATIENT">{i18n.language && i18n.language.startsWith('vi') ? 'BỆNH NHÂN' : 'PATIENT'}</MenuItem>
+                <MenuItem value="DOCTOR">{i18n.language && i18n.language.startsWith('vi') ? 'BÁC SĨ' : 'DOCTOR'}</MenuItem>
               </TextField>
               <TextField
-                id="reg-password" label="Mật khẩu" name="password" type="password"
+                id="reg-password" label={tPassword} name="password" type="password"
                 value={form.password} onChange={handleChange} required fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
-                id="reg-confirm" label="Xác nhận mật khẩu" name="confirmPassword" type="password"
+                id="reg-confirm" label={tConfirmPassword} name="confirmPassword" type="password"
                 value={form.confirmPassword} onChange={handleChange} required fullWidth
-                sx={{ '& .MuiOutlinedInput-root': { backgroundColor: 'rgba(255, 255, 255, 0.6)' } }}
+                InputProps={{
+                  sx: {
+                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                    transition: 'all 0.3s ease',
+                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                  }
+                }}
+                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               
               <Button
-                type="submit" variant="contained" size="large" fullWidth
+                type="submit"
+                variant="contained"
+                size="large"
+                fullWidth
                 disabled={isLoading}
                 sx={{
-                  py: 1.5, mt: 1,
+                  py: 1.5,
+                  mt: 1,
+                  borderRadius: 2,
                   background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                  '&:hover': { background: 'linear-gradient(135deg, #059669 0%, #047857 100%)' },
+                  color: '#ffffff',
+                  fontWeight: 800,
+                  fontSize: '1rem',
+                  letterSpacing: '0.05em',
+                  boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 6px 20px rgba(16, 185, 129, 0.4)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  }
                 }}
               >
-                {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Đăng ký'}
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : tBtn}
               </Button>
             </Box>
 
-            <Typography sx={{ mt: 3, textAlign: 'center' }} color="text.secondary">
-              Đã có tài khoản?{' '}
-              <Link to="/login" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>
-                Đăng nhập
+            <Typography sx={{ mt: 3, textAlign: 'center', fontWeight: 600 }} color="text.secondary">
+              {tAsk}{' '}
+              <Link to="/login" style={{ color: '#059669', fontWeight: 800, textDecoration: 'none' }}>
+                {tLogin}
               </Link>
             </Typography>
           </CardContent>
