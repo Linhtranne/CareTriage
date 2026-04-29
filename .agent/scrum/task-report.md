@@ -1,4 +1,4 @@
-# Báo cáo Tiến độ Sprint (Task T-001 -> T-004)
+# Báo cáo Tiến độ Sprint (Task T-001 -> T-007)
 
 ## T-001: Create User, Role entities + migration
 - **Lý do thực hiện:** Xây dựng nền tảng lưu trữ thông tin tài khoản và phân quyền người dùng (Bệnh nhân, Bác sĩ, Admin), phục vụ tất cả các luồng nghiệp vụ xác thực và truy cập tài nguyên bảo mật.
@@ -28,3 +28,10 @@
 - **Logic triển khai:**
   - Xây dựng `JwtAuthFilter` kế thừa `OncePerRequestFilter` giải mã token trên mỗi request và gán `SecurityContextHolder`.
   - Cấu hình `SecurityFilterChain` bỏ qua CSRF, chặn truy cập nặc danh ngoại trừ `/api/auth/**` và `/api/health`.
+
+## T-007: Implement Axios interceptor (JWT auto-attach, 401 refresh)
+- **Lý do thực hiện:** Tự động hóa các quy trình xác thực phía Client, đảm bảo các giao tiếp bảo mật diễn ra trơn tru và tăng cường trải nghiệm đăng nhập xuyên suốt.
+- **Công nghệ sử dụng:** Axios Interceptors, Zustand.
+- **Logic triển khai:**
+  - Request Interceptor: Rút trích access token và tự động đính kèm chuỗi `Bearer <token>` vào `Authorization` header.
+  - Response Interceptor: Bắt lỗi 401 Unauthorized. Khi token hết hạn, gọi API `/api/auth/refresh` lấy chuỗi mới và gửi lại Request thất bại (Silent Refresh). Nếu lỗi sâu hơn, đưa người dùng quay về `/login`.

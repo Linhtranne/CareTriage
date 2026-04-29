@@ -7,6 +7,7 @@ const useAuthStore = create(
     (set, get) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -14,8 +15,8 @@ const useAuthStore = create(
         set({ isLoading: true })
         try {
           const res = await axiosClient.post('/api/auth/login', { email, password })
-          const { token, user } = res.data
-          set({ user, token, isAuthenticated: true, isLoading: false })
+          const { token, refreshToken, user } = res.data.data
+          set({ user, token, refreshToken, isAuthenticated: true, isLoading: false })
           return { success: true }
         } catch (error) {
           set({ isLoading: false })
@@ -36,7 +37,7 @@ const useAuthStore = create(
       },
 
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false })
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
       },
 
       getRole: () => get().user?.role || null,
