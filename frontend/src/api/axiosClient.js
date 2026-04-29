@@ -16,13 +16,74 @@ axiosClient.interceptors.request.use((config) => {
   return config
 })
 
-// Response interceptor - handle 401
+let isRefreshing = false
+let failedQueue = []
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token)
+    }
+  })
+  failedQueue = []
+}
+
+// Response interceptor - handle 401 & silent token refresh
 axiosClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      useAuthStore.getState().logout()
-      window.location.href = '/login'
+  async (error) => {
+    const originalRequest = error.config
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise(function (resolve, reject) {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = 'Bearer ' + token
+            return axiosClient(originalRequest)
+          })
+          .catch((err) => {
+            return Promise.reject(err)
+          })
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      const refreshToken = useAuthStore.getState().refreshToken
+      if (refreshToken) {
+        try {
+          const refreshUrl = `${axiosClient.defaults.baseURL || ''}/api/auth/refresh`
+          const res = await axios.post(refreshUrl, {
+            refreshToken: refreshToken,
+          })
+          const { token: newToken, refreshToken: newRefreshToken } = res.data.data
+          
+          useAuthStore.setState({
+            token: newToken,
+            refreshToken: newRefreshToken,
+            isAuthenticated: true,
+          })
+
+          processQueue(null, newToken)
+          isRefreshing = false
+
+          originalRequest.headers['Authorization'] = 'Bearer ' + newToken
+          return axiosClient(originalRequest)
+        } catch (refreshError) {
+          processQueue(refreshError, null)
+          isRefreshing = false
+          useAuthStore.getState().logout()
+          window.location.href = '/login'
+          return Promise.reject(refreshError)
+        }
+      } else {
+        useAuthStore.getState().logout()
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }
