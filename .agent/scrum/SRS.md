@@ -63,9 +63,9 @@ Hệ thống CareTriage kết hợp quản lý bệnh viện cốt lõi (HMS Cor
 | F-DOC-04 | Xem Triage Tickets | Inbox ticket từ AI, xem chat history |
 | F-DOC-05 | Review Triage → Tạo hẹn | Chuyển ticket thành appointment |
 | F-DOC-06 | Dashboard | Lịch hôm nay, ticket pending, thống kê |
-| F-DOC-07 | ⭐ Upload ghi chú lâm sàng | Upload PDF/Word hoặc nhập text |
-| F-DOC-08 | ⭐ Xem kết quả EHR extraction | Entities trích xuất: thuốc, triệu chứng, bệnh lý |
-| F-DOC-09 | ⭐ Tìm kiếm nâng cao EHR | Tìm bệnh nhân theo triệu chứng/thuốc/bệnh lý |
+| F-DOC-07 | Upload ghi chú lâm sàng | Upload PDF/Word hoặc nhập text |
+| F-DOC-08 | Xem kết quả EHR extraction | Entities trích xuất: thuốc, triệu chứng, bệnh lý |
+| F-DOC-09 | Tìm kiếm nâng cao EHR | Tìm bệnh nhân theo triệu chứng/thuốc/bệnh lý |
 
 ### 2.4 Admin
 | ID | Chức năng | Mô tả |
@@ -104,7 +104,7 @@ chat_sessions ── chat_messages
         │
 triage_tickets
 
-⭐ EHR Tables:
+EHR Tables:
 clinical_notes ── extracted_entities
      │
      ├── patient_medications
@@ -176,7 +176,7 @@ clinical_notes ── extracted_entities
 | GET | /api/triage-tickets/{id} | Doctor/Patient(own) |
 | PUT | /api/triage-tickets/{id}/assign | Doctor |
 
-### EHR Data Extraction ⭐
+### EHR Data Extraction
 | Method | Endpoint | Access |
 |--------|----------|--------|
 | POST | /api/ehr/upload | Doctor/Admin |

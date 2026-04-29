@@ -10,6 +10,17 @@ import AdminDashboard from './pages/admin/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import NotFound from './pages/NotFound'
 
+// Detailed feature pages
+import AITriage from './pages/public/features/AITriage'
+import EHREngine from './pages/public/features/EHREngine'
+import SmartBooking from './pages/public/features/SmartBooking'
+import Hospitals from './pages/public/solutions/Hospitals'
+import Clinics from './pages/public/solutions/Clinics'
+import Individuals from './pages/public/solutions/Individuals'
+import APIDocs from './pages/public/developers/APIDocs'
+import Security from './pages/public/developers/Security'
+import Terms from './pages/public/Terms'
+
 export default function App() {
   return (
     <Routes>
@@ -18,6 +29,16 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        
+        <Route path="/features/ai-triage" element={<AITriage />} />
+        <Route path="/features/ehr-engine" element={<EHREngine />} />
+        <Route path="/features/smart-booking" element={<SmartBooking />} />
+        <Route path="/solutions/hospitals" element={<Hospitals />} />
+        <Route path="/solutions/clinics" element={<Clinics />} />
+        <Route path="/solutions/individuals" element={<Individuals />} />
+        <Route path="/developers/api-docs" element={<APIDocs />} />
+        <Route path="/developers/security" element={<Security />} />
+        <Route path="/terms" element={<Terms />} />
       </Route>
 
       {/* Patient routes */}

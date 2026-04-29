@@ -1,9 +1,13 @@
 import { Box, Typography, Button, Fade, Grid, Card, CardContent, Paper } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { MedicalServices, Chat, ArrowForward, Description, Biotech, Storage, Security, VerifiedUser } from '@mui/icons-material'
+import { 
+  MedicalServices, Chat, ArrowForward, Description, Biotech, Storage, Security, VerifiedUser,
+  Psychology, EventAvailable, LocalHospital, Person, Code 
+} from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import Navbar from '../../components/public/Navbar'
 
 // Interactive Particle Visualizer (Canvas API)
 function InteractiveParticles({ mode = 'neural', color = '16, 185, 129' }) {
@@ -413,8 +417,7 @@ export default function Landing() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
   const [chatStep, setChatStep] = useState(0)
-  const [scrolled, setScrolled] = useState(false)
-  const [navHovered, setNavHovered] = useState(false)
+
 
   const problemItems = [
     { 
@@ -525,15 +528,7 @@ export default function Landing() {
     { icon: <VerifiedUser />, title: t('ehr.nlp'), desc: t('ehr.nlp_desc') }
   ]
 
-  // Sticky Navbar Scroll Tracker
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 40) setScrolled(true)
-      else setScrolled(false)
-    }
-    window.addEventListener('scroll', handleScroll)
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
+
 
   // Simulated Chat Interval
   useEffect(() => {
@@ -565,92 +560,7 @@ export default function Landing() {
         }}
       />
 
-      {/* Invisible Sentinel Box for Hover Capture */}
-      <Box 
-        sx={{ 
-          position: 'fixed', top: 0, left: 0, width: '100%', height: '25px', zIndex: 9 
-        }}
-        onMouseEnter={() => setNavHovered(true)}
-      />
-
-      {/* Sticky Navbar */}
-      <Box
-        component="nav"
-        onMouseEnter={() => setNavHovered(true)}
-        onMouseLeave={() => setNavHovered(false)}
-        sx={{
-          backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.85)' : 'transparent',
-          backdropFilter: scrolled ? 'blur(16px)' : 'none',
-          borderBottom: scrolled ? '1px solid rgba(16, 185, 129, 0.1)' : 'none',
-          boxShadow: scrolled ? '0 10px 30px rgba(0, 0, 0, 0.03)' : 'none',
-          position: 'fixed', top: 0, zIndex: 10,
-          transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
-          width: '100%',
-          transform: scrolled && !navHovered ? 'translateY(-105%)' : 'translateY(0)',
-          opacity: scrolled && !navHovered ? 0 : 1,
-        }}
-      >
-        <Box sx={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          px: { xs: 2, md: 6 },
-          py: scrolled ? 1.5 : 3,
-          maxWidth: 1400,
-          mx: 'auto'
-        }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Box
-            sx={{
-              width: 40, height: 40, borderRadius: '50%',
-              backgroundColor: 'rgba(16, 185, 129, 0.15)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              animation: `${pulse} 3s ease-in-out infinite`,
-            }}
-          >
-            <MedicalServices sx={{ color: '#059669', fontSize: 24 }} />
-          </Box>
-          <Typography variant="h5" sx={{ fontWeight: 800, color: '#064e3b', letterSpacing: '-0.5px' }}>
-            CareTriage
-          </Typography>
-        </Box>
-        
-        <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi')}
-            sx={{ 
-              borderColor: 'rgba(16, 185, 129, 0.3)', 
-              color: '#059669', 
-              fontWeight: 700,
-              px: 2
-            }}
-          >
-            {i18n.language && i18n.language.startsWith('vi') ? 'EN' : 'VI'}
-          </Button>
-          
-          <Button
-            variant="text" onClick={() => navigate('/login')}
-            sx={{ color: '#374151', fontWeight: 700, '&:hover': { color: '#059669' } }}
-          >
-            {t('nav.login')}
-          </Button>
-          <Button
-            variant="contained" onClick={() => navigate('/register')}
-            sx={{
-              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
-              '&:hover': {
-                background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                transform: 'scale(1.05)',
-              },
-              transition: 'all 0.2s',
-            }}
-          >
-            {t('nav.register')}
-          </Button>
-          </Box>
-        </Box>
-      </Box>
+      <Navbar />
 
       {/* Hero Section */}
       <Fade in timeout={800}>
@@ -731,7 +641,7 @@ export default function Landing() {
 
       {/* AI Triage Section (Full Width Background) */}
       <Reveal>
-        <Box sx={{ 
+        <Box id="ai-tech" sx={{ 
           mb: 16, 
           position: 'relative',
           borderRadius: 0,
@@ -858,7 +768,7 @@ export default function Landing() {
 
       {/* EHR Section (Continuous Slider) */}
       <Reveal>
-        <Box sx={{ mt: 8, mb: 4, position: 'relative', width: '100%' }}>
+        <Box id="doctors" sx={{ mt: 8, mb: 4, position: 'relative', width: '100%' }}>
           <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, position: 'relative', zIndex: 1 }}>
             <InteractiveParticles mode="attract" />
             <Typography variant="h3" sx={{ fontWeight: 900, color: '#064e3b', mb: 3, textAlign: 'center', position: 'relative', zIndex: 1 }}>
@@ -942,7 +852,8 @@ export default function Landing() {
         </Reveal>
 
       {/* Alternating Feature Rows Section */}
-      {explorerItems.map((item, idx) => (
+      <Box id="patients">
+        {explorerItems.map((item, idx) => (
         <Reveal key={idx} delay={idx * 0.1}>
           <Box 
             sx={{ 
@@ -990,6 +901,7 @@ export default function Landing() {
           </Box>
         </Reveal>
       ))}
+      </Box>
 
       {/* Section 1: The Problem (Full Width) */}
       <Reveal>
@@ -1077,7 +989,7 @@ export default function Landing() {
       >
         <Grid container spacing={4} sx={{ maxWidth: 1200, mx: 'auto' }}>
           <Grid item xs={12} md={4}>
-            <Typography variant="h6" sx={{ fontWeight: 800, color: '#10b981', mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 900, color: '#f8fafc', mb: 2 }}>
               CareTriage
             </Typography>
             <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6 }}>

@@ -55,6 +55,9 @@ public class User {
     @Column(name = "avatar_url")
     private String avatarUrl;
 
+    @Column(name = "refresh_token")
+    private String refreshToken;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;
