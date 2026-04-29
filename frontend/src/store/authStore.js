@@ -40,6 +40,20 @@ const useAuthStore = create(
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
       },
 
+      setCredentials: (user, token, refreshToken) => {
+        set({ user, token, refreshToken, isAuthenticated: true })
+      },
+
+      clearCredentials: () => {
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
+      },
+
+      updateUser: (newData) => {
+        set((state) => ({
+          user: state.user ? { ...state.user, ...newData } : newData
+        }))
+      },
+
       getRole: () => get().user?.role || null,
     }),
     { name: 'caretriage-auth' }
