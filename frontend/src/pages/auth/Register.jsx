@@ -152,9 +152,16 @@ export default function Register() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isShaking, setIsShaking] = useState(false)
-  const { register, isLoading } = useAuthStore()
+  const { register, isLoading, isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
   const { i18n } = useTranslation()
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const userRole = user.role?.toLowerCase()
+      navigate(`/${userRole}/dashboard`, { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
   
   const [tTitle, setTTitle] = useState('Tạo tài khoản')
   const [tSubtitle, setTSubtitle] = useState('Đăng ký thông tin để bắt đầu sử dụng CareTriage')
@@ -217,6 +224,31 @@ export default function Register() {
     setError('')
     setSuccess('')
     setIsShaking(false)
+
+    if (!form.fullName.trim()) {
+      setError('Họ và tên không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    if (!form.email.trim()) {
+      setError('Email không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    if (!form.phone.trim()) {
+      setError('Số điện thoại không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    if (!form.password.trim()) {
+      setError('Mật khẩu không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
 
     if (form.password !== form.confirmPassword) {
       setError('Mật khẩu xác nhận không khớp')
@@ -363,84 +395,96 @@ export default function Register() {
             <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
               <TextField
                 id="reg-name" label={tFullName} name="fullName"
-                value={form.fullName} onChange={handleChange} required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                value={form.fullName} onChange={handleChange} fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
                 id="reg-email" label="EMAIL" name="email" type="email"
-                value={form.email} onChange={handleChange} required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                value={form.email} onChange={handleChange} fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
                 id="reg-phone" label={tPhone} name="phone"
-                value={form.phone} onChange={handleChange} required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                value={form.phone} onChange={handleChange} fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
                 id="reg-role" label={tRole} name="role"
                 value={form.role} onChange={handleChange} select fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               >
                 <MenuItem value="PATIENT">{i18n.language && i18n.language.startsWith('vi') ? 'BỆNH NHÂN' : 'PATIENT'}</MenuItem>
                 <MenuItem value="DOCTOR">{i18n.language && i18n.language.startsWith('vi') ? 'BÁC SĨ' : 'DOCTOR'}</MenuItem>
               </TextField>
               <TextField
                 id="reg-password" label={tPassword} name="password" type="password"
-                value={form.password} onChange={handleChange} required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                value={form.password} onChange={handleChange} fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               <TextField
                 id="reg-confirm" label={tConfirmPassword} name="confirmPassword" type="password"
-                value={form.confirmPassword} onChange={handleChange} required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
-                    '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
-                  }
+                value={form.confirmPassword} onChange={handleChange} fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2, border: '1px solid rgba(16, 185, 129, 0.3)', backgroundColor: 'rgba(255, 255, 255, 0.9)', fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': { borderColor: '#059669', transform: 'translateY(-2px)' },
+                      '&.Mui-focused': { borderColor: '#059669', boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)' }
+                    }
+                  },
+                  inputLabel: { sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }
                 }}
-                InputLabelProps={{ sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } } }}
               />
               
               <Button

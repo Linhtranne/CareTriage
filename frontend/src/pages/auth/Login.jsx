@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
   Box, Card, CardContent, TextField, Button, Typography,
@@ -154,10 +154,18 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isShaking, setIsShaking] = useState(false)
-  const { login, isLoading } = useAuthStore()
+  const { login, isLoading, isAuthenticated, user } = useAuthStore()
   const navigate = useNavigate()
+  const location = useLocation()
   const { i18n } = useTranslation()
   
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const userRole = user.role?.toLowerCase()
+      navigate(`/${userRole}/dashboard`, { replace: true })
+    }
+  }, [isAuthenticated, user, navigate])
+
   const [tTitle, setTTitle] = useState('Đăng nhập')
   const [tSubtitle, setTSubtitle] = useState('Hệ thống điều phối y tế CareTriage')
   const [tPassword, setTPassword] = useState('MẬT KHẨU')
@@ -203,10 +211,25 @@ export default function Login() {
     setError('')
     setIsShaking(false)
 
+    if (!email.trim()) {
+      setError('Email không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+
+    if (!password.trim()) {
+      setError('Mật khẩu không được để trống')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+
     const result = await login(email, password)
     if (result.success) {
       const role = useAuthStore.getState().user?.role?.toLowerCase()
-      navigate(`/${role}/dashboard`)
+      const from = location.state?.from?.pathname || `/${role}/dashboard`
+      navigate(from, { replace: true })
     } else {
       setError(result.message || 'Thông tin đăng nhập không chính xác')
       setIsShaking(true)
@@ -326,26 +349,28 @@ export default function Login() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2,
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: '#059669',
-                      transform: 'translateY(-2px)',
-                    },
-                    '&.Mui-focused': {
-                      borderColor: '#059669',
-                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
+                fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2,
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: '#059669',
+                        transform: 'translateY(-2px)',
+                      },
+                      '&.Mui-focused': {
+                        borderColor: '#059669',
+                        boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
+                      }
                     }
+                  },
+                  inputLabel: {
+                    sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
                   }
-                }}
-                InputLabelProps={{
-                  sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
                 }}
               />
               <TextField
@@ -354,33 +379,35 @@ export default function Login() {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                required fullWidth
-                InputProps={{
-                  sx: {
-                    borderRadius: 2,
-                    border: '1px solid rgba(16, 185, 129, 0.3)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    fontWeight: 600,
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      borderColor: '#059669',
-                      transform: 'translateY(-2px)',
+                fullWidth
+                slotProps={{
+                  input: {
+                    sx: {
+                      borderRadius: 2,
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      fontWeight: 600,
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        borderColor: '#059669',
+                        transform: 'translateY(-2px)',
+                      },
+                      '&.Mui-focused': {
+                        borderColor: '#059669',
+                        boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
+                      }
                     },
-                    '&.Mui-focused': {
-                      borderColor: '#059669',
-                      boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.1)',
-                    }
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#064e3b' }}>
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   },
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: '#064e3b' }}>
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                InputLabelProps={{
-                  sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
+                  inputLabel: {
+                    sx: { fontWeight: 700, color: '#064e3b', '&.Mui-focused': { color: '#064e3b' } }
+                  }
                 }}
               />
 

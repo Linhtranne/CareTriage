@@ -36,7 +36,10 @@ axiosClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isAuthEndpoint = originalRequest.url?.includes('/api/auth/login') || 
+                           originalRequest.url?.includes('/api/auth/register')
+
+    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise(function (resolve, reject) {
           failedQueue.push({ resolve, reject })
@@ -82,7 +85,10 @@ axiosClient.interceptors.response.use(
         }
       } else {
         useAuthStore.getState().logout()
-        window.location.href = '/login'
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login'
+        }
+        return Promise.reject(error)
       }
     }
     return Promise.reject(error)

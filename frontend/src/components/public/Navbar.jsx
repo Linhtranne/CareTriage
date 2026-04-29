@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Grid } from '@mui/material'
+import { Box, Typography, Button, Grid, Avatar, Menu, MenuItem, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, IconButton } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import { 
   Description, Psychology, EventAvailable, LocalHospital, MedicalServices, Person, Code, Security 
@@ -6,6 +6,8 @@ import {
 import { keyframes } from '@emotion/react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import useAuthStore from '../../store/authStore'
+import axiosClient from '../../api/axiosClient'
 
 const pulse = keyframes`
   0%, 100% { opacity: 0.6; transform: scale(1); }
@@ -15,9 +17,34 @@ const pulse = keyframes`
 export default function Navbar() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
+  const { isAuthenticated, user, logout, refreshToken } = useAuthStore()
   const [scrolled, setScrolled] = useState(false)
   const [navHovered, setNavHovered] = useState(false)
   const [activeMenu, setActiveMenu] = useState(null)
+  const [anchorEl, setAnchorEl] = useState(null)
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false)
+
+  const handleMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget)
+  }
+  
+  const handleMenuClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleLogoutConfirm = async () => {
+    setLogoutDialogOpen(false)
+    handleMenuClose()
+    try {
+      if (refreshToken) {
+        await axiosClient.post('/api/auth/logout', { refreshToken })
+      }
+    } catch (e) {
+      console.error('Server-side logout error', e)
+    }
+    logout()
+    navigate('/login')
+  }
 
   const menuHeights = { products: 160, solutions: 160, developers: 240 }
   const menuIndices = { products: 0, solutions: 1, developers: 2 }
@@ -193,26 +220,41 @@ export default function Navbar() {
               {i18n.language && i18n.language.startsWith('vi') ? 'EN' : 'VI'}
             </Button>
             
-            <Button
-              variant="text" onClick={() => navigate('/login')}
-              sx={{ color: '#374151', fontWeight: 700, '&:hover': { color: '#059669' } }}
-            >
-              {t('nav.login')}
-            </Button>
-            <Button
-              variant="contained" onClick={() => navigate('/register')}
-              sx={{
-                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                  transform: 'scale(1.05)',
-                },
-                transition: 'all 0.2s',
-              }}
-            >
-              {t('nav.register')}
-            </Button>
+            {!isAuthenticated ? (
+              <>
+                <Button
+                  variant="text" onClick={() => navigate('/login')}
+                  sx={{ color: '#374151', fontWeight: 700, '&:hover': { color: '#059669' } }}
+                >
+                  {t('nav.login')}
+                </Button>
+                <Button
+                  variant="contained" onClick={() => navigate('/register')}
+                  sx={{
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.25)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                      transform: 'scale(1.05)',
+                    },
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  {t('nav.register')}
+                </Button>
+              </>
+            ) : (
+              <IconButton onClick={handleMenuOpen} sx={{ p: 0 }}>
+                <Avatar 
+                  sx={{ 
+                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    fontWeight: 600
+                  }}
+                >
+                  {(user?.fullName || user?.username || 'U')[0].toUpperCase()}
+                </Avatar>
+              </IconButton>
+            )}
           </Box>
 
           {/* ================= SINGLE CONTAINER MEGA MENU ================= */}
@@ -308,6 +350,77 @@ export default function Navbar() {
           </Box>
         </Box>
       </Box>
+      {/* Avatar Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            width: 200,
+            borderRadius: '12px',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+            border: '1px solid rgba(0,0,0,0.05)'
+          }
+        }}
+      >
+        <MenuItem disabled sx={{ fontWeight: 600, color: '#111827' }}>
+          {user?.fullName || user?.username || 'Người dùng'}
+        </MenuItem>
+        <MenuItem onClick={() => { handleMenuClose(); navigate('/profile'); }} sx={{ color: '#374151' }}>
+          Hồ sơ cá nhân
+        </MenuItem>
+        <MenuItem 
+          onClick={() => { handleMenuClose(); setLogoutDialogOpen(true); }}
+          sx={{ color: '#ef4444', fontWeight: 600 }}
+        >
+          Đăng xuất
+        </MenuItem>
+      </Menu>
+
+      {/* Logout Confirmation Dialog */}
+      <Dialog
+        open={logoutDialogOpen}
+        onClose={() => setLogoutDialogOpen(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: '16px',
+            padding: 2,
+            maxWidth: '400px'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontWeight: 700, color: '#1f2937' }}>
+          Xác nhận đăng xuất
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: '#4b5563' }}>
+            Bạn có chắc chắn muốn đăng xuất không?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'flex-end', gap: 1, mt: 1 }}>
+          <Button 
+            onClick={() => setLogoutDialogOpen(false)}
+            sx={{ color: '#6b7280', fontWeight: 600 }}
+          >
+            Hủy
+          </Button>
+          <Button 
+            onClick={handleLogoutConfirm}
+            variant="contained"
+            color="error"
+            sx={{ 
+              fontWeight: 600, 
+              borderRadius: '8px',
+              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.2)'
+            }}
+          >
+            Đăng xuất
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   )
 }
