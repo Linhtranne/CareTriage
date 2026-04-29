@@ -1,4 +1,4 @@
-# Báo cáo Tiến độ Sprint (Task T-001 -> T-003)
+# Báo cáo Tiến độ Sprint (Task T-001 -> T-004)
 
 ## T-001: Create User, Role entities + migration
 - **Lý do thực hiện:** Xây dựng nền tảng lưu trữ thông tin tài khoản và phân quyền người dùng (Bệnh nhân, Bác sĩ, Admin), phục vụ tất cả các luồng nghiệp vụ xác thực và truy cập tài nguyên bảo mật.
@@ -21,3 +21,10 @@
   - Cấu trúc Endpoint: `/api/auth/register`, `/api/auth/login`, `/api/auth/refresh`, `/api/auth/logout`.
   - Tối ưu hóa DTO: Chuyển đổi cơ chế truyền tải map raw sang `TokenRequest` chuẩn hóa.
   - Quản lý Refresh Token Revocation: Lưu trạng thái token hoạt động vào DB thông qua cột `refresh_token`, kiểm tra trùng khớp hoặc xóa sạch khi Logout để vô hiệu hóa các hành vi chiếm dụng phiên trái phép.
+
+## T-004: Configure Spring Security + JWT filter chain
+- **Lý do thực hiện:** Thiết lập hệ thống phân quyền truy cập tài nguyên, bảo vệ ứng dụng khỏi tấn công khai thác và quản lý trạng thái xác thực phi trạng thái (Stateless).
+- **Công nghệ sử dụng:** Spring Security 6.x, OncePerRequestFilter.
+- **Logic triển khai:**
+  - Xây dựng `JwtAuthFilter` kế thừa `OncePerRequestFilter` giải mã token trên mỗi request và gán `SecurityContextHolder`.
+  - Cấu hình `SecurityFilterChain` bỏ qua CSRF, chặn truy cập nặc danh ngoại trừ `/api/auth/**` và `/api/health`.
