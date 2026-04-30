@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import { Visibility, VisibilityOff } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
-import useAuthStore from '../../store/authStore'
+import useAuthStore, { getHighestPriorityLandingPage } from '../../store/authStore'
 
 // Interactive Particle Visualizer (Canvas API)
 function InteractiveParticles({ color = '16, 185, 129' }) {
@@ -161,8 +161,8 @@ export default function Login() {
   
   useEffect(() => {
     if (isAuthenticated && user) {
-      const userRole = user.role?.toLowerCase()
-      navigate(`/${userRole}/dashboard`, { replace: true })
+      const targetPath = getHighestPriorityLandingPage(user)
+      navigate(targetPath, { replace: true })
     }
   }, [isAuthenticated, user, navigate])
 
@@ -227,8 +227,8 @@ export default function Login() {
 
     const result = await login(email, password)
     if (result.success) {
-      const role = useAuthStore.getState().user?.role?.toLowerCase()
-      const from = location.state?.from?.pathname || `/${role}/dashboard`
+      const userObj = useAuthStore.getState().user
+      const from = location.state?.from?.pathname || getHighestPriorityLandingPage(userObj)
       navigate(from, { replace: true })
     } else {
       setError(result.message || 'Thông tin đăng nhập không chính xác')

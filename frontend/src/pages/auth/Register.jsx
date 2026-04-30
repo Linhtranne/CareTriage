@@ -6,7 +6,7 @@ import {
   MenuItem, CircularProgress, Fade,
 } from '@mui/material'
 import { keyframes } from '@emotion/react'
-import useAuthStore from '../../store/authStore'
+import useAuthStore, { getHighestPriorityLandingPage } from '../../store/authStore'
 
 // Interactive Particle Visualizer (Canvas API)
 function InteractiveParticles({ color = '16, 185, 129' }) {
@@ -158,8 +158,8 @@ export default function Register() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const userRole = user.role?.toLowerCase()
-      navigate(`/${userRole}/dashboard`, { replace: true })
+      const targetPath = getHighestPriorityLandingPage(user)
+      navigate(targetPath, { replace: true })
     }
   }, [isAuthenticated, user, navigate])
   
