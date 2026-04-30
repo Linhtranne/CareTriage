@@ -2,6 +2,39 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import axiosClient from '../api/axiosClient'
 
+export const ROLE_PRIORITY = {
+  'SUPER_ADMIN': 100,
+  'CONTENT_ADMIN': 50,
+  'ADMIN': 30,
+  'DOCTOR': 20,
+  'PATIENT': 10
+}
+
+export const ROLE_LANDING_PAGES = {
+  'SUPER_ADMIN': '/super-admin/dashboard',
+  'CONTENT_ADMIN': '/content-admin/posts',
+  'ADMIN': '/admin/dashboard',
+  'DOCTOR': '/doctor/dashboard',
+  'PATIENT': '/patient/dashboard'
+}
+
+export const getHighestPriorityLandingPage = (user) => {
+  if (!user) return '/login'
+  
+  if (user.role) {
+    const cleanRole = user.role.replace('ROLE_', '').toUpperCase()
+    return ROLE_LANDING_PAGES[cleanRole] || '/patient/dashboard'
+  }
+  
+  if (user.roles && user.roles.length > 0) {
+    const cleanRoles = user.roles.map(r => r.replace('ROLE_', '').toUpperCase())
+    const sortedRoles = [...cleanRoles].sort((a, b) => (ROLE_PRIORITY[b] || 0) - (ROLE_PRIORITY[a] || 0))
+    return ROLE_LANDING_PAGES[sortedRoles[0]] || '/patient/dashboard'
+  }
+
+  return '/patient/dashboard'
+}
+
 const useAuthStore = create(
   persist(
     (set, get) => ({

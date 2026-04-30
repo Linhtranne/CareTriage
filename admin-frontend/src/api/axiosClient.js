@@ -18,11 +18,16 @@ axiosClient.interceptors.request.use((config) => {
 axiosClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    if (!error.response) {
+      return Promise.reject(new Error('Không thể kết nối đến máy chủ. Vui lòng kiểm tra kết nối internet.'))
+    }
+
+    const { status } = error.response
     const originalRequest = error.config
     const isAuthEndpoint = originalRequest.url?.includes('/api/auth/login') || 
                            originalRequest.url?.includes('/api/auth/register')
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (status === 401 && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true
       const refreshToken = useAuthStore.getState().refreshToken
       if (refreshToken) {
@@ -52,6 +57,15 @@ axiosClient.interceptors.response.use(
         return Promise.reject(error)
       }
     }
+
+    if (status === 403) {
+      return Promise.reject(new Error('Bạn không có quyền truy cập vào tài nguyên này.'))
+    }
+
+    if (status >= 500) {
+      return Promise.reject(new Error('Hệ thống đang gặp sự cố. Vui lòng thử lại sau.'))
+    }
+
     return Promise.reject(error)
   }
 )
