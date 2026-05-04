@@ -22,11 +22,13 @@ public class PatientCondition {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "patient_id", nullable = false)
-    private Long patientId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private User patient;
 
-    @Column(name = "clinical_note_id")
-    private Long clinicalNoteId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "clinical_note_id")
+    private ClinicalNote clinicalNote;
 
     @Column(name = "condition_name", nullable = false)
     private String conditionName;

@@ -296,7 +296,7 @@ export default function Navbar() {
               >
                 <Grid container spacing={4}>
                   {tMenuData[key].items.map((subItem, idx) => (
-                    <Grid item xs={12} md={4} key={idx}>
+                    <Grid size={{ xs: 12, md: 4 }} key={idx}>
                       <Box
                         onClick={() => {
                           setActiveMenu(null)
@@ -355,13 +355,15 @@ export default function Navbar() {
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
-        PaperProps={{
-          sx: {
-            mt: 1,
-            width: 200,
-            borderRadius: '12px',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
-            border: '1px solid rgba(0,0,0,0.05)'
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              width: 200,
+              borderRadius: '12px',
+              boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
+              border: '1px solid rgba(0,0,0,0.05)'
+            }
           }
         }}
       >
@@ -383,11 +385,13 @@ export default function Navbar() {
       <Dialog
         open={logoutDialogOpen}
         onClose={() => setLogoutDialogOpen(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: '16px',
-            padding: 2,
-            maxWidth: '400px'
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: '16px',
+              padding: 2,
+              maxWidth: '400px'
+            }
           }
         }}
       >

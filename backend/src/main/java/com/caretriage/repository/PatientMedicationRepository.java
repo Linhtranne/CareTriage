@@ -15,7 +15,7 @@ public interface PatientMedicationRepository extends JpaRepository<PatientMedica
 
     List<PatientMedication> findByPatientIdAndStatus(Long patientId, PatientMedication.MedicationStatus status);
 
-    @Query("SELECT DISTINCT pm.patientId FROM PatientMedication pm WHERE LOWER(pm.medicationName) LIKE LOWER(CONCAT('%', :name, '%'))")
+    @Query("SELECT DISTINCT pm.patient.id FROM PatientMedication pm WHERE LOWER(pm.medicationName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Long> findPatientIdsByMedicationName(@Param("name") String name);
 
     @Query("SELECT pm.medicationName, COUNT(pm) as cnt FROM PatientMedication pm GROUP BY pm.medicationName ORDER BY cnt DESC")

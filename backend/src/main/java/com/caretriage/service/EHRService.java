@@ -29,6 +29,7 @@ public class EHRService {
     private final PatientMedicationRepository patientMedicationRepository;
     private final PatientConditionRepository patientConditionRepository;
     private final PatientSymptomRepository patientSymptomRepository;
+    private final UserRepository userRepository;
     private final WebClient.Builder webClientBuilder;
 
     @Value("${ai.service.url:http://localhost:8000}")
@@ -36,10 +37,13 @@ public class EHRService {
 
     @Transactional
     public EHRDto.ExtractionResultDto extractFromText(String text, Long patientId, Long doctorId, String noteType) {
+        User patient = userRepository.findById(patientId).orElseThrow(() -> new RuntimeException("Patient not found"));
+        User doctor = userRepository.findById(doctorId).orElseThrow(() -> new RuntimeException("Doctor not found"));
+
         // Save clinical note
         ClinicalNote note = ClinicalNote.builder()
-                .patientId(patientId)
-                .doctorId(doctorId)
+                .patient(patient)
+                .doctor(doctor)
                 .noteType(parseNoteType(noteType))
                 .rawText(text)
                 .fileType("TEXT")
@@ -50,7 +54,7 @@ public class EHRService {
         try {
             // Call AI service
             Map<String, Object> aiResponse = callAiExtractText(text);
-            return processExtractionResult(note, aiResponse, patientId, doctorId);
+            return processExtractionResult(note, aiResponse, patient, doctor);
         } catch (Exception e) {
             note.setExtractionStatus(ClinicalNote.ExtractionStatus.FAILED);
             clinicalNoteRepository.save(note);
@@ -61,10 +65,13 @@ public class EHRService {
 
     @Transactional
     public EHRDto.ExtractionResultDto extractFromFile(MultipartFile file, Long patientId, Long doctorId, String noteType) {
+        User patient = userRepository.findById(patientId).orElseThrow(() -> new RuntimeException("Patient not found"));
+        User doctor = userRepository.findById(doctorId).orElseThrow(() -> new RuntimeException("Doctor not found"));
+
         // Save clinical note
         ClinicalNote note = ClinicalNote.builder()
-                .patientId(patientId)
-                .doctorId(doctorId)
+                .patient(patient)
+                .doctor(doctor)
                 .noteType(parseNoteType(noteType))
                 .fileType(getFileExtension(file.getOriginalFilename()))
                 .extractionStatus(ClinicalNote.ExtractionStatus.PROCESSING)
@@ -82,7 +89,7 @@ public class EHRService {
                 clinicalNoteRepository.save(note);
             }
 
-            return processExtractionResult(note, aiResponse, patientId, doctorId);
+            return processExtractionResult(note, aiResponse, patient, doctor);
         } catch (Exception e) {
             note.setExtractionStatus(ClinicalNote.ExtractionStatus.FAILED);
             clinicalNoteRepository.save(note);
@@ -164,7 +171,7 @@ public class EHRService {
 
     @SuppressWarnings("unchecked")
     private EHRDto.ExtractionResultDto processExtractionResult(
-            ClinicalNote note, Map<String, Object> aiResponse, Long patientId, Long doctorId) {
+            ClinicalNote note, Map<String, Object> aiResponse, User patient, User doctor) {
 
         Map<String, Object> result = (Map<String, Object>) aiResponse.get("result");
         List<Map<String, Object>> entitiesData = (List<Map<String, Object>>) result.get("entities");
@@ -185,7 +192,7 @@ public class EHRService {
                 savedEntities.add(extractedEntityRepository.save(entity));
 
                 // Save to structured tables
-                saveToStructuredTable(entity, patientId, note.getId(), doctorId);
+                saveToStructuredTable(entity, patient, note, doctor);
             }
         }
 
@@ -206,24 +213,24 @@ public class EHRService {
                 .build();
     }
 
-    private void saveToStructuredTable(ExtractedEntity entity, Long patientId, Long noteId, Long doctorId) {
+    private void saveToStructuredTable(ExtractedEntity entity, User patient, ClinicalNote note, User doctor) {
         switch (entity.getEntityType()) {
             case MEDICATION -> patientMedicationRepository.save(PatientMedication.builder()
-                    .patientId(patientId)
-                    .clinicalNoteId(noteId)
+                    .patient(patient)
+                    .clinicalNote(note)
                     .medicationName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
-                    .prescribingDoctorId(doctorId)
+                    .prescribingDoctorId(doctor.getId())
                     .startDate(LocalDate.now())
                     .build());
             case CONDITION -> patientConditionRepository.save(PatientCondition.builder()
-                    .patientId(patientId)
-                    .clinicalNoteId(noteId)
+                    .patient(patient)
+                    .clinicalNote(note)
                     .conditionName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
                     .diagnosedDate(LocalDate.now())
                     .build());
             case SYMPTOM -> patientSymptomRepository.save(PatientSymptom.builder()
-                    .patientId(patientId)
-                    .clinicalNoteId(noteId)
+                    .patient(patient)
+                    .clinicalNote(note)
                     .symptomName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
                     .build());
             default -> { /* DOSAGE, LAB_TEST, PROCEDURE stored in extracted_entities only */ }
@@ -292,8 +299,8 @@ public class EHRService {
     private EHRDto.ClinicalNoteDto toNoteDto(ClinicalNote note) {
         return EHRDto.ClinicalNoteDto.builder()
                 .id(note.getId())
-                .patientId(note.getPatientId())
-                .doctorId(note.getDoctorId())
+                .patientId(note.getPatient().getId())
+                .doctorId(note.getDoctor().getId())
                 .noteType(note.getNoteType().name())
                 .rawText(note.getRawText() != null && note.getRawText().length() > 200
                         ? note.getRawText().substring(0, 200) + "..." : note.getRawText())

@@ -6,8 +6,8 @@ import Login from './pages/auth/Login'
 import Register from './pages/auth/Register'
 import PatientDashboard from './pages/patient/Dashboard'
 import DoctorDashboard from './pages/doctor/Dashboard'
-import AdminDashboard from './pages/admin/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import Profile from './pages/shared/Profile'
 import NotFound from './pages/NotFound'
 
 // Detailed feature pages
@@ -41,6 +41,13 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
       </Route>
 
+      {/* Shared Authenticated routes */}
+      <Route element={<ProtectedRoute roles={['PATIENT', 'DOCTOR']} />}>
+        <Route element={<MainLayout />}>
+          <Route path="/profile" element={<Profile />} />
+        </Route>
+      </Route>
+
       {/* Patient routes */}
       <Route element={<ProtectedRoute roles={['PATIENT']} />}>
         <Route element={<MainLayout />}>
@@ -52,13 +59,6 @@ export default function App() {
       <Route element={<ProtectedRoute roles={['DOCTOR']} />}>
         <Route element={<MainLayout />}>
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-        </Route>
-      </Route>
-
-      {/* Admin routes */}
-      <Route element={<ProtectedRoute roles={['ADMIN']} />}>
-        <Route element={<MainLayout />}>
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Route>
       </Route>
 
