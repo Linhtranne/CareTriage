@@ -31,6 +31,10 @@ public class ClinicalNote {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private User doctor;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id")
+    private Appointment appointment;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "note_type", nullable = false, length = 20)

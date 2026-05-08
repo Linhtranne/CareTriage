@@ -8,4 +8,5 @@ public interface AdminUserService {
     AdminUserResponse getUserById(Long id);
     AdminUserResponse changeUserRole(Long userId, String roleName);
     AdminUserResponse toggleUserActive(Long userId);
+    AdminUserResponse updateUserProfile(Long userId, AdminUserResponse request);
 }

@@ -13,13 +13,18 @@ from app.models.ehr_models import (
 )
 from app.services.ner_prompt_templates import NER_SYSTEM_PROMPT, NER_EXTRACTION_PROMPT
 
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv(override=True)
 genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
 
 
 class EHRExtractionService:
     def __init__(self):
+        model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro")
         self.model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
+            model_name=model_name,
             system_instruction=NER_SYSTEM_PROMPT,
         )
 
@@ -28,17 +33,11 @@ class EHRExtractionService:
         start_time = time.time()
 
         prompt = NER_EXTRACTION_PROMPT.format(clinical_text=text)
-        response = self.model.generate_content(prompt)
-        raw_response = response.text.strip()
-
-        # Clean JSON response
-        raw_response = (
-            raw_response
-            .removeprefix("```json")
-            .removeprefix("```")
-            .removesuffix("```")
-            .strip()
+        response = self.model.generate_content(
+            prompt,
+            generation_config={"response_mime_type": "application/json"}
         )
+        raw_response = response.text.strip()
 
         entities = self._parse_entities(raw_response)
         categorized = self._categorize_entities(entities)

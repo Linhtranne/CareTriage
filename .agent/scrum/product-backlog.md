@@ -97,10 +97,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
-| T-019 | Create Department entity + DepartmentRepository | Backend | P1 | 2 | Sprint 3 |
-| T-020 | DepartmentController: CRUD endpoints | Backend | P1 | 3 | Sprint 3 |
-| T-021 | Admin Department management page | Frontend | P1 | 3 | Sprint 3 |
-| T-022 | Department form (create/edit dialog) | Frontend | P1 | 2 | Sprint 3 |
+| T-019 | Create Department entity + DepartmentRepository | Backend | P1 | 2 | Sprint 3 | [x] |
+| T-020 | DepartmentController: CRUD endpoints | Backend | P1 | 3 | Sprint 3 | [x] |
+| T-021 | Admin Department management page | Frontend | P1 | 3 | Sprint 3 | [x] |
+| T-022 | Department form (create/edit dialog) | Frontend | P1 | 2 | Sprint 3 | [x] |
 
 **Acceptance Criteria:**
 - [ ] Admin can create department with name, description, image
@@ -114,10 +114,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
-| T-023 | DoctorController: public list, filter by department | Backend | P1 | 3 | Sprint 3 |
-| T-024 | Doctor-Department relationship (assign/unassign) | Backend | P1 | 2 | Sprint 3 |
-| T-025 | Public Doctor listing page (cards, filter, search) | Frontend | P1 | 5 | Sprint 3 |
-| T-026 | Doctor detail page (profile, schedule) | Frontend | P2 | 3 | Sprint 3 |
+| T-023 | DoctorController: public list, filter by department | Backend | P1 | 3 | Sprint 3 | [x] |
+| T-024 | Doctor-Department relationship (assign/unassign) | Backend | P1 | 2 | Sprint 3 | [x] |
+| T-025 | Public Doctor listing page (cards, filter, search) | Frontend | P1 | 5 | Sprint 3 | [x] |
+| T-026 | Doctor detail page (profile, schedule) | Frontend | P2 | 3 | Sprint 3 | [x] |
 
 **Acceptance Criteria:**
 - [ ] Visitors can see doctor list without login
@@ -209,12 +209,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
-| T-046 | WebSocket config (STOMP over SockJS) | Backend | P0 | 3 | Sprint 7 |
-| T-047 | ChatWebSocketController (send/receive) | Backend | P0 | 5 | Sprint 7 |
-| T-048 | ChatSession, ChatMessage entities + persistence | Backend | P0 | 3 | Sprint 7 |
-| T-049 | Chat window component (message bubbles, typing indicator) | Frontend | P0 | 5 | Sprint 7 |
-| T-050 | useWebSocket hook (connect, send, receive, reconnect) | Frontend | P0 | 5 | Sprint 7 |
-| T-051 | Symptom suggestion chips (quick input) | Frontend | P2 | 2 | Sprint 7 |
+| T-046 | WebSocket config (STOMP over SockJS) | Backend | P0 | 3 | Sprint 7 | [x] |
+| T-047 | ChatWebSocketController (send/receive) | Backend | P0 | 5 | Sprint 7 | [x] |
+| T-048 | ChatSession, ChatMessage entities + persistence | Backend | P0 | 3 | Sprint 7 | [x] |
+| T-049 | Chat window component (message bubbles, typing indicator) | Frontend | P0 | 5 | Sprint 7 | [x] |
+| T-050 | useWebSocket hook (connect, send, receive, reconnect) | Frontend | P0 | 5 | Sprint 7 | [x] |
+| T-051 | Symptom suggestion chips (quick input) | Frontend | P2 | 2 | Sprint 7 | [x] |
 
 **Acceptance Criteria:**
 - [ ] Messages appear in real-time (< 500ms latency)
@@ -229,13 +229,13 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
-| T-052 | TriageTicket entity (session, patient, dept, urgency, summary, status) | Backend | P0 | 3 | Sprint 8 |
-| T-053 | Auto-generate ticket when triage completes | Backend | P0 | 5 | Sprint 8 |
-| T-054 | AI summary generation (summarize chat into ticket) | AI | P0 | 3 | Sprint 8 |
-| T-055 | TriageTicketController: list, assign, review | Backend | P1 | 3 | Sprint 8 |
-| T-056 | Doctor: Ticket inbox + detail page (with chat history) | Frontend | P0 | 5 | Sprint 8 |
-| T-057 | Patient: View triage result + ticket status | Frontend | P1 | 3 | Sprint 8 |
-| T-058 | Ticket → Create Appointment action | Backend + Frontend | P1 | 3 | Sprint 8 |
+| T-052 | TriageTicket entity (session, patient, dept, urgency, summary, status) | Backend | P0 | 3 | Sprint 8 | [x] |
+| T-053 | Auto-generate ticket when triage completes | Backend | P0 | 5 | Sprint 8 | [x] |
+| T-054 | AI summary generation (summarize chat into ticket) | AI | P0 | 3 | Sprint 8 | [x] |
+| T-055 | TriageTicketController: list, assign, review | Backend | P1 | 3 | Sprint 8 | [x] |
+| T-056 | Doctor: Ticket inbox + detail page (with chat history) | Frontend | P0 | 5 | Sprint 8 | [x] |
+| T-057 | Patient: View triage result + ticket status | Frontend | P1 | 3 | Sprint 8 | [x] |
+| T-058 | Ticket → Create Appointment action | Backend + Frontend | P1 | 3 | Sprint 8 | [x] |
 
 **Acceptance Criteria:**
 - [ ] Chat completion auto-creates ticket
@@ -253,7 +253,7 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
 | T-059 | Landing page: hero, services, CTA | Frontend | P1 | 5 | Sprint 9 |
-| T-060 | About page: mission, vision | Frontend | P2 | 2 | Sprint 9 |
+| T-060 | Sync status between ticket and appointment | Backend | P1 | 3 | Sprint 8 | [x] |
 | T-061 | Department detail page | Frontend | P2 | 2 | Sprint 9 |
 | T-062 | Emergency info page | Frontend | P2 | 2 | Sprint 9 |
 | T-063 | Contact form | Frontend | P3 | 2 | Sprint 9 |
@@ -307,7 +307,7 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 
 ---
 
-## EPIC 9: EHR Data Extraction System ⭐ MỚI
+## EPIC 9: EHR Data Extraction System 
 
 ### US-016: Upload & Nhập ghi chú lâm sàng
 **As a** doctor, **I want** to upload clinical notes (PDF/Word) or type them directly, **so that** the system can process and extract medical entities.

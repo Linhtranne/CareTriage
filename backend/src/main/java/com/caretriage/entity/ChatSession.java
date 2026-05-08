@@ -50,6 +50,15 @@ public class ChatSession {
     @Builder.Default
     private List<ChatMessage> messages = new ArrayList<>();
 
+    @Column(name = "title", length = 200)
+    private String title;
+
+    @Column(name = "last_message_content", columnDefinition = "TEXT")
+    private String lastMessageContent;
+
+    @Column(name = "last_message_time")
+    private LocalDateTime lastMessageTime;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

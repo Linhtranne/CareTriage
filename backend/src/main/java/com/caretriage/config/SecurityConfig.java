@@ -29,11 +29,11 @@ public class SecurityConfig {
     private static final String[] PUBLIC_URLS = {
             "/api/health",
             "/api/auth/**",
-            "/api/departments",
-            "/api/departments/**",
-            "/api/doctors",
-            "/api/doctors/**",
-            "/ws/**",
+            "/api/v1/departments",
+            "/api/v1/departments/**",
+            "/api/v1/doctors",
+            "/api/v1/doctors/**",
+            "/ws-chat/**",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",
@@ -48,7 +48,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(PUBLIC_URLS).permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUPER_ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

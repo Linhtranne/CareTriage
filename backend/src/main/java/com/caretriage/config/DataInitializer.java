@@ -5,14 +5,18 @@ import com.caretriage.entity.User;
 import com.caretriage.repository.RoleRepository;
 import com.caretriage.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
+@Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
@@ -23,6 +27,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        log.info("Starting data initialization...");
         // 1. Initialize Roles if not present
         Role patientRole = getOrCreateRole("PATIENT", "Default Patient role");
         Role doctorRole = getOrCreateRole("DOCTOR", "Default Doctor role");
@@ -32,6 +37,7 @@ public class DataInitializer implements CommandLineRunner {
         getOrCreateUser("admin@caretriage.com", "admin", "Admin User", "Password123@", Set.of(adminRole));
         getOrCreateUser("doctor@caretriage.com", "doctor", "Doctor User", "Password123@", Set.of(doctorRole));
         getOrCreateUser("patient@caretriage.com", "patient", "Patient User", "Password123@", Set.of(patientRole));
+        log.info("Data initialization completed.");
     }
 
     private Role getOrCreateRole(String name, String description) {
@@ -55,6 +61,9 @@ public class DataInitializer implements CommandLineRunner {
                     .deleted(false)
                     .build();
             userRepository.save(user);
+            log.info("Created seed user: {}", email);
+        } else {
+            log.info("Seed user already exists: {}", email);
         }
     }
 }

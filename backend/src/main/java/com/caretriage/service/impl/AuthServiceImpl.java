@@ -31,6 +31,9 @@ public class AuthServiceImpl implements AuthService {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email đã được sử dụng");
         }
+        if (userRepository.existsByPhone(request.getPhone())) {
+            throw new RuntimeException("Số điện thoại đã được sử dụng");
+        }
 
         String roleName = "PATIENT";
         if (request.getRole() != null) {

@@ -178,14 +178,16 @@ export default function Navbar() {
           {/* Navigation Links */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
             {[
+              { label: 'Danh sách bác sĩ', route: '/doctors' },
               { label: tMenuData.products.title, key: 'products' },
               { label: tMenuData.solutions.title, key: 'solutions' },
               { label: tMenuData.developers.title, key: 'developers' }
             ].map((item) => (
               <Typography
-                key={item.key}
+                key={item.key || item.route}
                 variant="body1"
-                onMouseEnter={() => setActiveMenu(item.key)}
+                onMouseEnter={() => item.key && setActiveMenu(item.key)}
+                onClick={() => item.route && navigate(item.route)}
                 sx={{
                   fontWeight: 700,
                   color: activeMenu === item.key ? '#059669' : '#4b5563',
@@ -198,9 +200,11 @@ export default function Navbar() {
                 }}
               >
                 {item.label}
-                <Box component="span" sx={{ fontSize: '0.6rem', transform: activeMenu === item.key ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
-                  ▼
-                </Box>
+                {item.key && (
+                  <Box component="span" sx={{ fontSize: '0.6rem', transform: activeMenu === item.key ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s' }}>
+                    ▼
+                  </Box>
+                )}
               </Typography>
             ))}
           </Box>
@@ -296,7 +300,7 @@ export default function Navbar() {
               >
                 <Grid container spacing={4}>
                   {tMenuData[key].items.map((subItem, idx) => (
-                    <Grid size={{ xs: 12, md: 4 }} key={idx}>
+                    <Grid item xs={12} md={4} key={idx}>
                       <Box
                         onClick={() => {
                           setActiveMenu(null)

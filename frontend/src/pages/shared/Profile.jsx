@@ -30,6 +30,7 @@ import {
   Tab,
   Switch,
   FormControlLabel,
+  Autocomplete,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -215,30 +216,36 @@ const ProfileInfoDisplay = ({ icon, label, value }) => {
   );
 };
 
-const CustomTextField = ({ icon, label, ...props }) => (
+const CustomTextField = ({ icon, label, error, helperText, ...props }) => (
   <TextField
     fullWidth
     label={label}
     variant="outlined"
-    InputLabelProps={{ shrink: true }}
-    InputProps={{
-      startAdornment: icon ? (
-        <InputAdornment position="start">
-          <Box sx={{ color: 'primary.main', display: 'flex', mr: 0.5 }}>
-            {React.cloneElement(icon, { sx: { fontSize: 20 } })}
-          </Box>
-        </InputAdornment>
-      ) : null,
-      sx: {
-        borderRadius: 3,
-        height: props.multiline ? 'auto' : 50,
-        backgroundColor: 'rgba(255, 255, 255, 0.6)',
-        backdropFilter: 'blur(4px)',
-        '&:hover': {
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-        },
-        '&.Mui-focused': {
-          backgroundColor: '#fff',
+    error={!!error}
+    helperText={error || helperText}
+    slotProps={{
+      inputLabel: { shrink: true },
+      input: {
+        startAdornment: icon ? (
+          <InputAdornment position="start" sx={{ mt: props.multiline ? '2px' : 0, alignSelf: props.multiline ? 'flex-start' : 'center' }}>
+            <Box sx={{ color: 'primary.main', display: 'flex', mr: 0.5, mt: props.multiline ? 1.2 : 0 }}>
+              {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+            </Box>
+          </InputAdornment>
+        ) : null,
+        sx: {
+          borderRadius: 3,
+          backgroundColor: 'rgba(255, 255, 255, 0.6)',
+          backdropFilter: 'blur(4px)',
+          '& .MuiOutlinedInput-input': {
+            py: props.multiline ? 1.5 : 1.2,
+          },
+          '&:hover': {
+            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+          },
+          '&.Mui-focused': {
+            backgroundColor: '#fff',
+          }
         }
       }
     }}
@@ -246,6 +253,7 @@ const CustomTextField = ({ icon, label, ...props }) => (
       mb: 1.5,
       '& .MuiOutlinedInput-notchedOutline': {
         borderColor: 'rgba(16, 185, 129, 0.2)',
+        borderRadius: 3,
       },
       '&:hover .MuiOutlinedInput-notchedOutline': {
         borderColor: 'primary.main',
@@ -253,7 +261,7 @@ const CustomTextField = ({ icon, label, ...props }) => (
       '& .MuiInputLabel-root': {
         color: 'text.secondary',
         transform: 'translate(14px, -9px) scale(0.75)',
-        backgroundColor: '#fff',
+        background: 'transparent',
         padding: '0 4px',
       }
     }}
@@ -263,7 +271,7 @@ const CustomTextField = ({ icon, label, ...props }) => (
 
 const Profile = () => {
   const { t } = useTranslation();
-  const { user, setUser } = useAuthStore();
+  const { user, updateUser } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [openModal, setOpenModal] = useState(false);
@@ -273,9 +281,44 @@ const Profile = () => {
   const [editForm, setEditForm] = useState(null);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
+  const [fieldErrors, setFieldErrors] = useState({});
   const [avatarAnchor, setAvatarAnchor] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef(null);
+  const [provincesList, setProvincesList] = useState([]);
+  const [districtsList, setDistrictsList] = useState([]);
+  const [wardsList, setWardsList] = useState([]);
+  const [selectedProv, setSelectedProv] = useState(null);
+  const [selectedDist, setSelectedDist] = useState(null);
+  const [selectedWard, setSelectedWard] = useState(null);
+  const [streetAddr, setStreetAddr] = useState('');
+
+  useEffect(() => {
+    fetch('https://provinces.open-api.vn/api/?depth=3')
+      .then(res => res.json())
+      .then(data => setProvincesList(data || []))
+      .catch(e => console.error('Failed to load provinces from API:', e));
+  }, []);
+
+  useEffect(() => {
+    if (selectedProv) {
+      setDistrictsList(selectedProv.districts || []);
+    } else {
+      setDistrictsList([]);
+    }
+    setSelectedDist(null);
+    setWardsList([]);
+    setSelectedWard(null);
+  }, [selectedProv]);
+
+  useEffect(() => {
+    if (selectedDist) {
+      setWardsList(selectedDist.wards || []);
+    } else {
+      setWardsList([]);
+    }
+    setSelectedWard(null);
+  }, [selectedDist]);
 
   // Password state
   const [passForm, setPassForm] = useState({
@@ -319,6 +362,13 @@ const Profile = () => {
 
   const handleOpenEdit = () => {
     setEditForm({ ...profileData });
+    setStreetAddr(profileData?.address || '');
+    setSelectedProv(null);
+    setSelectedDist(null);
+    setSelectedWard(null);
+    setError(null);
+    setSuccess(null);
+    setFieldErrors({});
     setOpenModal(true);
   };
 
@@ -355,13 +405,17 @@ const Profile = () => {
   const updateAvatar = async (newUrl) => {
     try {
       setSaving(true);
-      const updateRequest = { ...profileData, avatarUrl: newUrl };
+      const updateRequest = { 
+        fullName: profileData.fullName,
+        phone: profileData.phone,
+        avatarUrl: newUrl 
+      };
       const response = await axiosClient.put('/api/users/profile', updateRequest);
       if (response.data.success) {
         setProfileData(response.data.data);
         setSuccess(t('profile.success'));
         if (user) {
-          setUser({ ...user, avatarUrl: newUrl });
+          updateUser({ avatarUrl: newUrl });
         }
         setTimeout(() => setSuccess(null), 3000);
       }
@@ -373,18 +427,67 @@ const Profile = () => {
     }
   };
 
+  const validateForm = () => {
+    const errors = {};
+    if (!editForm.fullName?.trim()) errors.fullName = t('validation.required');
+    if (!editForm.phone?.trim()) errors.phone = t('validation.required');
+    else if (!/^\d{8,15}$/.test(editForm.phone.trim())) errors.phone = t('validation.invalid_phone');
+    
+    if (isPatient) {
+      if (!editForm.dateOfBirth) errors.dateOfBirth = t('validation.required');
+      if (!editForm.gender) errors.gender = t('validation.required');
+    }
+    
+    if (isDoctor) {
+      if (!editForm.specialization?.trim()) errors.specialization = t('validation.required');
+      if (!editForm.hospitalName?.trim()) errors.hospitalName = t('validation.required');
+    }
+    
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
   const handleSave = async () => {
+    if (!validateForm()) return;
     try {
       setSaving(true);
       setError(null);
-      const response = await axiosClient.put('/api/users/profile', editForm);
+      
+      let finalAddress = streetAddr;
+      if (selectedWard && selectedDist && selectedProv) {
+        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedWard.name}, ${selectedDist.name}, ${selectedProv.name}`;
+      } else if (selectedDist && selectedProv) {
+        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedDist.name}, ${selectedProv.name}`;
+      } else if (selectedProv) {
+        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedProv.name}`;
+      }
+      
+      const response = await axiosClient.put('/api/users/profile', {
+        fullName: editForm.fullName,
+        phone: editForm.phone,
+        avatarUrl: editForm.avatarUrl,
+        dateOfBirth: editForm.dateOfBirth,
+        gender: editForm.gender,
+        address: finalAddress,
+        bloodType: editForm.bloodType,
+        allergies: editForm.allergies,
+        insuranceNumber: editForm.insuranceNumber,
+        emergencyContactName: editForm.emergencyContactName,
+        emergencyContactPhone: editForm.emergencyContactPhone,
+        chronicConditions: editForm.chronicConditions,
+        bio: editForm.bio,
+        specialization: editForm.specialization,
+        experienceYears: editForm.experienceYears,
+        degrees: editForm.degrees,
+        hospitalName: editForm.hospitalName
+      });
+      
       if (response.data.success) {
         setProfileData(response.data.data);
         setSuccess(t('profile.success'));
         setOpenModal(false);
         if (user) {
-          setUser({
-            ...user,
+          updateUser({
             fullName: response.data.data.fullName,
             phone: response.data.data.phone,
             avatarUrl: response.data.data.avatarUrl,
@@ -401,8 +504,12 @@ const Profile = () => {
   };
 
   const handleUpdatePassword = async () => {
+    if (passForm.currentPassword === passForm.newPassword) {
+      setError(t('auth.password_same_as_old'));
+      return;
+    }
     if (passForm.newPassword !== passForm.confirmPassword) {
-      setError(t('auth.passwords_not_match', 'Passwords do not match'));
+      setError(t('auth.passwords_not_match'));
       return;
     }
     try {
@@ -456,7 +563,6 @@ const Profile = () => {
             </Box>
 
             <Box sx={{ px: 4, pb: 4, mt: -8, position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 3 }}>
-              <Tooltip title={t('profile.change_avatar')}>
                 <ButtonBase onClick={handleAvatarClick} sx={{ borderRadius: '50%', transition: 'transform 0.3s ease', '&:hover': { transform: 'scale(1.05)' } }}>
                   <Box sx={{ position: 'relative' }}>
                     <Avatar src={profileData?.avatarUrl} sx={{ width: 160, height: 160, border: '6px solid #fff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', animation: `${float} 6s ease-in-out infinite` }} />
@@ -465,7 +571,6 @@ const Profile = () => {
                     </Box>
                   </Box>
                 </ButtonBase>
-              </Tooltip>
 
               <Menu anchorEl={avatarAnchor} open={Boolean(avatarAnchor)} onClose={handleAvatarClose} TransitionComponent={Zoom} slotProps={{ paper: { sx: { borderRadius: 3, mt: 1, boxShadow: '0 10px 30px rgba(0,0,0,0.1)', minWidth: 180 } } }}>
                 <MenuItem onClick={handleUploadClick}><ListItemIcon><UploadIcon fontSize="small" /></ListItemIcon><ListItemText primary="Tải ảnh từ máy" /></MenuItem>
@@ -475,8 +580,7 @@ const Profile = () => {
               <Box sx={{ flex: 1, minWidth: 200 }}>
                 <Typography variant="h3" fontWeight={900} sx={{ color: '#064e3b', mb: 0.5 }}>{profileData?.fullName}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ px: 2, py: 0.5, borderRadius: 4, bgcolor: 'rgba(16, 185, 129, 0.1)', color: 'primary.main', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>{profileData?.role}</Box>
-                  <Typography variant="body2" color="text.secondary" fontWeight={500}>Last update: {new Date().toLocaleDateString()}</Typography>
+                  <Box sx={{ px: 2, py: 0.5, borderRadius: 4, bgcolor: 'rgba(16, 185, 129, 0.1)', color: 'primary.main', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>{profileData?.role ? t(`roles.${profileData.role}`) : ''}</Box>
                 </Box>
               </Box>
 
@@ -559,13 +663,6 @@ const Profile = () => {
                     </Paper>
                   )}
 
-                  <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%)', backdropFilter: 'blur(20px)', border: '1px solid rgba(16, 185, 129, 0.2)', textAlign: 'center' }}>
-                    <Typography variant="h6" fontWeight={800} color="primary.dark">EHR Connection Status</Typography>
-                    <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                      <ShieldIcon color="success" />
-                      <Typography variant="body2" fontWeight={700} color="success.main">Verified with National Health Database</Typography>
-                    </Box>
-                  </Paper>
                 </Box>
               </Grid>
             </Grid>
@@ -601,10 +698,9 @@ const Profile = () => {
 
               <Grid size={{ xs: 12, md: 5 }}>
                 <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
-                  <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <SecurityIcon /> {t('profile.two_factor')}
+                  <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ShieldIcon /> {t('profile.two_factor')}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>{t('profile.two_factor_desc')}</Typography>
                   <FormControlLabel control={<Switch defaultChecked color="primary" />} label="Email Authentication" sx={{ mb: 1, display: 'flex' }} />
                   <FormControlLabel control={<Switch color="primary" />} label="SMS Authentication" sx={{ display: 'flex' }} />
                   <Divider sx={{ my: 3 }} />
@@ -624,48 +720,87 @@ const Profile = () => {
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="md" fullWidth TransitionComponent={Zoom} TransitionProps={{ timeout: 500 }} slotProps={{ paper: { sx: { borderRadius: 8, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.6)', boxShadow: '0 40px 80px rgba(0,0,0,0.15)' } } }}>
         <Box sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', p: 3, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box display="flex" alignItems="center" gap={2}>
-            <SettingsIcon sx={{ fontSize: 32 }} />
-            <Box>
-              <Typography variant="h5" fontWeight={900}>{t('profile.edit')}</Typography>
-              <Typography variant="caption" sx={{ opacity: 0.8 }}>{t('profile.edit_subtitle')}</Typography>
-            </Box>
+            <Typography variant="h5" fontWeight={900}>{t('profile.edit')}</Typography>
           </Box>
           <IconButton onClick={() => setOpenModal(false)} sx={{ color: '#fff' }}><CloseIcon /></IconButton>
         </Box>
 
         <DialogContent sx={{ p: 4 }}>
+          {error && <Grow in><Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>{error}</Alert></Grow>}
+          {success && <Grow in><Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>{success}</Alert></Grow>}
           <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="subtitle2" color="primary.main" fontWeight={800} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}><ContactPageIcon fontSize="small" /> {t('profile.account_section')}</Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} /></Grid>
-                <Grid item xs={12} sm={6}><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} /></Grid>
+                <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} error={fieldErrors.fullName} /></Grid>
+                <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} error={fieldErrors.phone} /></Grid>
               </Grid>
             </Grid>
-
-            <Grid item xs={12}>
+            <Grid size={12}>
               <Typography variant="subtitle2" color="primary.main" fontWeight={800} sx={{ mb: 2, mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>{isPatient ? <HealthIcon fontSize="small" /> : <BioIcon fontSize="small" />} {isPatient ? t('profile.details_section') : t('profile.pro_section')}</Typography>
               <Grid container spacing={2}>
                 {isPatient && (
                   <>
-                    <Grid item xs={12} sm={6}><CustomTextField label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={6}><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={8}><CustomTextField icon={<HomeIcon />} label={t('profile.address')} name="address" value={editForm?.address || ''} onChange={handleInputChange} multiline rows={2} /></Grid>
-                    <Grid item xs={12} sm={4}><CustomTextField icon={<BloodTypeIcon />} label={t('profile.blood_type')} name="bloodType" value={editForm?.bloodType || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12}><CustomTextField icon={<CardIcon />} label={t('profile.insurance_number')} name="insuranceNumber" value={editForm?.insuranceNumber || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={6}><CustomTextField icon={<PersonIcon />} label={t('profile.emergency_contact')} name="emergencyContactName" value={editForm?.emergencyContactName || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={6}><CustomTextField icon={<ContactPhoneIcon />} label={t('profile.emergency_phone')} name="emergencyContactPhone" value={editForm?.emergencyContactPhone || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12}><CustomTextField icon={<AllergyIcon />} label={t('profile.allergies')} name="allergies" value={editForm?.allergies || ''} onChange={handleInputChange} multiline rows={2} /></Grid>
-                    <Grid item xs={12}><CustomTextField icon={<HealthIcon />} label={t('profile.chronic_conditions')} name="chronicConditions" value={editForm?.chronicConditions || ''} onChange={handleInputChange} multiline rows={2} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} error={fieldErrors.dateOfBirth} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} error={fieldErrors.gender} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<BloodTypeIcon />} label={t('profile.blood_type')} name="bloodType" value={editForm?.bloodType || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<CardIcon />} label={t('profile.insurance_number')} name="insuranceNumber" value={editForm?.insuranceNumber || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={12}>
+                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, ml: 1, mb: 1, display: 'block' }}>{t('profile.address')}</Typography>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <Autocomplete
+                            options={provincesList}
+                            getOptionLabel={(option) => option.name}
+                            value={selectedProv}
+                            onChange={(e, v) => setSelectedProv(v)}
+                            renderInput={(params) => (
+                              <TextField {...params} label={t('profile.province')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
+                            )}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <Autocomplete
+                            options={districtsList}
+                            getOptionLabel={(option) => option.name}
+                            value={selectedDist}
+                            onChange={(e, v) => setSelectedDist(v)}
+                            disabled={!selectedProv}
+                            renderInput={(params) => (
+                              <TextField {...params} label={t('profile.district')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
+                            )}
+                          />
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 4 }}>
+                          <Autocomplete
+                            options={wardsList}
+                            getOptionLabel={(option) => option.name}
+                            value={selectedWard}
+                            onChange={(e, v) => setSelectedWard(v)}
+                            disabled={!selectedDist}
+                            renderInput={(params) => (
+                              <TextField {...params} label={t('profile.ward')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
+                            )}
+                          />
+                        </Grid>
+                        <Grid size={12}>
+                          <CustomTextField icon={<HomeIcon />} label={t('profile.street_address')} value={streetAddr} onChange={(e) => setStreetAddr(e.target.value)} multiline minRows={1} />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PersonIcon />} label={t('profile.emergency_contact')} name="emergencyContactName" value={editForm?.emergencyContactName || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<ContactPhoneIcon />} label={t('profile.emergency_phone')} name="emergencyContactPhone" value={editForm?.emergencyContactPhone || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={12}><CustomTextField icon={<AllergyIcon />} label={t('profile.allergies')} name="allergies" value={editForm?.allergies || ''} onChange={handleInputChange} multiline minRows={1} /></Grid>
+                    <Grid size={12}><CustomTextField icon={<HealthIcon />} label={t('profile.chronic_conditions')} name="chronicConditions" value={editForm?.chronicConditions || ''} onChange={handleInputChange} multiline minRows={1} /></Grid>
                   </>
                 )}
                 {isDoctor && (
                   <>
-                    <Grid item xs={12} sm={6}><CustomTextField icon={<SchoolIcon />} label={t('profile.degrees')} name="degrees" value={editForm?.degrees || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={6}><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={8}><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12} sm={4}><CustomTextField icon={<ExperienceIcon />} label={t('profile.experience')} name="experienceYears" type="number" value={editForm?.experienceYears || ''} onChange={handleInputChange} /></Grid>
-                    <Grid item xs={12}><CustomTextField icon={<BioIcon />} label={t('profile.bio')} name="bio" value={editForm?.bio || ''} onChange={handleInputChange} multiline rows={4} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<SchoolIcon />} label={t('profile.degrees')} name="degrees" value={editForm?.degrees || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} error={fieldErrors.hospitalName} /></Grid>
+                    <Grid size={{ xs: 12, sm: 8 }}><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} error={fieldErrors.specialization} /></Grid>
+                    <Grid size={{ xs: 12, sm: 4 }}><CustomTextField icon={<ExperienceIcon />} label={t('profile.experience')} name="experienceYears" type="number" value={editForm?.experienceYears || ''} onChange={handleInputChange} /></Grid>
+                    <Grid size={12}><CustomTextField icon={<BioIcon />} label={t('profile.bio')} name="bio" value={editForm?.bio || ''} onChange={handleInputChange} multiline minRows={2} /></Grid>
                   </>
                 )}
               </Grid>

@@ -8,6 +8,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "appointments", indexes = {
@@ -61,7 +62,7 @@ public class Appointment {
     private String cancellationReason;
 
     @Column(name = "triage_ticket_id")
-    private Long triageTicketId;
+    private UUID triageTicketId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -72,6 +73,6 @@ public class Appointment {
     private LocalDateTime updatedAt;
 
     public enum AppointmentStatus {
-        PENDING, CONFIRMED, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
+        PENDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED, NO_SHOW
     }
 }

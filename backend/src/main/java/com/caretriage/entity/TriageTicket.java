@@ -1,65 +1,87 @@
 package com.caretriage.entity;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "triage_tickets", indexes = {
-    @Index(name = "idx_ticket_patient", columnList = "patient_id"),
-    @Index(name = "idx_ticket_doctor", columnList = "assigned_doctor_id"),
     @Index(name = "idx_ticket_status", columnList = "status"),
-    @Index(name = "idx_ticket_urgency", columnList = "urgency_level")
+    @Index(name = "idx_ticket_priority", columnList = "priority"),
+    @Index(name = "idx_ticket_requester", columnList = "requester_id"),
+    @Index(name = "idx_ticket_number", columnList = "ticket_number", unique = true)
 })
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class TriageTicket {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "chat_session_id", nullable = false)
-    private ChatSession chatSession;
+    @NotBlank(message = "Ticket number is required")
+    @Size(max = 50, message = "Ticket number must not exceed 50 characters")
+    @Column(name = "ticket_number", nullable = false, unique = true, length = 50)
+    private String ticketNumber;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient_id", nullable = false)
-    private User patient;
+    @NotBlank(message = "Title is required")
+    @Size(max = 255, message = "Title must not exceed 255 characters")
+    @Column(name = "title", nullable = false, length = 255)
+    private String title;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_doctor_id")
-    private User assignedDoctor;
+    @NotBlank(message = "Description is required")
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    private String description;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    private Department department;
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "urgency_level", nullable = false, length = 20)
-    @Builder.Default
-    private UrgencyLevel urgencyLevel = UrgencyLevel.MEDIUM;
-
-    @Column(name = "ai_summary", columnDefinition = "TEXT")
-    private String aiSummary;
-
-    @Column(name = "suggested_department", length = 100)
-    private String suggestedDepartment;
-
-    @Column(columnDefinition = "TEXT")
-    private String symptoms;
-
-    @Column(name = "doctor_notes", columnDefinition = "TEXT")
-    private String doctorNotes;
-
+    @NotNull(message = "Status is required")
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     @Builder.Default
-    private TicketStatus status = TicketStatus.OPEN;
+    private Status status = Status.NEW;
+
+    @NotNull(message = "Priority is required")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "priority", nullable = false, length = 20)
+    @Builder.Default
+    private Priority priority = Priority.MEDIUM;
+
+    @NotNull(message = "Severity is required")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "severity", nullable = false, length = 20)
+    @Builder.Default
+    private Severity severity = Severity.MINOR;
+
+    @NotNull(message = "Requester is required")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requester_id", nullable = false)
+    private User requester;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "triage_officer_id")
+    private User triageOfficer;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id")
+    private TicketCategory category;
+
+    @Column(name = "metadata", columnDefinition = "JSON")
+    private String metadata;
+
+    @Column(name = "triaged_at")
+    private LocalDateTime triagedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
@@ -69,11 +91,15 @@ public class TriageTicket {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public enum UrgencyLevel {
-        LOW, MEDIUM, HIGH, CRITICAL
+    public enum Status {
+        NEW, IN_TRIAGE, TRIAGED, CLOSED, REJECTED
     }
 
-    public enum TicketStatus {
-        OPEN, ASSIGNED, IN_REVIEW, RESOLVED, CLOSED
+    public enum Priority {
+        LOW, MEDIUM, HIGH, URGENT
+    }
+
+    public enum Severity {
+        CRITICAL, MAJOR, MINOR, COSMETIC
     }
 }

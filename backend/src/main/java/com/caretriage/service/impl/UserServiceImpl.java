@@ -1,6 +1,7 @@
 package com.caretriage.service.impl;
 
 import com.caretriage.dto.request.UpdateProfileRequest;
+import com.caretriage.dto.response.DepartmentResponse;
 import com.caretriage.dto.response.UserProfileResponse;
 import com.caretriage.entity.DoctorProfile;
 import com.caretriage.entity.PatientProfile;
@@ -111,7 +112,18 @@ public class UserServiceImpl implements UserService {
                     .specialization(d.getSpecialization())
                     .experienceYears(d.getExperienceYears())
                     .degrees(d.getDegrees())
-                    .hospitalName(d.getHospitalName());
+                    .hospitalName(d.getHospitalName())
+                    .departments(d.getDepartments().stream()
+                            .map(dept -> DepartmentResponse.builder()
+                                    .id(dept.getId())
+                                    .code(dept.getCode())
+                                    .name(dept.getName())
+                                    .slug(dept.getSlug())
+                                    .description(dept.getDescription())
+                                    .imageUrl(dept.getImageUrl())
+                                    .status(dept.getStatus())
+                                    .build())
+                            .collect(Collectors.toList()));
         });
 
         return builder.build();

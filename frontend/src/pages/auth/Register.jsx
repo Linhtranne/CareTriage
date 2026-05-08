@@ -232,19 +232,33 @@ export default function Register() {
       return
     }
     if (!form.email.trim()) {
-      setError('Email không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Email không được để trống' : 'Email cannot be empty')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(form.email)) {
+      setError(i18n.language.startsWith('vi') ? 'Email không hợp lệ' : 'Invalid email address')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
     }
     if (!form.phone.trim()) {
-      setError('Số điện thoại không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Số điện thoại không được để trống' : 'Phone number cannot be empty')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/
+    if (!phoneRegex.test(form.phone)) {
+      setError(i18n.language.startsWith('vi') ? 'Số điện thoại không hợp lệ (10 số, ví dụ: 0912345678)' : 'Invalid phone number (10 digits, e.g., 0912345678)')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
     }
     if (!form.password.trim()) {
-      setError('Mật khẩu không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Mật khẩu không được để trống' : 'Password cannot be empty')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
