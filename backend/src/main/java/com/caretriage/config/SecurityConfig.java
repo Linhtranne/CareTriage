@@ -34,6 +34,7 @@ public class SecurityConfig {
             "/api/v1/doctors",
             "/api/v1/doctors/**",
             "/ws-chat/**",
+            "/api/v1/public/landing-content",
             "/swagger-ui/**",
             "/v3/api-docs/**",
             "/swagger-resources/**",

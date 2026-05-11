@@ -74,6 +74,10 @@ public class TriageTicket {
     @JoinColumn(name = "category_id")
     private TicketCategory category;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "chat_session_id")
+    private ChatSession chatSession;
+
     @Column(name = "metadata", columnDefinition = "JSON")
     private String metadata;
 

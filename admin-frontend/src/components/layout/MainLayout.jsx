@@ -70,7 +70,8 @@ const menuByRole = {
     { text: 'Tổng quan hệ thống', icon: <Dashboard />, path: '/super-admin/dashboard' },
   ],
   CONTENT_ADMIN: [
-    { text: 'Quản lý nội dung', icon: <Campaign />, path: '/content-admin/posts' },
+    { text: 'Quản lý bài viết', icon: <Campaign />, path: '/content-admin/posts' },
+    { text: 'Quản lý nội dung (CMS)', icon: <Dashboard />, path: '/admin/cms' },
   ],
   ADMIN: [
     { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
@@ -78,6 +79,7 @@ const menuByRole = {
     { text: 'Quản lý chuyên khoa', icon: <LocalHospital />, path: '/admin/departments' },
     { text: 'Lịch hẹn hệ thống', icon: <CalendarMonth />, path: '/admin/appointments' },
     { text: 'Hồ sơ bệnh án', icon: <MedicalServices />, path: '/admin/records' },
+    { text: 'Quản lý nội dung', icon: <Campaign />, path: '/admin/cms' },
   ],
 }
 

@@ -28,7 +28,7 @@ class ResearchService:
     def __init__(self):
         self.api_key = os.getenv("GEMINI_API_KEY")
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/embedding-001",
+            model="models/text-embedding-004",
             google_api_key=self.api_key
         )
         self.db_path = os.path.join(os.getcwd(), "data", "vector_db")

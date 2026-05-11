@@ -18,10 +18,24 @@ const chatApi = {
     return createRes.data;
   },
 
+
+  /**
+   * Kiểm tra trạng thái hoạt động của AI Service
+   */
+  checkAiHealth: async () => {
+    try {
+      const res = await axiosClient.get('/api/v1/chat/health/ai');
+      return res.data?.status === 'UP';
+    } catch (err) {
+      return false;
+    }
+  },
+
   /**
    * Lấy lịch sử tin nhắn
    */
   getHistory: (sessionId, page = 0, size = 20) => {
+
     return axiosClient.get(`/api/v1/chat/sessions/${sessionId}/history`, {
       params: { page, size }
     });

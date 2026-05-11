@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { Bot } from 'lucide-react';
 
@@ -55,11 +54,12 @@ const MessageBubble = ({ message, prevMessage, nextMessage }) => {
           className="flex-shrink-0 mr-2" 
           style={{ width: '28px', visibility: (isLastInGroup || isStandalone) ? 'visible' : 'hidden' }}
         >
-          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center">
-            <Bot size={14} className="text-white" />
+          <div className="w-7 h-7 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center overflow-hidden">
+            <img src="/gemini-svg.svg" alt="AI" className="w-4 h-4 object-contain" />
           </div>
         </div>
       )}
+
 
       {/* Bubble Container */}
       <div className={`flex flex-col max-w-[70%]`}>

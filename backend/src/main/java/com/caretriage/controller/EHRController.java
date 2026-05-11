@@ -29,8 +29,7 @@ public class EHRController {
                 request.getText(),
                 request.getPatientId(),
                 1L, // TODO: get from SecurityContext
-                request.getNoteType()
-        );
+                request.getNoteType());
         return ResponseEntity.ok(result);
     }
 
@@ -47,8 +46,7 @@ public class EHRController {
                 file,
                 patientId,
                 1L, // TODO: get from SecurityContext
-                noteType
-        );
+                noteType);
         return ResponseEntity.ok(result);
     }
 
@@ -73,7 +71,8 @@ public class EHRController {
     /**
      * Advanced search: find patients by symptoms, medications, conditions.
      * Access: DOCTOR, ADMIN
-     * Example: GET /api/ehr/search?symptom=đau đầu&medication=paracetamol&condition=cao huyết áp
+     * Example: GET /api/ehr/search?symptom=đau
+     * đầu&medication=paracetamol&condition=cao huyết áp
      */
     @GetMapping("/search")
     public ResponseEntity<List<Long>> searchPatients(

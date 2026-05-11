@@ -10,7 +10,6 @@ app = FastAPI(
     description="AI Symptom Checker & Triage + EHR Data Extraction powered by Google Gemini",
     version="0.2.0",
 )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173", "http://localhost:8080"],

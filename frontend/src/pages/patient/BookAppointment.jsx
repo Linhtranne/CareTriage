@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Container,
   Paper,
   Stepper,
   Step,
@@ -18,13 +17,13 @@ import {
   CircularProgress,
   Divider,
   Alert,
-  IconButton,
-  Chip
+  Stack,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import {
   CalendarDays,
   Clock,
-  User,
   Stethoscope,
   ChevronRight,
   ChevronLeft,
@@ -38,6 +37,7 @@ import { useTranslation } from 'react-i18next';
 import publicApi from '../../api/publicApi';
 import appointmentApi from '../../api/appointmentApi';
 import useAuthStore from '../../store/authStore';
+import PatientPageShell from '../../components/patient/PatientPageShell';
 
 export default function BookAppointment() {
   const { t, i18n } = useTranslation();
@@ -50,6 +50,8 @@ export default function BookAppointment() {
   ];
   
   const dateLocale = i18n.language === 'vi' ? vi : enUS;
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { user } = useAuthStore();
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -97,27 +99,30 @@ export default function BookAppointment() {
   const fetchDepartments = async () => {
     try {
       const res = await publicApi.getDepartments({ size: 100 });
-      setDepartments(res.data.content);
+      setDepartments(res.data?.content || []);
     } catch (err) {
       console.error('Failed to fetch departments', err);
+      setDepartments([]);
     }
   };
 
   const fetchDoctors = async (deptId) => {
     try {
       const res = await publicApi.getDoctors({ departmentId: deptId, size: 100 });
-      setDoctors(res.data.content);
+      setDoctors(res.data?.content || []);
     } catch (err) {
       console.error('Failed to fetch doctors', err);
+      setDoctors([]);
     }
   };
 
   const fetchDoctorSchedules = async (doctorId) => {
     try {
       const res = await appointmentApi.getDoctorSchedules(doctorId);
-      setDoctorSchedules(res.data);
+      setDoctorSchedules(res.data || []);
     } catch (err) {
       console.error('Failed to fetch doctor schedules', err);
+      setDoctorSchedules([]);
     }
   };
 
@@ -125,9 +130,10 @@ export default function BookAppointment() {
     setLoading(true);
     try {
       const res = await appointmentApi.getAvailableSlots(doctorId, dateStr);
-      setAvailableSlots(res.data);
+      setAvailableSlots(res.data || []);
     } catch (err) {
       console.error('Failed to fetch slots', err);
+      setAvailableSlots([]);
     } finally {
       setLoading(false);
     }
@@ -197,14 +203,14 @@ export default function BookAppointment() {
               label={t('booking.select_department')}
               value={selectedDept?.id || ''}
               onChange={(e) => {
-                const dept = departments.find(d => d.id === e.target.value);
+                const dept = (departments || []).find(d => d.id === e.target.value);
                 setSelectedDept(dept);
                 setSelectedDoctor(null);
               }}
               sx={{ mb: 4, mt: 2 }}
             >
               <MenuItem value="">{t('booking.all_departments')}</MenuItem>
-              {departments.map((dept) => (
+              {(departments || []).map((dept) => (
                 <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
               ))}
             </TextField>
@@ -214,7 +220,7 @@ export default function BookAppointment() {
             </Typography>
             
             <Grid container spacing={2}>
-              {doctors.map((doc) => (
+              {(doctors || []).map((doc) => (
                 <Grid item xs={12} sm={6} key={doc.id}>
                   <Card 
                     variant="outlined" 
@@ -287,7 +293,7 @@ export default function BookAppointment() {
                         {format(date, 'dd')}
                       </Typography>
                       <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                        Th{format(date, 'M')}
+                        {format(date, 'MMM', { locale: dateLocale })}
                       </Typography>
                     </CardContent>
                   </Card>
@@ -305,9 +311,9 @@ export default function BookAppointment() {
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                 <CircularProgress size={32} />
               </Box>
-            ) : availableSlots.length > 0 ? (
+            ) : (availableSlots || []).length > 0 ? (
               <Grid container spacing={1} sx={{ mt: 1 }}>
-                {availableSlots.map((slot, idx) => (
+                {(availableSlots || []).map((slot, idx) => (
                   <Grid item xs={4} sm={3} md={2} key={idx}>
                     <Button
                       fullWidth
@@ -436,8 +442,35 @@ export default function BookAppointment() {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 6 }}>
-      <Paper 
+    <PatientPageShell
+      title={t('booking.title')}
+      subtitle={t('booking.subtitle')}
+      maxWidth="md"
+      actions={
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/patient/appointments')}
+          sx={{
+            borderRadius: 3,
+            color: '#0f766e',
+            borderColor: 'rgba(8, 187, 163, 0.28)',
+            fontWeight: 700,
+            px: 2.5,
+            py: 1.1,
+            width: 'auto',
+            minWidth: 0,
+            alignSelf: 'flex-end',
+            '&:hover': {
+              borderColor: '#08bba3',
+              bgcolor: 'rgba(8, 187, 163, 0.06)'
+            }
+          }}
+        >
+          {t('booking.manage_btn')}
+        </Button>
+      }
+    >
+      <Paper
         elevation={0} 
         sx={{ 
           p: { xs: 3, md: 5 }, 
@@ -446,20 +479,22 @@ export default function BookAppointment() {
           border: '1px solid #f1f5f9'
         }}
       >
-        <Box sx={{ mb: 4, textAlign: 'center' }}>
-          <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a', mb: 1 }}>{t('booking.title')}</Typography>
-          <Typography variant="body1" color="text.secondary">{t('booking.subtitle')}</Typography>
-        </Box>
-
         {activeStep < 3 && (
-          <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 5 }}>
+          <Stepper
+            activeStep={activeStep}
+            orientation={isMobile ? 'vertical' : 'horizontal'}
+            alternativeLabel={!isMobile}
+            sx={{ mb: { xs: 4, sm: 5 } }}
+          >
             {steps.map((label) => (
               <Step key={label}>
                 <StepLabel
-                  StepIconProps={{
-                    sx: {
-                      '&.Mui-active': { color: '#10b981' },
-                      '&.Mui-completed': { color: '#10b981' }
+                  slotProps={{
+                    stepIcon: {
+                      sx: {
+                        '&.Mui-active': { color: '#10b981' },
+                        '&.Mui-completed': { color: '#10b981' }
+                      }
                     }
                   }}
                 >
@@ -484,21 +519,28 @@ export default function BookAppointment() {
         {renderStepContent(activeStep)}
 
         {activeStep < 3 && (
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 6 }}>
+          <Stack
+            direction={{ xs: 'column-reverse', sm: 'row' }}
+            spacing={2}
+            sx={{ mt: 6 }}
+            justifyContent="space-between"
+          >
             <Button
               disabled={activeStep === 0 || loading}
               onClick={handleBack}
               startIcon={<ChevronLeft size={18} />}
+              fullWidth={isMobile}
               sx={{ borderRadius: 2, px: 3, color: '#64748b', fontWeight: 600 }}
             >
               {t('booking.back')}
             </Button>
-            
+
             {activeStep === steps.length - 1 ? (
               <Button
                 variant="contained"
                 onClick={handleBooking}
                 disabled={loading}
+                fullWidth={isMobile}
                 endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ChevronRight size={18} />}
                 sx={{ borderRadius: 2, px: 4, py: 1.2, bgcolor: '#10b981', fontWeight: 700, '&:hover': { bgcolor: '#059669' } }}
               >
@@ -508,15 +550,16 @@ export default function BookAppointment() {
               <Button
                 variant="contained"
                 onClick={handleNext}
+                fullWidth={isMobile}
                 endIcon={<ChevronRight size={18} />}
                 sx={{ borderRadius: 2, px: 4, py: 1.2, bgcolor: '#10b981', fontWeight: 700, '&:hover': { bgcolor: '#059669' } }}
               >
                 {t('booking.next')}
               </Button>
             )}
-          </Box>
+          </Stack>
         )}
       </Paper>
-    </Container>
+    </PatientPageShell>
   );
 }

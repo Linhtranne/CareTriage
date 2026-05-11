@@ -15,7 +15,6 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -39,8 +38,8 @@ public class ExaminationServiceImpl implements ExaminationService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ"));
 
         // Xác thực quyền hạn: Chỉ bác sĩ được phân công hoặc Admin
-        if (!appointment.getDoctor().getId().equals(doctor.getId()) && 
-            doctor.getRoles().stream().noneMatch(r -> r.getName().equals("ADMIN"))) {
+        if (!appointment.getDoctor().getId().equals(doctor.getId()) &&
+                doctor.getRoles().stream().noneMatch(r -> r.getName().equals("ADMIN"))) {
             throw new AccessDeniedException("Bạn không có quyền bắt đầu ca khám này");
         }
 
@@ -49,9 +48,10 @@ public class ExaminationServiceImpl implements ExaminationService {
         if (currentStatus == AppointmentStatus.CANCELLED || currentStatus == AppointmentStatus.COMPLETED) {
             throw new ConflictException("Lịch hẹn đã bị hủy hoặc đã hoàn thành. Không thể bắt đầu khám.");
         }
-        
+
         if (currentStatus != AppointmentStatus.CONFIRMED && currentStatus != AppointmentStatus.CHECKED_IN) {
-            throw new ConflictException("Chỉ những lịch hẹn có trạng thái 'Confirmed' hoặc 'Checked-in' mới được phép bắt đầu.");
+            throw new ConflictException(
+                    "Chỉ những lịch hẹn có trạng thái 'Confirmed' hoặc 'Checked-in' mới được phép bắt đầu.");
         }
 
         // 3. Xác thực sự tồn tại của Hồ sơ bệnh án chính (PatientProfile)
@@ -82,21 +82,23 @@ public class ExaminationServiceImpl implements ExaminationService {
                 appointment.getId(),
                 appointment.getTriageTicketId(),
                 previousStatus,
-                appointment.getStatus()
-        ));
+                appointment.getStatus()));
 
         // 7. Ghi nhận Audit Log
         AuditLog auditLog = AuditLog.builder()
                 .action("START_EXAMINATION")
                 .entityName("Appointment")
                 .entityId(appointmentId)
-                .details(String.format("Bác sĩ %s bắt đầu khám cho bệnh nhân %s. Đã tạo phiên làm việc ClinicalNote ID: %s", 
+                .details(String.format(
+                        "Bác sĩ %s bắt đầu khám cho bệnh nhân %s. Đã tạo phiên làm việc ClinicalNote ID: %s",
                         doctor.getFullName(), patient.getFullName(), sessionNote.getId()))
                 .build();
-        // BaseEntity fields (createdBy, createdAt) are handled by AuditingEntityListener
+        // BaseEntity fields (createdBy, createdAt) are handled by
+        // AuditingEntityListener
         auditLogRepository.save(auditLog);
 
-        log.info("Bắt đầu ca khám thành công: Appointment ID={}, ClinicalNote ID={}", appointmentId, sessionNote.getId());
+        log.info("Bắt đầu ca khám thành công: Appointment ID={}, ClinicalNote ID={}", appointmentId,
+                sessionNote.getId());
 
         return mapToResponse(appointment);
     }

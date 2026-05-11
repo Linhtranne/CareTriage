@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MessageCircle, X } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import ChatWindow from './ChatWindow';
 import useChat from '../../hooks/useChat';
 import chatApi from '../../api/chatApi';
 import useAuthStore from '../../store/authStore';
+import axiosClient from '../../api/axiosClient';
 
 const ChatWidget = () => {
+
   const [isOpen, setIsOpen] = useState(false);
   const [sessionId, setSessionId] = useState(null);
   const [sessionLoading, setSessionLoading] = useState(false);
+  const [isAiOnline, setIsAiOnline] = useState(false);
   const { isAuthenticated } = useAuthStore();
 
   const {
@@ -23,26 +26,40 @@ const ChatWidget = () => {
     status
   } = useChat(sessionId);
 
-  // Lấy hoặc tạo session khi user đã đăng nhập
+  // Khởi tạo phiên chat mới khi mount
   useEffect(() => {
     if (!isAuthenticated) return;
 
     const init = async () => {
       setSessionLoading(true);
       try {
-        const session = await chatApi.getOrCreateSession();
-        if (session?.id) {
-          setSessionId(session.id);
+        // Luôn tạo session mới khi load lại trang theo yêu cầu của user
+        const res = await axiosClient.post('/api/v1/chat/sessions', null, {
+          params: { type: 'TRIAGE', title: 'Tư vấn sức khỏe' }
+        });
+        if (res.data?.id) {
+          setSessionId(res.data.id);
         }
       } catch (err) {
-        console.error('[ChatWidget] Failed to init session:', err);
+        console.error('[ChatWidget] Failed to create new session:', err);
       } finally {
         setSessionLoading(false);
       }
     };
 
+    const checkHealth = async () => {
+      const online = await chatApi.checkAiHealth();
+      setIsAiOnline(online);
+    };
+
     init();
+    checkHealth();
+    
+    // Check health mỗi 30s
+    const timer = setInterval(checkHealth, 30000);
+    return () => clearInterval(timer);
   }, [isAuthenticated]);
+
 
   if (!isAuthenticated) return null;
 
@@ -66,7 +83,7 @@ const ChatWidget = () => {
             </button>
 
             {/* Online dot */}
-            {isConnected && (
+            {isAiOnline && (
               <motion.span
                 initial={{ scale: 0 }}
                 animate={{ scale: [1, 1.2, 1] }}
@@ -74,6 +91,7 @@ const ChatWidget = () => {
                 className="absolute top-0.5 right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white"
               />
             )}
+
 
             {/* Loading dot */}
             {sessionLoading && (
@@ -96,7 +114,9 @@ const ChatWidget = () => {
         hasMore={hasMore}
         loadMoreMessages={loadMoreMessages}
         status={status}
+        isAiOnline={isAiOnline}
       />
+
     </div>
   );
 };

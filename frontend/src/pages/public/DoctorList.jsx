@@ -2,165 +2,209 @@ import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Box, Container, Grid, Typography, TextField, 
-  Card, CardContent, Avatar, Chip, Button, 
-  InputAdornment, FormControl, InputLabel, Select, MenuItem,
-  Pagination, Skeleton, useTheme, alpha, Fade,
-  IconButton, Tooltip, Paper, Divider, Stack
+  Avatar, Button, FormControl, Select, MenuItem,
+  Pagination, Skeleton, Chip, InputAdornment
 } from '@mui/material'
 import { 
-  Search, Filter, MapPin, GraduationCap, 
-  Stethoscope, Calendar, ArrowRight, X,
-  ChevronRight, Star, Heart, Award, Clock
+  Search, MapPin, Stethoscope, Clock, Award, X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import publicApi from '../../api/publicApi'
+import { useTranslation } from 'react-i18next'
 
-const MotionCard = motion(Card)
+// Variants
+const fadeUp = {
+  hidden: { opacity: 0, y: 10 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+}
 
-const DoctorCard = ({ doctor }) => {
-  const theme = useTheme()
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.05 }
+  }
+}
+
+// Custom Loading Skeleton Row
+const SkeletonRow = () => (
+  <Box sx={{ 
+    display: 'flex', flexDirection: { xs: 'column', md: 'row' }, 
+    gap: { xs: 4, md: 6 }, py: { xs: 6, md: 8 }, 
+    borderBottom: '1px solid #e2e8f0' 
+  }}>
+    <Skeleton variant="rectangular" sx={{ width: { xs: 100, md: 160 }, height: { xs: 100, md: 160 }, borderRadius: '32px' }} />
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <Skeleton variant="text" width="40%" height={60} sx={{ mb: 1 }} />
+      <Skeleton variant="text" width="20%" height={30} sx={{ mb: 3 }} />
+      <Box sx={{ display: 'flex', gap: 3, mb: 2 }}>
+        <Skeleton variant="text" width={100} height={24} />
+        <Skeleton variant="text" width={100} height={24} />
+      </Box>
+      <Skeleton variant="text" width="90%" height={24} />
+    </Box>
+    <Box sx={{ width: { xs: '100%', md: '280px' }, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'flex-end', gap: 2 }}>
+      <Skeleton variant="text" width={80} height={20} />
+      <Skeleton variant="text" width={140} height={40} />
+      <Skeleton variant="rectangular" width="100%" height={56} sx={{ borderRadius: '100px' }} />
+    </Box>
+  </Box>
+)
+
+const DoctorRow = ({ doctor }) => {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   
   return (
-    <MotionCard
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95 }}
-      whileHover={{ y: -8, boxShadow: '0 20px 40px rgba(0,0,0,0.1)' }}
-      onClick={() => navigate(`/doctors/${doctor.id}`)}
-      sx={{ 
-        height: '100%', 
-        borderRadius: '24px',
-        cursor: 'pointer',
-        border: '1px solid',
-        borderColor: alpha(theme.palette.divider, 0.08),
-        overflow: 'hidden',
-        position: 'relative',
-        bgcolor: 'background.paper',
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-    >
-      <Box sx={{ p: 3, pb: 0, display: 'flex', alignItems: 'flex-start', gap: 2.5 }}>
-        <Avatar
-          src={doctor.avatarUrl}
-          sx={{ 
-            width: 90, 
-            height: 90, 
-            borderRadius: '20px',
-            boxShadow: '0 8px 16px rgba(0,0,0,0.08)',
-            border: '3px solid #fff'
-          }}
-        >
-          {doctor.fullName.charAt(0)}
-        </Avatar>
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, color: 'text.primary', lineHeight: 1.2, mb: 0.5 }}>
-                {doctor.fullName}
-              </Typography>
-              <Typography variant="body2" sx={{ color: 'primary.main', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Stethoscope size={14} />
-                {doctor.specialization}
+    <motion.div variants={fadeUp} layout>
+      <Box 
+        onClick={() => navigate(`/doctors/${doctor.id}`)}
+        sx={{ 
+          display: 'flex',
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: { xs: 4, md: 6 },
+          py: { xs: 6, md: 8 },
+          px: { md: 4 },
+          mx: { md: -4 },
+          borderRadius: { md: '32px' },
+          borderBottom: '1px solid #e2e8f0',
+          cursor: 'pointer',
+          transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          '&:hover': { 
+            background: '#f8fafc',
+            borderColor: '#08bba3',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.02)'
+          }
+        }}
+      >
+        {/* Left: Avatar Cluster */}
+        <Box sx={{ flexShrink: 0, alignSelf: { xs: 'flex-start', md: 'center' }, position: 'relative' }}>
+          <Avatar
+            src={doctor.avatarUrl}
+            sx={{ 
+              width: { xs: 120, md: 160 }, 
+              height: { xs: 120, md: 160 }, 
+              borderRadius: '32px', 
+              border: '1px solid #e2e8f0',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.05)'
+            }}
+          >
+            {doctor.fullName.charAt(0)}
+          </Avatar>
+        </Box>
+
+        {/* Center: Editorial Details */}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+          <Box sx={{ mb: 1 }}>
+            <Typography 
+              variant="h3" 
+              sx={{ 
+                fontWeight: 900, color: '#0f172a', 
+                fontSize: { xs: '2rem', md: '3rem' }, 
+                lineHeight: 1, mb: 1,
+                letterSpacing: '-0.03em'
+              }}
+            >
+              {doctor.fullName}
+            </Typography>
+            <Typography variant="h6" sx={{ color: '#08bba3', fontWeight: 700, fontSize: '1.125rem' }}>
+              {doctor.specialization}
+            </Typography>
+          </Box>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 4, mb: 3, mt: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#64748b' }}>
+              <Clock size={20} />
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {doctor.experienceYears} {t('doctor_list.years_experience')}
               </Typography>
             </Box>
-            <IconButton size="small" sx={{ color: alpha(theme.palette.error.main, 0.6) }}>
-              <Heart size={18} />
-            </IconButton>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, color: '#64748b' }}>
+              <Award size={20} />
+              <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                {t('doctor_list.reviews')}
+              </Typography>
+            </Box>
           </Box>
-          <Box sx={{ mt: 1.5, display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, color: '#94a3b8' }}>
+            <MapPin size={20} style={{ marginTop: '2px', flexShrink: 0 }} />
+            <Typography variant="body1" sx={{ fontWeight: 400, maxWidth: '65ch', fontSize: '1.125rem' }}>
+              {doctor.hospitalName || t('doctor_list.default_hospital')}
+            </Typography>
+          </Box>
+
+          {/* Departments - Clean Pills */}
+          <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
             {doctor.departments?.map((dept) => (
-              <Chip 
+              <Box 
                 key={dept.id} 
-                label={dept.name} 
-                size="small" 
                 sx={{ 
-                  borderRadius: '8px', 
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  color: 'primary.main',
-                  border: '1px solid',
-                  borderColor: alpha(theme.palette.primary.main, 0.1)
+                  px: 2.5, py: 0.75, 
+                  background: '#ffffff', color: '#64748b',
+                  fontSize: '0.813rem', fontWeight: 700,
+                  borderRadius: '100px',
+                  border: '1px solid #e2e8f0',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em'
                 }} 
-              />
+              >
+                {dept.name}
+              </Box>
             ))}
           </Box>
         </Box>
-      </Box>
 
-      <CardContent sx={{ p: 3, flex: 1 }}>
-        <Grid container spacing={2}>
-          <Grid item xs={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-              <Clock size={16} color={theme.palette.primary.main} />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {doctor.experienceYears} năm KN
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-              <Award size={16} color={theme.palette.warning.main} />
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                4.9 (120+)
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
-              <MapPin size={16} color={theme.palette.info.main} />
-              <Typography variant="body2" sx={{ 
-                fontWeight: 500,
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap'
-              }}>
-                {doctor.hospitalName || 'Hệ thống CareTriage'}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-
+        {/* Right: Modern Booking Action */}
         <Box sx={{ 
-          mt: 3, 
-          p: 2, 
-          borderRadius: '16px', 
-          bgcolor: alpha(theme.palette.background.default, 0.5),
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
+          flexShrink: 0, 
+          width: { xs: '100%', md: '300px' },
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: { xs: 'flex-start', md: 'flex-end' },
+          justifyContent: 'center',
+          gap: 3,
+          pl: { md: 4 }
         }}>
-          <Box>
-            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              Giá khám từ
+          <Box sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+            <Typography variant="overline" sx={{ color: '#94a3b8', fontWeight: 700, letterSpacing: '0.15em', display: 'block', mb: 0.5 }}>
+              {t('doctor_list.consultation_fee')}
             </Typography>
-            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: 'text.primary' }}>
-              500.000đ
+            <Typography variant="h3" sx={{ fontWeight: 900, color: '#064e3b' }}>
+              {t('doctor_list.price_mock')}
             </Typography>
           </Box>
           <Button 
             variant="contained" 
-            endIcon={<ChevronRight size={16} />}
             sx={{ 
-              borderRadius: '12px',
+              background: '#0f172a', color: '#ffffff',
+              borderRadius: '100px', 
+              px: 5, py: 2, 
+              fontSize: '1rem', fontWeight: 800,
               textTransform: 'none',
-              fontWeight: 700,
-              boxShadow: '0 4px 12px rgba(8, 187, 163, 0.2)'
+              boxShadow: 'none',
+              width: '100%',
+              height: '56px',
+              '&:hover': {
+                background: '#08bba3',
+                boxShadow: '0 12px 30px rgba(8, 187, 163, 0.3)'
+              },
+              transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/doctors/${doctor.id}`)
             }}
           >
-            Đặt lịch
+            {t('doctor_list.book_appointment')}
           </Button>
         </Box>
-      </CardContent>
-    </MotionCard>
+      </Box>
+    </motion.div>
   )
 }
 
 export default function DoctorList() {
-  const theme = useTheme()
   const [doctors, setDoctors] = useState([])
   const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(true)
@@ -168,9 +212,10 @@ export default function DoctorList() {
     departmentId: '',
     search: '',
     page: 0,
-    size: 9
+    size: 10
   })
   const [totalPages, setTotalPages] = useState(0)
+  const { t } = useTranslation()
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -184,7 +229,7 @@ export default function DoctorList() {
           size: filters.size
         })
       ])
-      setDepartments(deptRes.data.data.content || deptRes.data.data) // Support both wrapped and unwrapped
+      setDepartments(deptRes.data.data.content || deptRes.data.data) 
       setDoctors(docRes.data.data.content)
       setTotalPages(docRes.data.data.totalPages)
     } catch (error) {
@@ -207,235 +252,254 @@ export default function DoctorList() {
       departmentId: '',
       search: '',
       page: 0,
-      size: 9
+      size: 10
     })
   }
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', pb: 10 }}>
-      {/* Hero Header */}
-      <Box sx={{ 
-        bgcolor: alpha(theme.palette.primary.main, 0.03), 
-        pt: 15, 
-        pb: 10,
-        borderBottom: '1px solid',
-        borderColor: alpha(theme.palette.divider, 0.08)
-      }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={7}>
-              <motion.div
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Chip 
-                  label="CareTriage Doctors" 
-                  color="primary" 
-                  size="small" 
-                  sx={{ fontWeight: 800, mb: 2, borderRadius: '8px' }} 
-                />
-                <Typography variant="h2" sx={{ fontWeight: 900, mb: 2, letterSpacing: '-0.02em' }}>
-                  Tìm kiếm <Typography component="span" variant="inherit" color="primary.main">Bác sĩ</Typography> phù hợp
+    <Box sx={{ bgcolor: '#ffffff', minHeight: '100vh' }}>
+      
+      {/* Restrained Hero Header (Meadow Mist) */}
+      <Box sx={{ background: '#f0fdf4', pt: { xs: 16, md: 24 }, pb: { xs: 12, md: 16 }, px: 3, borderBottom: '1px solid #e2e8f0' }}>
+        <Container maxWidth="xl">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+          >
+            <Grid container>
+              <Grid item xs={12} md={9} lg={8}>
+                <Typography variant="overline" sx={{ color: '#08bba3', fontWeight: 700, letterSpacing: '0.1em', display: 'block', mb: 2 }}>
+                  {t('doctor_list.hero_overline')}
                 </Typography>
-                <Typography variant="h6" color="text.secondary" sx={{ fontWeight: 500, mb: 4, lineHeight: 1.6, maxWidth: 500 }}>
-                  Kết nối với hàng nghìn bác sĩ chuyên khoa giỏi nhất. Chăm sóc sức khỏe của bạn và gia đình một cách tốt nhất.
+                <Typography variant="h1" sx={{ fontWeight: 900, mb: 3, letterSpacing: '-0.03em', fontSize: { xs: '3rem', md: '5rem' }, color: '#064e3b', lineHeight: 1.1 }}>
+                  {t('doctor_list.hero_title_1')} <br />
+                  {t('doctor_list.hero_title_2')}
                 </Typography>
-              </motion.div>
+                <Typography variant="body1" sx={{ color: '#4b5563', fontSize: '1.25rem', maxWidth: '55ch', lineHeight: 1.7 }}>
+                  {t('doctor_list.hero_desc')}
+                </Typography>
+              </Grid>
             </Grid>
-            <Grid item xs={12} md={5}>
-              <Paper sx={{ 
-                p: 1, 
-                borderRadius: '24px', 
-                boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
-                bgcolor: 'background.paper'
-              }}>
-                <TextField
-                  fullWidth
-                  placeholder="Tìm theo tên bác sĩ..."
-                  value={filters.search}
-                  onChange={(e) => handleFilterChange('search', e.target.value)}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <Search size={20} color={theme.palette.primary.main} />
-                      </InputAdornment>
-                    ),
-                    sx: { 
-                      borderRadius: '20px', 
-                      '& fieldset': { border: 'none' },
-                      bgcolor: alpha(theme.palette.background.default, 0.5),
-                      height: '60px',
-                      fontSize: '1.1rem',
-                      fontWeight: 500
+          </motion.div>
+        </Container>
+      </Box>
+
+      {/* Unified Filter Bar - Search First Layout */}
+      <Box sx={{ borderBottom: '1px solid #e2e8f0', background: '#ffffff', py: 4 }}>
+        <Container maxWidth="xl">
+          <Grid container spacing={3} alignItems="center">
+            {/* 1. Primary Search Box */}
+            <Grid item xs={12} lg={4}>
+              <TextField
+                fullWidth
+                placeholder={t('doctor_list.search_placeholder')}
+                value={filters.search}
+                onChange={(e) => handleFilterChange('search', e.target.value)}
+                variant="outlined"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search size={22} color="#08bba3" strokeWidth={2.5} />
+                    </InputAdornment>
+                  ),
+                  sx: { 
+                    height: '56px',
+                    borderRadius: '100px',
+                    background: '#f8fafc',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    color: '#0f172a',
+                    paddingLeft: '12px',
+                    '& fieldset': {
+                      borderColor: '#e2e8f0',
+                      transition: 'all 0.3s ease'
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#cbd5e1'
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#08bba3',
+                      borderWidth: '2px',
+                      boxShadow: '0 0 0 4px rgba(8, 187, 163, 0.15)'
                     }
+                  }
+                }}
+              />
+            </Grid>
+
+            {/* 2. Department Chips - Secondary Filter */}
+            <Grid item xs={12} lg={4}>
+              <Box sx={{ 
+                display: 'flex', 
+                flexWrap: 'nowrap', 
+                overflowX: 'auto', 
+                gap: 1.5, 
+                height: '56px',
+                alignItems: 'center',
+                '&::-webkit-scrollbar': { display: 'none' },
+                msOverflowStyle: 'none',
+                scrollbarWidth: 'none',
+              }}>
+                <Chip
+                  label={t('doctor_list.all_departments')}
+                  onClick={() => handleFilterChange('departmentId', '')}
+                  sx={{ 
+                    borderRadius: '100px', 
+                    fontWeight: 700,
+                    height: '56px', px: 2,
+                    cursor: 'pointer',
+                    border: '1px solid',
+                    borderColor: filters.departmentId === '' ? '#08bba3' : '#e2e8f0',
+                    background: filters.departmentId === '' ? 'rgba(8, 187, 163, 0.1)' : '#ffffff',
+                    color: filters.departmentId === '' ? '#064e3b' : '#64748b',
+                    '&:hover': { background: filters.departmentId === '' ? 'rgba(8, 187, 163, 0.15)' : '#f8fafc' }
                   }}
                 />
-              </Paper>
+                {departments.map((dept) => (
+                  <Chip
+                    key={dept.id}
+                    label={dept.name}
+                    onClick={() => handleFilterChange('departmentId', dept.id)}
+                    sx={{ 
+                      borderRadius: '100px', 
+                      fontWeight: 600,
+                      height: '56px', px: 2,
+                      cursor: 'pointer',
+                      border: '1px solid',
+                      borderColor: filters.departmentId === dept.id ? '#08bba3' : '#e2e8f0',
+                      background: filters.departmentId === dept.id ? 'rgba(8, 187, 163, 0.1)' : '#ffffff',
+                      color: filters.departmentId === dept.id ? '#064e3b' : '#64748b',
+                      '&:hover': { background: filters.departmentId === dept.id ? 'rgba(8, 187, 163, 0.15)' : '#f8fafc' }
+                    }}
+                  />
+                ))}
+              </Box>
+            </Grid>
+            
+            {/* 3. Actions: Sort & Reset */}
+            <Grid item xs={12} lg={4}>
+              <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}>
+                <Select
+                  value="popular"
+                  sx={{ 
+                    fontWeight: 700, 
+                    color: '#0f172a',
+                    background: '#ffffff',
+                    borderRadius: '100px',
+                    height: '56px',
+                    minWidth: '160px',
+                    '& fieldset': { borderColor: '#e2e8f0' },
+                    '&:hover fieldset': { borderColor: '#cbd5e1' },
+                    '&.Mui-focused fieldset': { borderColor: '#08bba3' }
+                  }}
+                >
+                  <MenuItem value="popular">{t('doctor_list.sort_popular')}</MenuItem>
+                  <MenuItem value="rating">{t('doctor_list.sort_rating')}</MenuItem>
+                  <MenuItem value="newest">{t('doctor_list.sort_newest')}</MenuItem>
+                </Select>
+                {(filters.departmentId || filters.search) && (
+                  <Button
+                    onClick={resetFilters}
+                    sx={{ 
+                      minWidth: '56px', height: '56px', borderRadius: '50%', 
+                      color: '#64748b', border: '1px solid #e2e8f0',
+                      '&:hover': { background: '#f1f5f9', color: '#0f172a', borderColor: '#cbd5e1' }
+                    }}
+                  >
+                    <X size={20} />
+                  </Button>
+                )}
+              </Box>
             </Grid>
           </Grid>
         </Container>
       </Box>
 
-      {/* Main Content */}
-      <Container maxWidth="lg" sx={{ mt: -5 }}>
-        <Grid container spacing={4}>
-          {/* Filters Sidebar */}
-          <Grid item xs={12} md={3}>
-            <Paper sx={{ 
-              p: 3, 
-              borderRadius: '24px', 
-              boxShadow: '0 10px 30px rgba(0,0,0,0.03)',
-              position: { md: 'sticky' },
-              top: 100
-            }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-                <Filter size={20} color={theme.palette.primary.main} />
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>Bộ lọc</Typography>
-              </Box>
-
-              <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1.5, color: 'text.secondary' }}>
-                Chuyên khoa
-              </Typography>
-              <Stack spacing={1}>
-                <Button
-                  variant={filters.departmentId === '' ? 'contained' : 'text'}
-                  onClick={() => handleFilterChange('departmentId', '')}
+      {/* Main Content List */}
+      <Container maxWidth="xl" sx={{ pt: 4, pb: 16 }}>
+        <AnimatePresence mode="wait">
+          {loading ? (
+            <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+              {[1, 2, 3, 4].map((i) => (
+                <SkeletonRow key={i} />
+              ))}
+            </motion.div>
+          ) : doctors.length > 0 ? (
+            <motion.div
+              key="list"
+              initial="hidden"
+              animate="visible"
+              variants={staggerContainer}
+            >
+              {doctors.map((doctor) => (
+                <DoctorRow key={doctor.id} doctor={doctor} />
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+              <Box sx={{ 
+                py: 20, 
+                textAlign: 'center', 
+                borderBottom: '1px solid #e2e8f0'
+              }}>
+                <Typography variant="h3" sx={{ fontWeight: 900, mb: 2, color: '#0f172a' }}>
+                  {t('doctor_list.no_doctors_title')}
+                </Typography>
+                <Typography color="#64748b" sx={{ mb: 4, fontSize: '1.25rem' }}>
+                  {t('doctor_list.no_doctors_desc')}
+                </Typography>
+                <Button 
+                  variant="outlined" 
+                  onClick={resetFilters}
                   sx={{ 
-                    justifyContent: 'flex-start', 
-                    borderRadius: '12px', 
-                    textTransform: 'none',
-                    fontWeight: filters.departmentId === '' ? 800 : 500,
-                    px: 2
+                    borderRadius: '12px', px: 4, py: 1.5, 
+                    borderColor: '#0f172a', color: '#0f172a', 
+                    fontWeight: 700, textTransform: 'none',
+                    borderWidth: '2px',
+                    '&:hover': { borderWidth: '2px', background: '#0f172a', color: '#ffffff' }
                   }}
                 >
-                  Tất cả chuyên khoa
+                  {t('doctor_list.clear_all_filters')}
                 </Button>
-                {departments.map((dept) => (
-                  <Button
-                    key={dept.id}
-                    variant={filters.departmentId === dept.id ? 'contained' : 'text'}
-                    onClick={() => handleFilterChange('departmentId', dept.id)}
-                    sx={{ 
-                      justifyContent: 'flex-start', 
-                      borderRadius: '12px', 
-                      textTransform: 'none',
-                      fontWeight: filters.departmentId === dept.id ? 800 : 500,
-                      px: 2
-                    }}
-                  >
-                    {dept.name}
-                  </Button>
-                ))}
-              </Stack>
-
-              <Divider sx={{ my: 3 }} />
-
-              <Button
-                fullWidth
-                variant="outlined"
-                startIcon={<X size={16} />}
-                onClick={resetFilters}
-                sx={{ 
-                  borderRadius: '12px', 
-                  textTransform: 'none', 
-                  fontWeight: 700,
-                  color: 'text.secondary',
-                  borderColor: 'divider'
-                }}
-              >
-                Xóa bộ lọc
-              </Button>
-            </Paper>
-          </Grid>
-
-          {/* Results Area */}
-          <Grid item xs={12} md={9}>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                {loading ? 'Đang tìm kiếm...' : `Tìm thấy ${doctors.length} bác sĩ phù hợp`}
-              </Typography>
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <FormControl size="small" sx={{ minWidth: 120 }}>
-                  <Select
-                    value="popular"
-                    sx={{ borderRadius: '10px', fontWeight: 600, fontSize: '0.875rem' }}
-                  >
-                    <MenuItem value="popular">Phổ biến</MenuItem>
-                    <MenuItem value="rating">Đánh giá cao</MenuItem>
-                    <MenuItem value="newest">Mới nhất</MenuItem>
-                  </Select>
-                </FormControl>
               </Box>
-            </Box>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-            <AnimatePresence mode="wait">
-              {loading ? (
-                <Grid container spacing={3}>
-                  {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <Grid item xs={12} sm={6} key={i}>
-                      <Skeleton variant="rectangular" height={280} sx={{ borderRadius: '24px' }} />
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : doctors.length > 0 ? (
-                <Grid container spacing={3}>
-                  {doctors.map((doctor) => (
-                    <Grid item xs={12} sm={6} key={doctor.id}>
-                      <DoctorCard doctor={doctor} />
-                    </Grid>
-                  ))}
-                </Grid>
-              ) : (
-                <Fade in>
-                  <Box sx={{ 
-                    py: 10, 
-                    textAlign: 'center', 
-                    bgcolor: 'background.paper', 
-                    borderRadius: '24px',
-                    border: '1px dashed',
-                    borderColor: 'divider'
-                  }}>
-                    <Box sx={{ mb: 2, color: 'text.disabled' }}>
-                      <Search size={64} />
-                    </Box>
-                    <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
-                      Không tìm thấy bác sĩ nào
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>
-                      Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm của bạn.
-                    </Typography>
-                    <Button 
-                      variant="contained" 
-                      onClick={resetFilters}
-                      sx={{ borderRadius: '12px', px: 4 }}
-                    >
-                      Xóa tất cả bộ lọc
-                    </Button>
-                  </Box>
-                </Fade>
-              )}
-            </AnimatePresence>
-
-            {totalPages > 1 && (
-              <Box sx={{ mt: 6, display: 'flex', justifyContent: 'center' }}>
-                <Pagination 
-                  count={totalPages} 
-                  page={filters.page + 1} 
-                  onChange={(_, p) => handleFilterChange('page', p - 1)}
-                  color="primary"
-                  size="large"
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      borderRadius: '12px',
-                      fontWeight: 800
-                    }
-                  }}
-                />
-              </Box>
-            )}
-          </Grid>
-        </Grid>
+        {totalPages > 1 && (
+          <Box sx={{ mt: 10, display: 'flex', justifyContent: 'center' }}>
+            <Pagination 
+              count={totalPages} 
+              page={filters.page + 1} 
+              onChange={(_, p) => handleFilterChange('page', p - 1)}
+              size="large"
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  borderRadius: '100px',
+                  width: '56px',
+                  height: '56px',
+                  fontWeight: 800,
+                  fontSize: '1.125rem',
+                  border: '1px solid #e2e8f0',
+                  background: '#ffffff',
+                  color: '#0f172a',
+                  transition: 'all 0.3s ease',
+                  '&.Mui-selected': {
+                    background: '#0f172a',
+                    color: '#ffffff',
+                    borderColor: '#0f172a',
+                    '&:hover': { background: '#08bba3', borderColor: '#08bba3' }
+                  },
+                  '&:hover': {
+                    background: '#f8fafc',
+                    borderColor: '#cbd5e1'
+                  }
+                }
+              }}
+            />
+          </Box>
+        )}
       </Container>
     </Box>
   )

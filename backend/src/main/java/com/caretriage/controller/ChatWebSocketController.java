@@ -40,11 +40,16 @@ public class ChatWebSocketController {
         ChatMessageDTO savedMessage = chatService.sendMessage(user.getId(), chatMessage);
 
         // Broadcast to the specific session topic
-        // Path: /topic/chat/{sessionId}
         String destination = "/topic/chat/" + chatMessage.getSessionId();
         messagingTemplate.convertAndSend(destination, savedMessage);
         
-        log.info("Broadcasted message to: {}", destination);
+        // Kích hoạt xử lý AI bất đồng bộ nếu là session TRIAGE
+        // Gọi qua interface proxy để @Async có hiệu lực
+        if (chatMessage.getContent() != null) {
+            chatService.processAiResponse(chatMessage.getSessionId(), chatMessage.getContent());
+        }
+        
+        log.info("Broadcasted message and triggered AI for session: {}", chatMessage.getSessionId());
     }
 
     @MessageMapping("/chat.addUser")

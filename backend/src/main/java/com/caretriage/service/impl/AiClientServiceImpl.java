@@ -48,7 +48,20 @@ public class AiClientServiceImpl implements AiClientService {
         }
     }
 
+    @Override
+    public boolean checkHealth() {
+        try {
+            String url = aiServiceUrl + "/health";
+            Map<?, ?> response = restTemplate.getForObject(url, Map.class);
+            return response != null && "UP".equals(response.get("status"));
+        } catch (Exception e) {
+            log.warn("AI Service health check failed: {}", e.getMessage());
+            return false;
+        }
+    }
+
     private Map<String, Object> callAiService(String url, String sessionId, String message, List<Map<String, String>> history) {
+
         try {
             Map<String, Object> request = new HashMap<>();
             request.put("session_id", sessionId);

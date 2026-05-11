@@ -14,6 +14,36 @@ const pulse = keyframes`
   50% { opacity: 1; transform: scale(1.03); }
 `
 
+const menuHeights = { products: 160, solutions: 160, developers: 240 }
+const menuIndices = { products: 0, solutions: 1, developers: 2 }
+
+const menuData = {
+  products: {
+    title: 'Sản phẩm',
+    items: [
+      { label: 'AI Triage', desc: 'Phân luồng chuyên khoa tự động bằng AI', icon: <Psychology />, route: '/features/ai-triage' },
+      { label: 'EHR Engine', desc: 'Số hóa & Trích xuất bệnh án thông minh', icon: <Description />, route: '/features/ehr-engine' },
+      { label: 'Smart Booking', desc: 'Tối ưu hóa thời gian và lịch khám', icon: <EventAvailable />, route: '/features/smart-booking' }
+    ]
+  },
+  solutions: {
+    title: 'Giải pháp',
+    items: [
+      { label: 'Bệnh viện lớn', desc: 'Giảm tải phòng tiếp đón, tối ưu quy trình', icon: <LocalHospital />, route: '/solutions/hospitals' },
+      { label: 'Phòng khám tư', desc: 'Quản lý bệnh án tinh gọn, hiệu quả', icon: <MedicalServices />, route: '/solutions/clinics' },
+      { label: 'Cá nhân', desc: 'Tự theo dõi và quản lý sức khỏe', icon: <Person />, route: '/solutions/individuals' }
+    ]
+  },
+  developers: {
+    title: 'Hệ thống',
+    items: [
+      { label: 'Tài liệu API', desc: 'Tích hợp chuẩn dữ liệu HL7/FHIR', icon: <Code />, route: '/developers/api-docs' },
+      { label: 'Bảo mật & Tin cậy', desc: 'Mã hóa dữ liệu đạt chuẩn HIPAA', icon: <Security />, route: '/developers/security' },
+      { label: 'Điều khoản & Dịch vụ', desc: 'Cam kết an toàn thông tin y tế', icon: <Description />, route: '/terms' }
+    ]
+  }
+}
+
 export default function Navbar() {
   const navigate = useNavigate()
   const { t, i18n } = useTranslation()
@@ -46,9 +76,6 @@ export default function Navbar() {
     navigate('/login')
   }
 
-  const menuHeights = { products: 160, solutions: 160, developers: 240 }
-  const menuIndices = { products: 0, solutions: 1, developers: 2 }
-
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 50) {
@@ -61,47 +88,21 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const menuData = {
-    products: {
-      title: 'Sản phẩm',
-      items: [
-        { label: 'AI Triage', desc: 'Phân luồng chuyên khoa tự động bằng AI', icon: <Psychology />, route: '/features/ai-triage' },
-        { label: 'EHR Engine', desc: 'Số hóa & Trích xuất bệnh án thông minh', icon: <Description />, route: '/features/ehr-engine' },
-        { label: 'Smart Booking', desc: 'Tối ưu hóa thời gian và lịch khám', icon: <EventAvailable />, route: '/features/smart-booking' }
-      ]
-    },
-    solutions: {
-      title: 'Giải pháp',
-      items: [
-        { label: 'Bệnh viện lớn', desc: 'Giảm tải phòng tiếp đón, tối ưu quy trình', icon: <LocalHospital />, route: '/solutions/hospitals' },
-        { label: 'Phòng khám tư', desc: 'Quản lý bệnh án tinh gọn, hiệu quả', icon: <MedicalServices />, route: '/solutions/clinics' },
-        { label: 'Cá nhân', desc: 'Tự theo dõi và quản lý sức khỏe', icon: <Person />, route: '/solutions/individuals' }
-      ]
-    },
-    developers: {
-      title: 'Hệ thống',
-      items: [
-        { label: 'Tài liệu API', desc: 'Tích hợp chuẩn dữ liệu HL7/FHIR', icon: <Code />, route: '/developers/api-docs' },
-        { label: 'Bảo mật & Tin cậy', desc: 'Mã hóa dữ liệu đạt chuẩn HIPAA', icon: <Security />, route: '/developers/security' },
-        { label: 'Điều khoản & Dịch vụ', desc: 'Cam kết an toàn thông tin y tế', icon: <Description />, route: '/terms' }
-      ]
-    }
-  }
-
   const [tMenuData, setTMenuData] = useState(menuData)
 
   useEffect(() => {
     if (!i18n.language || i18n.language.startsWith('vi')) {
-      setTMenuData(menuData)
       return
     }
+    
+    let isMounted = true
 
     const translateText = async (text) => {
       try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
         const data = await res.json()
         return data[0].map(item => item[0]).join('')
-      } catch (err) {
+      } catch {
         return text
       }
     }
@@ -120,11 +121,17 @@ export default function Navbar() {
           )
         }
       }
-      setTMenuData(translated)
+      if (isMounted) {
+        setTMenuData(translated)
+      }
     }
 
     performTranslation()
+    return () => { isMounted = false }
   }, [i18n.language])
+
+  const isVi = !i18n.language || i18n.language.startsWith('vi')
+  const displayMenuData = isVi ? menuData : tMenuData
 
   return (
     <>
@@ -157,7 +164,7 @@ export default function Navbar() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           px: { xs: 2, md: 6 },
           py: scrolled ? 1.5 : 3,
-          maxWidth: 1400,
+          maxWidth: 1536,
           mx: 'auto',
           position: 'relative'
         }}>
@@ -178,10 +185,11 @@ export default function Navbar() {
           {/* Navigation Links */}
           <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 4 }}>
             {[
+              { label: 'Giới thiệu', route: '/about' },
               { label: 'Danh sách bác sĩ', route: '/doctors' },
-              { label: tMenuData.products.title, key: 'products' },
-              { label: tMenuData.solutions.title, key: 'solutions' },
-              { label: tMenuData.developers.title, key: 'developers' }
+              { label: displayMenuData.products.title, key: 'products' },
+              { label: displayMenuData.solutions.title, key: 'solutions' },
+              { label: displayMenuData.developers.title, key: 'developers' }
             ].map((item) => (
               <Typography
                 key={item.key || item.route}
@@ -210,6 +218,22 @@ export default function Navbar() {
           </Box>
           
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={() => navigate('/emergency')}
+              sx={{ 
+                bgcolor: '#ef4444', 
+                color: 'white', 
+                fontWeight: 900,
+                px: 2,
+                '&:hover': { bgcolor: '#dc2626' },
+                animation: `${pulse} 2s infinite`
+              }}
+            >
+              CẤP CỨU
+            </Button>
+            
             <Button
               variant="outlined"
               size="small"
@@ -282,7 +306,7 @@ export default function Navbar() {
               pointerEvents: activeMenu ? 'auto' : 'none'
             }}
           >
-            {Object.keys(tMenuData).map((key) => (
+            {Object.keys(displayMenuData).map((key) => (
               <Box
                 key={key}
                 sx={{
@@ -299,8 +323,8 @@ export default function Navbar() {
                 }}
               >
                 <Grid container spacing={4}>
-                  {tMenuData[key].items.map((subItem, idx) => (
-                    <Grid item xs={12} md={4} key={idx}>
+                  {displayMenuData[key].items.map((subItem, idx) => (
+                    <Grid size={{ xs: 12, md: 4 }} key={idx}>
                       <Box
                         onClick={() => {
                           setActiveMenu(null)

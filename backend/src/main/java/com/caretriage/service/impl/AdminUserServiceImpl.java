@@ -30,11 +30,13 @@ public class AdminUserServiceImpl implements AdminUserService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, Boolean isActive) {
+    public PagedResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role,
+            Boolean isActive) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         Page<User> userPage;
 
-        log.info("Fetching users with filter - search: {}, role: {}, isActive: {}, page: {}, size: {}", search, role, isActive, page, size);
+        log.info("Fetching users with filter - search: {}, role: {}, isActive: {}, page: {}, size: {}", search, role,
+                isActive, page, size);
         if (search != null && !search.isBlank()) {
             userPage = userRepository.searchUsers(search.trim(), pageable);
         } else if (role != null && !role.isBlank()) {
@@ -78,7 +80,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         String currentUsername = getCurrentUsername();
         if (user.getUsername().equals(currentUsername)) {
             log.warn("Admin audit: Self-demotion attempt blocked for user {}", currentUsername);
-            throw new RuntimeException("Bạn không thể tự thay đổi vai trò của chính mình để tránh lỗi vận hành hệ thống.");
+            throw new RuntimeException(
+                    "Bạn không thể tự thay đổi vai trò của chính mình để tránh lỗi vận hành hệ thống.");
         }
 
         Role newRole = roleRepository.findByName(roleName)
@@ -108,8 +111,8 @@ public class AdminUserServiceImpl implements AdminUserService {
         user.setIsActive(!user.getIsActive());
         User updatedUser = userRepository.save(user);
 
-        log.info("Admin audit: User {} status toggled to {} by admin {}", 
-                 user.getUsername(), user.getIsActive() ? "ACTIVE" : "INACTIVE", currentUsername);
+        log.info("Admin audit: User {} status toggled to {} by admin {}",
+                user.getUsername(), user.getIsActive() ? "ACTIVE" : "INACTIVE", currentUsername);
         return mapToAdminResponse(updatedUser);
     }
 
@@ -126,7 +129,7 @@ public class AdminUserServiceImpl implements AdminUserService {
 
         // Update profile based on roles
         Set<String> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
-        
+
         if (roles.contains("ROLE_PATIENT")) {
             PatientProfile profile = user.getPatientProfile();
             if (profile == null) {
@@ -193,24 +196,24 @@ public class AdminUserServiceImpl implements AdminUserService {
         if (user.getPatientProfile() != null) {
             PatientProfile p = user.getPatientProfile();
             builder.dateOfBirth(p.getDateOfBirth())
-                   .gender(p.getGender())
-                   .address(p.getAddress())
-                   .bloodType(p.getBloodType())
-                   .allergies(p.getAllergies())
-                   .insuranceNumber(p.getInsuranceNumber())
-                   .emergencyContactName(p.getEmergencyContactName())
-                   .emergencyContactPhone(p.getEmergencyContactPhone())
-                   .chronicConditions(p.getChronicConditions());
+                    .gender(p.getGender())
+                    .address(p.getAddress())
+                    .bloodType(p.getBloodType())
+                    .allergies(p.getAllergies())
+                    .insuranceNumber(p.getInsuranceNumber())
+                    .emergencyContactName(p.getEmergencyContactName())
+                    .emergencyContactPhone(p.getEmergencyContactPhone())
+                    .chronicConditions(p.getChronicConditions());
         }
 
         // Map Doctor Profile
         if (user.getDoctorProfile() != null) {
             DoctorProfile d = user.getDoctorProfile();
             builder.bio(d.getBio())
-                   .specialization(d.getSpecialization())
-                   .experienceYears(d.getExperienceYears())
-                   .degrees(d.getDegrees())
-                   .hospitalName(d.getHospitalName());
+                    .specialization(d.getSpecialization())
+                    .experienceYears(d.getExperienceYears())
+                    .degrees(d.getDegrees())
+                    .hospitalName(d.getHospitalName());
         }
 
         return builder.build();

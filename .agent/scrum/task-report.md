@@ -1,4 +1,4 @@
-﻿# Báo cáo Tiến độ Sprint (Task T-001 -> T-011)
+# Báo cáo Tiến độ Sprint (Task T-001 -> T-011)
 
 ## T-001: Create User, Role entities + migration
 
@@ -809,4 +809,71 @@
   - Publish event sau khi đổi trạng thái trong `AppointmentServiceImpl`, `TriageTicketServiceImpl`, `ExaminationServiceImpl`, `MedicalRecordServiceImpl`.
   - Bổ sung `findByTriageTicketId` cho `AppointmentRepository` để listener tìm lịch hẹn liên kết.
   - Giữ cập nhật đồng bộ mà không tạo vòng lặp bằng cách cho listener cập nhật trực tiếp entity qua repository.
+
+## T-061: Landing page components (Hero, Services, CTA)
+- **Lý do thực hiện:** Xây dựng bộ nhận diện thương hiệu và cung cấp thông tin dịch vụ cốt lõi tại trang chủ.
+- **Công nghệ sử dụng:** React, MUI, Framer Motion, Tailwind CSS v4.
+- **Logic triển khai:**
+  - Thiết kế Hero section với hiệu ứng tương tác (Interactive Particles/Morphing Particles).
+  - Tích hợp CMS Bridge (i18n) để load nội dung động từ Backend.
+  - Chuẩn hóa layout với Container `xl` (1536px) và cấu trúc Grid responsive (sử dụng size prop thay cho xs/md/item để tương thích MUI v9).
+
+## T-062: UI Modernization (Vision & Mission, Footer)
+- **Lý do thực hiện:** Đồng nhất bộ nhận diện thương hiệu số của CareTriage theo phong cách Glassmorphism cao cấp, thay thế giao diện cũ đơn điệu bằng trải nghiệm hiện đại, trong suốt và tinh tế.
+- **Logic triển khai:**
+  - **Vision & Mission**: Chuyển đổi nền từ màu xanh đậm/xám sang dải gradient sáng (`#f0fdf4` -> `#f8fafc`). Áp dụng hiệu ứng Glassmorphism (`backdrop-filter: blur(10px)`) cho các khối nội dung và Hero section.
+  - **Footer**: Loại bỏ nền xanh đậm truyền thống, thay bằng lớp phủ trắng mờ 40% với độ nhòe 20px. Chuẩn hóa màu chữ sang Dark Green (`#064e3b`) và Slate (`#4b5563`) để đảm bảo độ tương phản cao cấp.
+  - **Typography & Layout**: Cân chỉnh lại toàn bộ hệ thống chữ và nút bấm (CTA) theo chuẩn MUI v9, sử dụng organic shapes và micro-animations để tăng tính tương tác.
+
+## T-063: Department detail page
+- **Lý do thực hiện:** Cung cấp thông tin chuyên sâu về từng khoa, danh sách bác sĩ và trang thiết bị.
+- **Logic triển khai:**
+  - Tích hợp API `publicApi.getDepartmentById` và `publicApi.getDoctors` để load dữ liệu khoa.
+  - Hiển thị danh sách bác sĩ dưới dạng Card với thông tin chi tiết và đánh giá (Star Rating).
+  - Xử lý trạng thái loading và empty state một cách tinh tế, gỡ bỏ các icon dư thừa theo yêu cầu UI. 
+
+## T-064: Emergency Info page (Hotlines, First-aid, GPS)
+- **Lý do thực hiện:** Cung cấp thông tin cấp cứu khẩn cấp và hướng dẫn sơ cứu nhanh cho người dùng.
+- **Logic triển khai:**
+  - Thiết kế Banner cấp cứu với hiệu ứng Pulse báo động.
+  - Tích hợp Geolocation API để tính toán khoảng cách đến bệnh viện gần nhất dựa trên công thức Haversine.
+  - Cung cấp danh sách Hotline hỗ trợ gọi điện trực tiếp (`tel:` links).
+
+## T-065: Contact Form with Spam Protection
+- **Lý do thực hiện:** Kênh liên lạc chính thức giữa bệnh viện và khách hàng, đảm bảo an toàn trước spam.
+- **Logic triển khai:**
+  - Form liên hệ với Validation dữ liệu và xử lý trạng thái gửi (loading/success/error) mượt mà.
+  - Tích hợp cơ chế Robot check (Checkbox confirm) để bảo vệ hệ thống trước các yêu cầu tự động.
+  - Thiết kế layout 2 cột khoa học, tách biệt giữa thông tin liên hệ và form tương tác.
+
+---
+
+### Maintenance Notes:
+- **MUI v9 Migration**: Always use `size` prop for `<Grid>` instead of `xs, md, lg`.
+- **Styling**: Prioritize HSL color system for Glassmorphism to ensure contrast on all backgrounds.
+- **Performance**: Use `useMemo` for large doctor/department lists to optimize rendering.
+
+---
+
+### Backend Refactor Technical Report (Security & Quality):
+#### 1. EHRController Refactor:
+- **Security**: Replaced hardcoded ID (`1L`) with a dynamic mechanism to retrieve `UserID` via `@AuthenticationPrincipal UserDetails`.
+- **Clean Code**: Cleaned up redundant imports (`java.util.List`, `java.util.Map`) and restored corrupted Javadoc comment formats.
+
+#### 2. Service Layer Optimization:
+- **ExaminationServiceImpl.java**: Expanded wildcard imports (`entity.*`, `repository.*`) into explicit imports to eliminate IDE warnings.
+- **AdminUserServiceImpl.java**: Explicitly defined dependency imports and cleaned up file structure.
+- **AdminDashboardServiceImpl.java**: Updated imports for specific Repositories, ensuring consistency with `TriageTicket.Status`.
+- **EHRService.java**: Optimized imports and handled unchecked cast warnings in helper methods processing AI results.
+
+#### 4. Verification:
+- All changes have been confirmed via `mvn compile -DskipTests` command with **BUILD SUCCESS** status.
+
+---
+*Updated by Antigravity AI Assistant at 02:00 PM on May 8, 2026*
+
+render_diffs(file:///d:/CareTriage/frontend/src/pages/public/VisionMission.jsx)
+render_diffs(file:///d:/CareTriage/frontend/src/components/public/Footer.jsx)
+
+render_diffs(file:///d:/CareTriage/.agent/scrum/task-report.md)
 

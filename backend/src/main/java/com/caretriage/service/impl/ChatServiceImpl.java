@@ -71,11 +71,6 @@ public class ChatServiceImpl implements ChatService {
         session.setLastMessageTime(savedMessage.getCreatedAt());
         chatSessionRepository.save(session);
 
-        // Trigger AI processing if it's a TRIAGE session
-        if (session.getSessionType() == ChatSession.SessionType.TRIAGE) {
-            processAiResponse(session.getId(), message.getContent());
-        }
-        
         return convertToDTO(savedMessage);
     }
 
@@ -83,12 +78,17 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public void processAiResponse(Long sessionId, String userMessage) {
+        String destination = "/topic/chat/" + sessionId;
         try {
             ChatSession session = chatSessionRepository.findById(sessionId)
                     .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
+            // Chỉ xử lý AI cho session TRIAGE
+            if (session.getSessionType() != ChatSession.SessionType.TRIAGE) {
+                return;
+            }
+
             // 1. Gửi trạng thái "AI is typing..."
-            String destination = "/topic/chat/" + sessionId;
             Map<String, Object> typingStatus = new HashMap<>();
             typingStatus.put("type", "TYPING");
             typingStatus.put("senderType", "AI");
@@ -114,7 +114,7 @@ public class ChatServiceImpl implements ChatService {
                     .chatSession(session)
                     .content(aiContent)
                     .senderType(ChatMessage.SenderType.AI)
-                    .metadata(objectMapper.writeValueAsString(aiResponse)) // Lưu toàn bộ metadata AI trả về dạng JSON chuẩn
+                    .metadata(objectMapper.writeValueAsString(aiResponse))
                     .build();
             
             ChatMessage savedAiMessage = chatMessageRepository.save(aiMessage);
@@ -124,8 +124,9 @@ public class ChatServiceImpl implements ChatService {
             session.setLastMessageTime(savedAiMessage.getCreatedAt());
             chatSessionRepository.save(session);
 
-            // 5. Broadcast tin nhắn AI qua WebSocket
+            // 5. Broadcast tin nhắn AI trực tiếp qua WebSocket
             messagingTemplate.convertAndSend(destination, convertToDTO(savedAiMessage));
+            log.info("AI response broadcasted to {}", destination);
 
             // 6. Auto-create triage ticket when triage is complete
             if (Boolean.TRUE.equals(aiResponse.get("is_complete"))) {
@@ -133,10 +134,16 @@ public class ChatServiceImpl implements ChatService {
             }
 
         } catch (Exception e) {
-            log.error("Error processing AI response for session {}: {}", sessionId, e.getMessage());
-            // Có thể gửi tin nhắn lỗi qua WebSocket ở đây
+            log.error("Error processing AI response for session {}: {}", sessionId, e.getMessage(), e);
+            // Gửi thông báo lỗi qua WebSocket để frontend tắt typing indicator
+            Map<String, Object> errorMsg = new HashMap<>();
+            errorMsg.put("type", "ERROR");
+            errorMsg.put("senderType", "SYSTEM");
+            errorMsg.put("content", "Xin lỗi, hệ thống AI đang gặp sự cố. Vui lòng thử lại.");
+            messagingTemplate.convertAndSend(destination, errorMsg);
         }
     }
+
 
     @Override
     public List<ChatMessageDTO> getSessionHistory(Long sessionId) {

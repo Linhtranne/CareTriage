@@ -1,13 +1,12 @@
-import { Box, Typography, Button, Fade, Grid, Card, CardContent, Paper } from '@mui/material'
+import { Box, Typography, Button, Fade, Grid, Card, CardContent, Paper, Container, Stack, Avatar, IconButton, Tooltip, Zoom, CircularProgress } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { 
+import {
   MedicalServices, Chat, ArrowForward, Description, Biotech, Storage, Security, VerifiedUser,
-  Psychology, EventAvailable, LocalHospital, Person, Code 
+  Psychology, EventAvailable, LocalHospital, Person, Code, ChevronRight, Star, CheckCircle as CheckCircle2
 } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import Navbar from '../../components/public/Navbar'
 
 // Interactive Particle Visualizer (Canvas API)
 function InteractiveParticles({ mode = 'neural', color = '16, 185, 129' }) {
@@ -193,7 +192,7 @@ function MorphingParticles({ color = '16, 185, 129', shape = 'cross' }) {
         this.vy = (Math.random() - 0.5) * 0.6
         this.radius = Math.random() * 1.5 + 1
         this.isMorpher = Math.random() > 0.4 // 60% form shapes, 40% stay cosmic
-        
+
         // Generate shape offsets relative to center
         if (shape === 'cross') {
           const inVertical = Math.random() > 0.5
@@ -217,7 +216,7 @@ function MorphingParticles({ color = '16, 185, 129', shape = 'cross' }) {
         if (this.isMorpher && isHovered) {
           const targetX = cx + this.offsetX
           const targetY = cy + this.offsetY
-          
+
           this.x += (targetX - this.x) * 0.06
           this.y += (targetY - this.y) * 0.06
         } else {
@@ -288,7 +287,7 @@ function Reveal({ children, delay = 0 }) {
         observer.unobserve(ref.current)
       }
     }, { threshold: 0.1 })
-    
+
     if (ref.current) observer.observe(ref.current)
     return () => observer.disconnect()
   }, [])
@@ -420,44 +419,44 @@ export default function Landing() {
 
 
   const problemItems = [
-    { 
-      title: 'Thời gian chờ đợi kéo dài', 
-      description: 'Bệnh nhân trung bình mất 2-4 tiếng xếp hàng tại quầy tiếp đón chỉ để hỏi thông tin phân luồng ban đầu, làm gia tăng nguy cơ lây nhiễm chéo.',
+    {
+      title: t('problems.wait'),
+      description: t('problems.wait_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⏰</Typography>
     },
-    { 
-      title: 'Sai sót định hướng chuyên khoa', 
-      description: 'Hơn 30% người bệnh chọn sai chuyên khoa trong lần khám đầu tiên, dẫn đến việc phải làm lại các thủ tục xét nghiệm từ đầu.',
+    {
+      title: t('problems.specialty'),
+      description: t('problems.specialty_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⚠️</Typography>
     },
-    { 
-      title: 'Hồ sơ cồng kềnh', 
-      description: 'Ghi chép phi cấu trúc trên giấy gây khó khăn cực độ cho việc phân tích tổng quan bệnh sử bệnh nhân.',
+    {
+      title: t('problems.records'),
+      description: t('problems.records_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>📂</Typography>
     }
   ];
 
   const solutionItems = [
-    { 
-      title: 'Sơ chẩn Tự Động 24/7', 
-      description: 'AI tiếp nhận & đánh giá rủi ro tức thì thông qua mô tả triệu chứng thông minh.',
+    {
+      title: t('solutions.triage'),
+      description: t('solutions.triage_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>🤖</Typography>
     },
-    { 
-      title: 'Điều hướng Thông Minh', 
-      description: 'Phân luồng hồ sơ bệnh chính xác đến từng phòng khám chuyên môn sâu phù hợp.',
+    {
+      title: t('solutions.routing'),
+      description: t('solutions.routing_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⚡</Typography>
     },
-    { 
-      title: 'Số hóa EHR Tự Động', 
-      description: 'Quy đổi toàn bộ ghi chép lâm sàng sang bảng mã HL7 tiêu chuẩn chỉ sau 1 giây.',
+    {
+      title: t('solutions.ehr'),
+      description: t('solutions.ehr_desc'),
       media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>🔒</Typography>
     }
   ];
 
   const explorerItems = [
-    { 
-      title: t('problems.wait'), 
+    {
+      title: t('problems.wait'),
       description: t('problems.wait_desc'),
       bgVideo: '/assets/bg_video_1.mp4',
       media: (
@@ -472,8 +471,8 @@ export default function Landing() {
         </Box>
       )
     },
-    { 
-      title: t('problems.specialty'), 
+    {
+      title: t('problems.specialty'),
       description: t('problems.specialty_desc'),
       bgVideo: '/assets/bg_video_2.mp4',
       media: (
@@ -488,8 +487,8 @@ export default function Landing() {
         </Box>
       )
     },
-    { 
-      title: t('problems.triage247'), 
+    {
+      title: t('problems.triage247'),
       description: t('problems.triage247_desc'),
       media: (
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -503,8 +502,8 @@ export default function Landing() {
         </Box>
       )
     },
-    { 
-      title: t('problems.ehr_sync'), 
+    {
+      title: t('problems.ehr_sync'),
       description: t('problems.ehr_sync_desc'),
       media: (
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
@@ -560,8 +559,6 @@ export default function Landing() {
         }}
       />
 
-      <Navbar />
-
       {/* Hero Section */}
       <Fade in timeout={800}>
         <Box
@@ -578,9 +575,9 @@ export default function Landing() {
             py: 10
           }}
         >
-          <Box 
-            component="video" 
-            src="/assets/bg_video_1.mp4" 
+          <Box
+            component="video"
+            src="/assets/bg_video_1.mp4"
             autoPlay loop muted playsInline
             sx={{
               position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
@@ -641,8 +638,8 @@ export default function Landing() {
 
       {/* AI Triage Section (Full Width Background) */}
       <Reveal>
-        <Box id="ai-tech" sx={{ 
-          mb: 16, 
+        <Box id="ai-tech" sx={{
+          mb: 16,
           position: 'relative',
           borderRadius: 0,
           overflow: 'hidden',
@@ -656,16 +653,16 @@ export default function Landing() {
           flexDirection: 'column',
           justifyContent: 'center'
         }}>
-          <Box 
-            component="video" 
-            src="/assets/bg_video_2.mp4" 
+          <Box
+            component="video"
+            src="/assets/bg_video_2.mp4"
             autoPlay loop muted playsInline
             sx={{
               position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
               objectFit: 'cover', zIndex: 0, opacity: 0.1, pointerEvents: 'none'
             }}
           />
-          
+
           <Box sx={{ maxWidth: 1200, mx: 'auto', position: 'relative', zIndex: 1 }}>
             <InteractiveParticles mode="repel" />
             <Typography variant="h3" sx={{ fontWeight: 900, color: '#064e3b', mb: 3, textAlign: 'center' }}>
@@ -682,7 +679,7 @@ export default function Landing() {
                 { icon: <ArrowForward />, title: t('triage.step2'), text: t('triage.step2_desc') },
                 { icon: <MedicalServices />, title: t('triage.step3'), text: t('triage.step3_desc') },
               ].map((item, idx) => (
-                <Grid item xs={12} md={4} key={idx}>
+                <Grid size={{ xs: 12, md: 4 }} key={idx}>
                   <Paper
                     elevation={0}
                     sx={{
@@ -723,9 +720,9 @@ export default function Landing() {
                   <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#ffbd2e' }} />
                   <Box sx={{ width: 12, height: 12, borderRadius: '50%', backgroundColor: '#27c93f' }} />
                 </Box>
-                
+
                 <CardContent sx={{ minHeight: 360, height: 360, overflowY: 'auto', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', gap: 2.5, p: 3 }}>
-                  
+
                   {chatStep >= 0 && (
                     <Paper elevation={0} sx={{ p: 2, alignSelf: 'flex-end', maxWidth: '80%', background: '#059669', color: '#fff', borderRadius: '16px 16px 4px 16px', boxShadow: '0 4px 10px rgba(5, 150, 105, 0.15)' }}>
                       <Typography variant="body2">{t('triage.chat_patient1')}</Typography>
@@ -779,128 +776,128 @@ export default function Landing() {
             </Typography>
           </Box>
 
+          <Box
+            sx={{
+              width: '100%',
+              overflow: 'hidden',
+              position: 'relative',
+              py: 3,
+              '&::before, &::after': {
+                content: '""', position: 'absolute', top: 0, width: 100, height: '100%', zIndex: 2,
+                pointerEvents: 'none',
+              },
+              '&::before': { left: 0, background: 'linear-gradient(to right, #f0fdf4 0%, rgba(255,255,255,0) 100%)' },
+              '&::after': { right: 0, background: 'linear-gradient(to left, #f0fdf4 0%, rgba(255,255,255,0) 100%)' }
+            }}
+          >
             <Box
               sx={{
-                width: '100%',
-                overflow: 'hidden',
-                position: 'relative',
-                py: 3,
-                '&::before, &::after': {
-                  content: '""', position: 'absolute', top: 0, width: 100, height: '100%', zIndex: 2,
-                  pointerEvents: 'none',
-                },
-                '&::before': { left: 0, background: 'linear-gradient(to right, #f0fdf4 0%, rgba(255,255,255,0) 100%)' },
-                '&::after': { right: 0, background: 'linear-gradient(to left, #f0fdf4 0%, rgba(255,255,255,0) 100%)' }
+                display: 'flex', width: 'max-content',
+                animation: `${slideTrack} 22s linear infinite`,
+                '&:hover': { animationPlayState: 'paused' },
               }}
             >
-              <Box
-                sx={{
-                  display: 'flex', width: 'max-content',
-                  animation: `${slideTrack} 22s linear infinite`,
-                  '&:hover': { animationPlayState: 'paused' },
-                }}
-              >
-                {[...ehrFeatures, ...ehrFeatures].map((item, idx) => (
-                  <Paper
-                    key={idx}
-                    elevation={0}
-                    sx={{
-                      p: 3.5, width: 300, mx: 2.5, borderRadius: 5,
-                      background: 'rgba(255, 255, 255, 0.7)',
-                      backdropFilter: 'blur(12px)',
-                      border: '1px solid rgba(16, 185, 129, 0.15)',
-                      boxShadow: '0 15px 35px rgba(0,0,0,0.02)',
-                      flexShrink: 0,
-                      '&:hover': { transform: 'translateY(-10px)', transition: 'all 0.3s ease' },
-                    }}
-                  >
-                    <Box sx={{ color: '#059669', display: 'flex', mb: 2 }}>
-                      {item.icon}
-                    </Box>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: '#064e3b', mb: 1 }}>
-                      {item.title}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                      {item.desc}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Box>
-            </Box>
-            
-            <Box sx={{ textAlign: 'center', mt: 6 }}>
-              <Button
-                variant="outlined" size="large"
-                onClick={() => navigate('/register')}
-                sx={{
-                  borderColor: '#059669', color: '#059669', px: 5, py: 1.5, fontSize: '1.05rem',
-                  borderWidth: '2px',
-                  '&:hover': {
-                    borderColor: '#047857',
-                    color: '#047857',
-                    background: 'rgba(16, 185, 129, 0.05)',
-                    borderWidth: '2px',
-                    transform: 'scale(1.05)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                Bắt đầu trải nghiệm
-              </Button>
+              {[...ehrFeatures, ...ehrFeatures].map((item, idx) => (
+                <Paper
+                  key={idx}
+                  elevation={0}
+                  sx={{
+                    p: 3.5, width: 300, mx: 2.5, borderRadius: 5,
+                    background: 'rgba(255, 255, 255, 0.7)',
+                    backdropFilter: 'blur(12px)',
+                    border: '1px solid rgba(16, 185, 129, 0.15)',
+                    boxShadow: '0 15px 35px rgba(0,0,0,0.02)',
+                    flexShrink: 0,
+                    '&:hover': { transform: 'translateY(-10px)', transition: 'all 0.3s ease' },
+                  }}
+                >
+                  <Box sx={{ color: '#059669', display: 'flex', mb: 2 }}>
+                    {item.icon}
+                  </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800, color: '#064e3b', mb: 1 }}>
+                    {item.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                    {item.desc}
+                  </Typography>
+                </Paper>
+              ))}
             </Box>
           </Box>
-        </Reveal>
+
+          <Box sx={{ textAlign: 'center', mt: 6 }}>
+            <Button
+              variant="outlined" size="large"
+              onClick={() => navigate('/register')}
+              sx={{
+                borderColor: '#059669', color: '#059669', px: 5, py: 1.5, fontSize: '1.05rem',
+                borderWidth: '2px',
+                '&:hover': {
+                  borderColor: '#047857',
+                  color: '#047857',
+                  background: 'rgba(16, 185, 129, 0.05)',
+                  borderWidth: '2px',
+                  transform: 'scale(1.05)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              {t('ehr.action')}
+            </Button>
+          </Box>
+        </Box>
+      </Reveal>
 
       {/* Alternating Feature Rows Section */}
       <Box id="patients">
         {explorerItems.map((item, idx) => (
-        <Reveal key={idx} delay={idx * 0.1}>
-          <Box 
-            sx={{ 
-              display: 'flex', 
-              flexDirection: { xs: 'column', md: idx % 2 === 0 ? 'row' : 'row-reverse' }, 
-              gap: { xs: 4, md: 8 }, 
-              maxWidth: 1400, 
-              width: '95%', 
-              mx: 'auto', 
-              py: { xs: 6, md: 10 }, 
-              alignItems: 'center',
-              position: 'relative',
-              zIndex: 1,
-            }}
-          >
-            {/* Text Content */}
-            <Box sx={{ flex: 1, px: { xs: 2, md: 4 } }}>
-              <Typography variant="h3" sx={{ fontWeight: 900, color: '#064e3b', mb: 3, fontSize: { xs: '2rem', md: '2.8rem' } }}>
-                {item.title}
-              </Typography>
-              <Typography variant="body1" sx={{ color: '#4b5563', lineHeight: 1.8, fontSize: '1.15rem' }}>
-                {item.description}
-              </Typography>
-            </Box>
-
-            {/* Media Container */}
+          <Reveal key={idx} delay={idx * 0.1}>
             <Box
               sx={{
-                flex: 1.5, 
-                height: { xs: '300px', md: '50vh' }, 
-                width: '100%',
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                borderRadius: 5, 
-                overflow: 'hidden',
-                background: 'rgba(255, 255, 255, 0.5)', 
-                backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(16, 185, 129, 0.15)',
-                boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
+                display: 'flex',
+                flexDirection: { xs: 'column', md: idx % 2 === 0 ? 'row' : 'row-reverse' },
+                gap: { xs: 4, md: 8 },
+                maxWidth: 1536,
+                width: '95%',
+                mx: 'auto',
+                py: { xs: 6, md: 10 },
+                alignItems: 'center',
+                position: 'relative',
+                zIndex: 1,
               }}
             >
-              {item.media}
+              {/* Text Content */}
+              <Box sx={{ flex: 1, px: { xs: 2, md: 4 } }}>
+                <Typography variant="h3" sx={{ fontWeight: 900, color: '#064e3b', mb: 3, fontSize: { xs: '2rem', md: '2.8rem' } }}>
+                  {item.title}
+                </Typography>
+                <Typography variant="body1" sx={{ color: '#4b5563', lineHeight: 1.8, fontSize: '1.15rem' }}>
+                  {item.description}
+                </Typography>
+              </Box>
+
+              {/* Media Container */}
+              <Box
+                sx={{
+                  flex: 1.5,
+                  height: { xs: '300px', md: '50vh' },
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 5,
+                  overflow: 'hidden',
+                  background: 'rgba(255, 255, 255, 0.5)',
+                  backdropFilter: 'blur(16px)',
+                  border: '1px solid rgba(16, 185, 129, 0.15)',
+                  boxShadow: '0 20px 50px rgba(0,0,0,0.05)',
+                }}
+              >
+                {item.media}
+              </Box>
             </Box>
-          </Box>
-        </Reveal>
-      ))}
+          </Reveal>
+        ))}
       </Box>
 
       {/* Section 1: The Problem (Full Width) */}
@@ -915,21 +912,21 @@ export default function Landing() {
           }}
         >
           <MorphingParticles color="239, 68, 68" shape="cross" />
-          <Box sx={{ maxWidth: 1000, mx: 'auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ maxWidth: 1536, mx: 'auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
             <Typography variant="h3" sx={{ fontWeight: 900, color: '#991b1b', mb: 4 }}>
-              Vấn Đề Quá Tải Trong Y Tế
+              {t('problems.title')}
             </Typography>
             <Typography variant="h5" sx={{ color: '#7f1d1d', mb: 6, fontWeight: 600, lineHeight: 1.6, maxWidth: 850, mx: 'auto' }}>
-              Hệ thống chăm sóc sức khỏe truyền thống đang đứng trước áp lực cực kỳ to lớn.
+              {t('problems.subtitle')}
             </Typography>
-            
+
             <Grid container spacing={4} sx={{ textAlign: 'left' }}>
               {[
-                { title: 'Thời gian chờ đợi kéo dài', text: 'Bệnh nhân trung bình mất 2-4 tiếng xếp hàng chỉ để nhận diện ban đầu.' },
-                { title: 'Sai sót định hướng', text: 'Hơn 30% người bệnh chọn sai chuyên khoa điều trị trong lần khám đầu.' },
-                { title: 'Hồ sơ cồng kềnh', text: 'Ghi chép phi cấu trúc gây khó khăn cực độ cho việc phân tích bệnh sử.' }
+                { title: t('problems.wait'), text: t('problems.wait_desc') },
+                { title: t('problems.specialty'), text: t('problems.specialty_desc') },
+                { title: t('problems.records'), text: t('problems.records_desc') }
               ].map((item, idx) => (
-                <Grid item xs={12} md={4} key={idx}>
+                <Grid size={{ xs: 12, md: 4 }} key={idx}>
                   <Box sx={{ p: 3, background: '#ffffff', borderRadius: 4, boxShadow: '0 10px 30px rgba(153, 27, 27, 0.03)', border: '1px solid rgba(239, 68, 68, 0.05)' }}>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#b91c1c', mb: 1.5 }}>{item.title}</Typography>
                     <Typography variant="body2" sx={{ color: '#7f1d1d', lineHeight: 1.6 }}>{item.text}</Typography>
@@ -952,21 +949,21 @@ export default function Landing() {
           }}
         >
           <MorphingParticles color="16, 185, 129" shape="heart" />
-          <Box sx={{ maxWidth: 1000, mx: 'auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
+          <Box sx={{ maxWidth: 1536, mx: 'auto', textAlign: 'center', position: 'relative', zIndex: 1 }}>
             <Typography variant="h3" sx={{ fontWeight: 900, color: '#047857', mb: 4 }}>
-              Giải Pháp Tối Ưu Từ CareTriage
+              {t('solutions.title')}
             </Typography>
             <Typography variant="h5" sx={{ color: '#065f46', mb: 6, fontWeight: 600, lineHeight: 1.6, maxWidth: 850, mx: 'auto' }}>
-              Chúng tôi tái định nghĩa trải nghiệm chăm sóc sức khỏe bằng công nghệ.
+              {t('solutions.subtitle')}
             </Typography>
-            
+
             <Grid container spacing={4} sx={{ textAlign: 'left' }}>
               {[
-                { title: 'Sơ chẩn Tự Động 24/7', text: 'AI tiếp nhận & đánh giá rủi ro tức thì thông qua mô tả triệu chứng.' },
-                { title: 'Điều hướng Thông Minh', text: 'Phân luồng hồ sơ bệnh chính xác đến từng phòng khám chuyên sâu.' },
-                { title: 'Số hóa EHR Tự Động', text: 'Quy đổi ghi chép lâm sàng sang bảng mã HL7 tiêu chuẩn chỉ sau 1 giây.' }
+                { title: t('solutions.triage'), text: t('solutions.triage_desc') },
+                { title: t('solutions.routing'), text: t('solutions.routing_desc') },
+                { title: t('solutions.ehr'), text: t('solutions.ehr_desc') }
               ].map((item, idx) => (
-                <Grid item xs={12} md={4} key={idx}>
+                <Grid size={{ xs: 12, md: 4 }} key={idx}>
                   <Box sx={{ p: 3, background: '#ffffff', borderRadius: 4, boxShadow: '0 10px 30px rgba(16, 185, 129, 0.03)', border: '1px solid rgba(16, 185, 129, 0.05)' }}>
                     <Typography variant="h6" sx={{ fontWeight: 800, color: '#059669', mb: 1.5 }}>{item.title}</Typography>
                     <Typography variant="body2" sx={{ color: '#065f46', lineHeight: 1.6 }}>{item.text}</Typography>
@@ -978,56 +975,6 @@ export default function Landing() {
         </Box>
       </Reveal>
 
-      {/* Footer Section */}
-      <Box
-        component="footer"
-        sx={{
-          background: '#064e3b', color: '#e2e8f0',
-          py: 6, px: { xs: 3, md: 6 },
-          mt: 8, borderTop: '1px solid rgba(255,255,255,0.1)',
-        }}
-      >
-        <Grid container spacing={4} sx={{ maxWidth: 1200, mx: 'auto' }}>
-          <Grid item xs={12} md={4}>
-            <Typography variant="h5" sx={{ fontWeight: 900, color: '#f8fafc', mb: 2 }}>
-              CareTriage
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8', lineHeight: 1.6 }}>
-              Ứng dụng Trí tuệ nhân tạo nâng cao trải nghiệm y khoa thông minh cho người Việt.
-            </Typography>
-          </Grid>
-          
-          <Grid item xs={6} md={4}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f8fafc', mb: 2 }}>
-              Tính năng chính
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, cursor: 'pointer', '&:hover': { color: '#10b981' } }}>
-              Triage Sơ chẩn
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1, cursor: 'pointer', '&:hover': { color: '#10b981' } }}>
-              Trích xuất Bệnh án
-            </Typography>
-          </Grid>
-
-          <Grid item xs={6} md={4}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#f8fafc', mb: 2 }}>
-              Liên hệ hỗ trợ
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8', mb: 1 }}>
-              Email: info@caretriage.vn
-            </Typography>
-            <Typography variant="body2" sx={{ color: '#94a3b8' }}>
-              Hotline: 1900-XXXX
-            </Typography>
-          </Grid>
-        </Grid>
-
-        <Box sx={{ textAlign: 'center', mt: 6, pt: 3, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <Typography variant="caption" sx={{ color: '#64748b' }}>
-            © {new Date().getFullYear()} CareTriage. All rights reserved.
-          </Typography>
-        </Box>
-      </Box>
     </Box>
   )
 }

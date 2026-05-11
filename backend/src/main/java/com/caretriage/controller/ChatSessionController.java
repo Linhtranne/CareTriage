@@ -12,6 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import com.caretriage.dto.ChatSessionDTO;
+import java.util.Map;
+import java.util.HashMap;
+
 
 @RestController
 @RequestMapping("/api/v1/chat")
@@ -20,8 +23,20 @@ public class ChatSessionController {
 
     private final ChatService chatService;
     private final UserRepository userRepository;
+    private final com.caretriage.service.AiClientService aiClientService;
+
+    @GetMapping("/health/ai")
+    public ResponseEntity<Map<String, Object>> getAiHealth() {
+        boolean isUp = aiClientService.checkHealth();
+        Map<String, Object> response = new HashMap<>();
+        response.put("status", isUp ? "UP" : "DOWN");
+        response.put("service", "caretriage-ai-service");
+        return ResponseEntity.ok(response);
+    }
+
 
     @PostMapping("/sessions")
+
     public ResponseEntity<com.caretriage.dto.ChatSessionDTO> createSession(
             @AuthenticationPrincipal UserDetails userDetails,
             @RequestParam(defaultValue = "TRIAGE") ChatSession.SessionType type,

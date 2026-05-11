@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -39,12 +38,13 @@ import {
   RefreshCw,
   Info
 } from 'lucide-react';
-import { format } from 'date-fns';
+import { format, isValid } from 'date-fns';
 import { vi, enUS } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import appointmentApi from '../../api/appointmentApi';
 import LoadingScreen from '../../components/common/LoadingScreen';
+import PatientPageShell from '../../components/patient/PatientPageShell';
 
 export default function MyAppointments() {
   const { t, i18n } = useTranslation();
@@ -70,6 +70,32 @@ export default function MyAppointments() {
   const [selectedAppt, setSelectedAppt] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const detailTriggerRef = useRef(null);
+  const cancelReturnRef = useRef(null);
+
+  const focusTrigger = (target) => {
+    if (!target?.focus) return;
+    window.requestAnimationFrame(() => {
+      if (target.isConnected) target.focus();
+    });
+  };
+
+  const formatDateValue = (value, pattern, locale = dateLocale) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (!isValid(date)) return '-';
+    return locale ? format(date, pattern, { locale }) : format(date, pattern);
+  };
+
+  const formatTimeValue = (value) => value?.slice?.(0, 5) || '-';
+
+  const handleCardKeyDown = (event, appt) => {
+    if (event.target !== event.currentTarget) return;
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      handleOpenDetail(appt, event.currentTarget);
+    }
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -93,15 +119,27 @@ export default function MyAppointments() {
     }
   };
 
-  const handleOpenCancel = (e, appt) => {
+  const handleOpenCancel = (e, appt, returnFocusTarget = null) => {
     e.stopPropagation();
+    cancelReturnRef.current = returnFocusTarget || detailTriggerRef.current || e.currentTarget;
     setSelectedAppt(appt);
     setCancelDialogOpen(true);
   };
 
-  const handleOpenDetail = (appt) => {
+  const handleOpenDetail = (appt, trigger = null) => {
+    if (trigger) detailTriggerRef.current = trigger;
     setSelectedAppt(appt);
     setDetailDialogOpen(true);
+  };
+
+  const handleCloseDetail = (restoreFocus = true) => {
+    setDetailDialogOpen(false);
+    if (restoreFocus) focusTrigger(detailTriggerRef.current);
+  };
+
+  const handleCloseCancel = () => {
+    setCancelDialogOpen(false);
+    focusTrigger(cancelReturnRef.current);
   };
 
   const handleCancelAppointment = async () => {
@@ -110,6 +148,7 @@ export default function MyAppointments() {
       await appointmentApi.cancelAppointment(selectedAppt.id, { cancellationReason: cancelReason });
       setCancelDialogOpen(false);
       setCancelReason('');
+      focusTrigger(cancelReturnRef.current);
       fetchAppointments();
     } catch (err) {
       alert(err.response?.data?.message || t('appointments.error_cancel_failed'));
@@ -120,7 +159,7 @@ export default function MyAppointments() {
 
   const handleRebook = (appt) => {
     // Logic to navigate to booking with pre-selected doctor (T-031 AC-5)
-    navigate(`/patient/book-appointment?doctorId=${appt.doctorId}`);
+    navigate(`/patient/appointments/book-appointment?doctorId=${appt.doctorId}`);
   };
 
   const renderStatusChip = (status) => {
@@ -142,31 +181,32 @@ export default function MyAppointments() {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6 }}>
-      {/* Header Section */}
-      <Box sx={{ mb: 5, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2 }}>
-        <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, color: '#0f172a', letterSpacing: '-0.02em' }}>{t('appointments.title')}</Typography>
-          <Typography variant="body1" color="text.secondary">{t('appointments.subtitle')}</Typography>
-        </Box>
-        <Button 
-          variant="contained" 
+    <PatientPageShell
+      title={t('appointments.title')}
+      subtitle={t('appointments.subtitle')}
+      maxWidth="lg"
+      actions={
+        <Button
+          variant="contained"
           startIcon={<CalendarCheck size={18} />}
-          onClick={() => navigate('/patient/book-appointment')}
-          sx={{ 
-            borderRadius: 3, 
-            bgcolor: '#10b981', 
-            '&:hover': { bgcolor: '#059669' }, 
+          onClick={() => navigate('/patient/appointments/book-appointment')}
+          sx={{
+            borderRadius: 3,
+            bgcolor: '#10b981',
+            '&:hover': { bgcolor: '#059669' },
             fontWeight: 700,
             px: 3,
             py: 1.2,
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)'
+            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+            width: 'auto',
+            minWidth: 0,
+            alignSelf: 'flex-end',
           }}
         >
           {t('appointments.book_new')}
         </Button>
-      </Box>
-
+      }
+    >
       {/* Tabs Section */}
       <Paper sx={{ borderRadius: 5, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.04)', border: '1px solid #f1f5f9' }}>
         <Tabs 
@@ -198,20 +238,29 @@ export default function MyAppointments() {
             <Grid container spacing={3}>
               {appointments.map((appt) => (
                 <Grid item xs={12} md={6} key={appt.id}>
-                  <Card 
-                    onClick={() => handleOpenDetail(appt)}
-                    sx={{ 
-                      borderRadius: 5, 
-                      border: '1px solid #e2e8f0', 
-                      boxShadow: 'none', 
+                  <Card
+                    role="button"
+                    tabIndex={0}
+                    aria-haspopup="dialog"
+                    onClick={(e) => handleOpenDetail(appt, e.currentTarget)}
+                    onKeyDown={(event) => handleCardKeyDown(event, appt)}
+                    sx={{
+                      borderRadius: 5,
+                      border: '1px solid #e2e8f0',
+                      boxShadow: 'none',
                       cursor: 'pointer',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       overflow: 'visible',
-                      '&:hover': { 
-                        transform: 'translateY(-6px)', 
+                      '&:hover': {
+                        transform: 'translateY(-6px)',
                         boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
                         borderColor: '#10b981'
+                      },
+                      '&:focus-visible': {
+                        outline: 'none',
+                        borderColor: '#10b981',
+                        boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.18)'
                       }
                     }}
                   >
@@ -222,7 +271,7 @@ export default function MyAppointments() {
                             src={appt.doctorAvatar} 
                             sx={{ width: 60, height: 60, borderRadius: 3, bgcolor: '#f0fdf4', color: '#10b981', fontWeight: 800, fontSize: '1.5rem', border: '2px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                           >
-                            {appt.doctorName.charAt(0)}
+                            {appt.doctorName?.charAt(0) || '?'}
                           </Avatar>
                           <Box>
                             <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{t('appointments.attending_doctor')}: {appt.doctorName}</Typography>
@@ -230,8 +279,18 @@ export default function MyAppointments() {
                             <Box sx={{ mt: 1 }}>{renderStatusChip(appt.status)}</Box>
                           </Box>
                         </Box>
-                        <Tooltip title={t('records.close')}>
-                          <IconButton size="small" sx={{ bgcolor: '#f1f5f9' }}><ChevronRight size={18} /></IconButton>
+                        <Tooltip title={t('appointments.open_detail')}>
+                          <IconButton
+                            size="small"
+                            aria-label={t('appointments.open_detail')}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDetail(appt, e.currentTarget);
+                            }}
+                            sx={{ bgcolor: '#f1f5f9' }}
+                          >
+                            <ChevronRight size={18} />
+                          </IconButton>
                         </Tooltip>
                       </Box>
 
@@ -241,7 +300,7 @@ export default function MyAppointments() {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <CalendarDays size={14} color="#10b981" />
                               <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
-                                {format(new Date(appt.appointmentDate), 'dd/MM/yyyy')}
+                                {formatDateValue(appt.appointmentDate, 'dd/MM/yyyy')}
                               </Typography>
                             </Box>
                           </Grid>
@@ -249,7 +308,7 @@ export default function MyAppointments() {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               <Clock size={14} color="#10b981" />
                               <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
-                                {appt.appointmentTime.substring(0, 5)}
+                                {formatTimeValue(appt.appointmentTime)}
                               </Typography>
                             </Box>
                           </Grid>
@@ -258,12 +317,12 @@ export default function MyAppointments() {
 
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
-                          <Button 
-                            fullWidth 
-                            variant="outlined" 
-                            color="error" 
+                          <Button
+                            fullWidth
+                            variant="outlined"
+                            color="error"
                             size="small"
-                            onClick={(e) => handleOpenCancel(e, appt)}
+                            onClick={(e) => handleOpenCancel(e, appt, e.currentTarget)}
                             sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1 }}
                           >
                             {t('appointments.cancel_btn')}
@@ -298,7 +357,7 @@ export default function MyAppointments() {
               </Typography>
               <Button 
                 variant="contained" 
-                onClick={() => navigate('/patient/book-appointment')}
+                onClick={() => navigate('/patient/appointments/book-appointment')}
                 sx={{ borderRadius: 3, bgcolor: '#10b981', px: 4, py: 1.5, fontWeight: 700 }}
               >
                 {t('appointments.book_now')}
@@ -309,14 +368,18 @@ export default function MyAppointments() {
       </Paper>
 
       {/* Appointment Detail Dialog (T-031 AC-4) */}
-      <Dialog 
-        open={detailDialogOpen} 
-        onClose={() => setDetailDialogOpen(false)}
+      <Dialog
+        open={detailDialogOpen}
+        onClose={handleCloseDetail}
         fullWidth
         maxWidth="sm"
+        aria-labelledby="appointment-detail-title"
         PaperProps={{ sx: { borderRadius: 6, p: 1 } }}
       >
-        <DialogTitle sx={{ fontWeight: 900, fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          id="appointment-detail-title"
+          sx={{ fontWeight: 900, fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           {t('appointments.detail_title')}
           {selectedAppt && renderStatusChip(selectedAppt.status)}
         </DialogTitle>
@@ -341,7 +404,7 @@ export default function MyAppointments() {
                     <Box>
                       <Typography variant="caption" color="text.secondary">{t('appointments.exam_date')}</Typography>
                       <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                        {selectedAppt && format(new Date(selectedAppt.appointmentDate), 'eeee, dd/MM/yyyy', { locale: dateLocale })}
+                        {selectedAppt && formatDateValue(selectedAppt.appointmentDate, 'eeee, dd/MM/yyyy')}
                       </Typography>
                     </Box>
                   </Box>
@@ -350,7 +413,7 @@ export default function MyAppointments() {
                     <Box>
                       <Typography variant="caption" color="text.secondary">{t('appointments.exam_time')}</Typography>
                       <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                        {selectedAppt?.appointmentTime.substring(0, 5)} - {selectedAppt?.endTime.substring(0, 5)}
+                        {formatTimeValue(selectedAppt?.appointmentTime)} - {formatTimeValue(selectedAppt?.endTime)}
                       </Typography>
                     </Box>
                   </Box>
@@ -403,7 +466,7 @@ export default function MyAppointments() {
         <DialogActions sx={{ p: 3, gap: 2 }}>
           <Button 
             fullWidth 
-            onClick={() => setDetailDialogOpen(false)} 
+            onClick={handleCloseDetail}
             sx={{ borderRadius: 3, fontWeight: 700, color: '#64748b', bgcolor: '#f1f5f9' }}
           >
             {t('appointments.close')}
@@ -413,7 +476,7 @@ export default function MyAppointments() {
               fullWidth 
               variant="contained" 
               color="error"
-              onClick={(e) => { setDetailDialogOpen(false); handleOpenCancel(e, selectedAppt); }}
+              onClick={(e) => { handleCloseDetail(false); handleOpenCancel(e, selectedAppt, detailTriggerRef.current); }}
               sx={{ borderRadius: 3, fontWeight: 700, boxShadow: 'none' }}
             >
               {t('appointments.cancel_now')}
@@ -423,12 +486,13 @@ export default function MyAppointments() {
       </Dialog>
 
       {/* Cancel Confirmation Dialog */}
-      <Dialog 
-        open={cancelDialogOpen} 
-        onClose={() => setCancelDialogOpen(false)}
+      <Dialog
+        open={cancelDialogOpen}
+        onClose={handleCloseCancel}
+        aria-labelledby="appointment-cancel-title"
         PaperProps={{ sx: { borderRadius: 6, p: 1, maxWidth: 450 } }}
       >
-        <DialogTitle sx={{ fontWeight: 900, textAlign: 'center', pt: 4 }}>{t('appointments.cancel_confirm_title')}</DialogTitle>
+        <DialogTitle id="appointment-cancel-title" sx={{ fontWeight: 900, textAlign: 'center', pt: 4 }}>{t('appointments.cancel_confirm_title')}</DialogTitle>
         <DialogContent>
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <Box sx={{ p: 2, borderRadius: '50%', bgcolor: '#fef2f2', display: 'inline-flex', mb: 2 }}>
@@ -452,7 +516,7 @@ export default function MyAppointments() {
         <DialogActions sx={{ px: 4, pb: 4, gap: 2 }}>
           <Button 
             fullWidth 
-            onClick={() => setCancelDialogOpen(false)} 
+            onClick={handleCloseCancel}
             sx={{ borderRadius: 3, fontWeight: 700, color: '#64748b' }}
           >
             {t('appointments.go_back')}
@@ -469,6 +533,6 @@ export default function MyAppointments() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PatientPageShell>
   );
 }

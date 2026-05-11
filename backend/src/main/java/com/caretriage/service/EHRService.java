@@ -64,7 +64,8 @@ public class EHRService {
     }
 
     @Transactional
-    public EHRDto.ExtractionResultDto extractFromFile(MultipartFile file, Long patientId, Long doctorId, String noteType) {
+    public EHRDto.ExtractionResultDto extractFromFile(MultipartFile file, Long patientId, Long doctorId,
+            String noteType) {
         User patient = userRepository.findById(patientId).orElseThrow(() -> new RuntimeException("Patient not found"));
         User doctor = userRepository.findById(doctorId).orElseThrow(() -> new RuntimeException("Doctor not found"));
 
@@ -186,8 +187,10 @@ public class EHRService {
                         .entityValue((String) ed.get("entity_value"))
                         .normalizedValue((String) ed.get("normalized_value"))
                         .confidenceScore(((Number) ed.getOrDefault("confidence_score", 0.8)).doubleValue())
-                        .startPosition(ed.get("start_position") != null ? ((Number) ed.get("start_position")).intValue() : null)
-                        .endPosition(ed.get("end_position") != null ? ((Number) ed.get("end_position")).intValue() : null)
+                        .startPosition(ed.get("start_position") != null ? ((Number) ed.get("start_position")).intValue()
+                                : null)
+                        .endPosition(
+                                ed.get("end_position") != null ? ((Number) ed.get("end_position")).intValue() : null)
                         .build();
                 savedEntities.add(extractedEntityRepository.save(entity));
 
@@ -218,22 +221,26 @@ public class EHRService {
             case MEDICATION -> patientMedicationRepository.save(PatientMedication.builder()
                     .patient(patient)
                     .clinicalNote(note)
-                    .medicationName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
+                    .medicationName(
+                            entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
                     .prescribingDoctorId(doctor.getId())
                     .startDate(LocalDate.now())
                     .build());
             case CONDITION -> patientConditionRepository.save(PatientCondition.builder()
                     .patient(patient)
                     .clinicalNote(note)
-                    .conditionName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
+                    .conditionName(
+                            entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
                     .diagnosedDate(LocalDate.now())
                     .build());
             case SYMPTOM -> patientSymptomRepository.save(PatientSymptom.builder()
                     .patient(patient)
                     .clinicalNote(note)
-                    .symptomName(entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
+                    .symptomName(
+                            entity.getNormalizedValue() != null ? entity.getNormalizedValue() : entity.getEntityValue())
                     .build());
-            default -> { /* DOSAGE, LAB_TEST, PROCEDURE stored in extracted_entities only */ }
+            default -> {
+                /* DOSAGE, LAB_TEST, PROCEDURE stored in extracted_entities only */ }
         }
     }
 
@@ -258,7 +265,8 @@ public class EHRService {
                 public String getFilename() {
                     return file.getOriginalFilename();
                 }
-            }).contentType(MediaType.parseMediaType(file.getContentType() != null ? file.getContentType() : "application/octet-stream"));
+            }).contentType(MediaType.parseMediaType(
+                    file.getContentType() != null ? file.getContentType() : "application/octet-stream"));
 
             return webClientBuilder.build()
                     .post()
@@ -273,12 +281,14 @@ public class EHRService {
     }
 
     private Set<Long> intersect(Set<Long> current, Set<Long> newSet) {
-        if (current == null) return newSet;
+        if (current == null)
+            return newSet;
         current.retainAll(newSet);
         return current;
     }
 
-    private List<EHRDto.ExtractedEntityDto> filterByType(List<ExtractedEntity> entities, ExtractedEntity.EntityType type) {
+    private List<EHRDto.ExtractedEntityDto> filterByType(List<ExtractedEntity> entities,
+            ExtractedEntity.EntityType type) {
         return entities.stream()
                 .filter(e -> e.getEntityType() == type)
                 .map(this::toEntityDto)
@@ -303,7 +313,8 @@ public class EHRService {
                 .doctorId(note.getDoctor().getId())
                 .noteType(note.getNoteType().name())
                 .rawText(note.getRawText() != null && note.getRawText().length() > 200
-                        ? note.getRawText().substring(0, 200) + "..." : note.getRawText())
+                        ? note.getRawText().substring(0, 200) + "..."
+                        : note.getRawText())
                 .fileType(note.getFileType())
                 .extractionStatus(note.getExtractionStatus().name())
                 .createdAt(note.getCreatedAt() != null ? note.getCreatedAt().toString() : null)
@@ -312,7 +323,8 @@ public class EHRService {
     }
 
     private ClinicalNote.NoteType parseNoteType(String noteType) {
-        if (noteType == null || noteType.isBlank()) return ClinicalNote.NoteType.PROGRESS;
+        if (noteType == null || noteType.isBlank())
+            return ClinicalNote.NoteType.PROGRESS;
         try {
             return ClinicalNote.NoteType.valueOf(noteType.toUpperCase());
         } catch (IllegalArgumentException e) {
@@ -321,7 +333,8 @@ public class EHRService {
     }
 
     private String getFileExtension(String filename) {
-        if (filename == null || !filename.contains(".")) return "UNKNOWN";
+        if (filename == null || !filename.contains("."))
+            return "UNKNOWN";
         return filename.substring(filename.lastIndexOf(".") + 1).toUpperCase();
     }
 }

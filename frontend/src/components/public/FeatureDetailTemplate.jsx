@@ -23,19 +23,17 @@ export default function FeatureDetailTemplate({
 
   useEffect(() => {
     if (!i18n.language || i18n.language.startsWith('vi')) {
-      setTTitle(title)
-      setTCategory(category)
-      setTDesc(description)
-      setTFeatures(features)
       return
     }
+
+    let isMounted = true
 
     const translateText = async (text) => {
       try {
         const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
         const data = await res.json()
         return data[0].map(item => item[0]).join('')
-      } catch (err) {
+      } catch {
         return text
       }
     }
@@ -52,14 +50,23 @@ export default function FeatureDetailTemplate({
         }))
       )
 
-      setTTitle(newTitle)
-      setTCategory(newCategory)
-      setTDesc(newDesc)
-      setTFeatures(newFeatures)
+      if (isMounted) {
+        setTTitle(newTitle)
+        setTCategory(newCategory)
+        setTDesc(newDesc)
+        setTFeatures(newFeatures)
+      }
     }
 
     performTranslation()
+    return () => { isMounted = false }
   }, [i18n.language, title, category, description, features])
+
+  const isVi = !i18n.language || i18n.language.startsWith('vi')
+  const displayTitle = isVi ? title : tTitle
+  const displayCategory = isVi ? category : tCategory
+  const displayDesc = isVi ? description : tDesc
+  const displayFeatures = isVi ? features : tFeatures
 
   return (
     <Box sx={{
@@ -84,20 +91,20 @@ export default function FeatureDetailTemplate({
         {/* Hero Info */}
         <Box sx={{ mb: 8 }}>
           <Typography variant="overline" sx={{ color: '#059669', fontWeight: 800, letterSpacing: 2 }}>
-            {tCategory}
+            {displayCategory}
           </Typography>
           <Typography variant="h2" sx={{ fontWeight: 900, color: '#064e3b', mt: 1, mb: 3 }}>
-            {tTitle}
+            {displayTitle}
           </Typography>
           <Typography variant="h6" sx={{ color: '#4b5563', maxWidth: 800, lineHeight: 1.8, fontWeight: 500 }}>
-            {tDesc}
+            {displayDesc}
           </Typography>
         </Box>
 
         {/* Feature Breakdown Grid */}
         <Grid container spacing={4} sx={{ mb: 8 }}>
-          {tFeatures.map((feat, index) => (
-            <Grid item xs={12} md={4} key={index}>
+          {displayFeatures.map((feat, index) => (
+            <Grid size={{ xs: 12, md: 4 }} key={index}>
               <Paper sx={{
                 p: 4, height: '100%', borderRadius: 4,
                 background: 'rgba(255, 255, 255, 0.6)',
@@ -129,7 +136,7 @@ export default function FeatureDetailTemplate({
           boxShadow: '0 20px 40px rgba(16, 185, 129, 0.3)'
         }}>
           <Typography variant="h4" sx={{ fontWeight: 900, mb: 2 }}>
-            Trải nghiệm {tTitle} ngay hôm nay
+            Trải nghiệm {displayTitle} ngay hôm nay
           </Typography>
           <Typography variant="h6" sx={{ mb: 4, opacity: 0.9, fontWeight: 400 }}>
             Đăng ký tài khoản miễn phí để bắt đầu số hóa quy trình khám chữa bệnh của bạn.

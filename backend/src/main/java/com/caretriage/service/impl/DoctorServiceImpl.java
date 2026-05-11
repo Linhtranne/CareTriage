@@ -114,7 +114,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private DoctorResponse mapToDoctorResponse(DoctorProfile d) {
         return DoctorResponse.builder()
-                .id(d.getId())
+                .id(d.getUser().getId())
                 .fullName(d.getUser().getFullName())
                 .email(d.getUser().getEmail())
                 .phone(d.getUser().getPhone())

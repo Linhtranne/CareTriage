@@ -1,12 +1,9 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Search, 
   MessageSquare, 
-  Clock, 
-  ChevronRight,
-  MoreVertical,
   Bot
 } from 'lucide-react';
 import { format } from 'date-fns';
@@ -18,13 +15,8 @@ const ChatHistoryList = ({ onSelectSession, currentSessionId }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchSessions();
-  }, [searchQuery]);
-
-  const fetchSessions = async () => {
+  const fetchSessions = useCallback(async () => {
     try {
-      setLoading(true);
       const url = searchQuery 
         ? `/api/v1/chat/sessions?query=${encodeURIComponent(searchQuery)}`
         : '/api/v1/chat/sessions';
@@ -35,7 +27,13 @@ const ChatHistoryList = ({ onSelectSession, currentSessionId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      fetchSessions();
+    });
+  }, [fetchSessions]);
 
   const formatDate = (dateString) => {
     if (!dateString) return '';
@@ -65,7 +63,10 @@ const ChatHistoryList = ({ onSelectSession, currentSessionId }) => {
             type="text"
             placeholder="Tìm kiếm cuộc hội thoại..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setLoading(true);
+            }}
             className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/10 focus:border-primary-500/50 transition-all"
           />
         </div>

@@ -13,6 +13,7 @@ const UserManagement = lazy(() => import('./pages/admin/UserManagement'))
 const DepartmentManagement = lazy(() => import('./pages/admin/DepartmentManagement'))
 const MedicalRecordDetail = lazy(() => import('./pages/admin/MedicalRecordDetail'))
 const MedicalRecords = lazy(() => import('./pages/admin/MedicalRecords'))
+const CMSManagement = lazy(() => import('./pages/CMSManagement'))
 
 const FallbackLoader = () => (
   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0f172a' }}>
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/admin/departments" element={<DepartmentManagement />} />
               <Route path="/admin/records" element={<MedicalRecords />} />
               <Route path="/admin/records/:id" element={<MedicalRecordDetail />} />
+              <Route path="/admin/cms" element={<CMSManagement />} />
             </Route>
 
             {/* Fallback route */}

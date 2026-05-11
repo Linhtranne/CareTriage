@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import {
   Dashboard, CalendarMonth, Chat, Assignment,
-  Person, MedicalServices, Logout, Settings,
+  Person, MedicalServices, Logout,
   NotificationsNone, Menu as MenuIcon,
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
@@ -23,7 +23,7 @@ const menuByRole = {
     { textKey: 'sidebar.appointments', icon: <CalendarMonth />, path: '/patient/appointments' },
     { textKey: 'sidebar.ai_triage', icon: <Chat />, path: '/patient/triage' },
     { textKey: 'sidebar.records', icon: <Assignment />, path: '/patient/records' },
-    { text: 'Kết quả triage', icon: <MedicalServices />, path: '/patient/triage-tickets' },
+    { textKey: 'sidebar.priority_classification', icon: <MedicalServices />, path: '/patient/triage-tickets' }
   ],
   DOCTOR: [
     { textKey: 'sidebar.dashboard', icon: <Dashboard />, path: '/doctor/dashboard' },

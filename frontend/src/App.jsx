@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { CircularProgress, Box } from '@mui/material'
 import MainLayout from './components/layout/MainLayout'
 import PublicLayout from './components/layout/PublicLayout'
@@ -18,6 +18,10 @@ const TriageTicketInbox = lazy(() => import('./pages/doctor/TriageTicketInbox'))
 const PatientTriageTickets = lazy(() => import('./pages/patient/TriageTickets'))
 const CreateMedicalRecord = lazy(() => import('./pages/doctor/CreateMedicalRecord'))
 const Profile = lazy(() => import('./pages/shared/Profile'))
+const VisionMission = lazy(() => import('./pages/public/VisionMission'))
+const DepartmentDetail = lazy(() => import('./pages/public/DepartmentDetail'))
+const Emergency = lazy(() => import('./pages/public/Emergency'))
+const Contact = lazy(() => import('./pages/public/Contact'))
 const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Detailed feature pages
@@ -48,6 +52,7 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<VisionMission />} />
         
         <Route path="/features/ai-triage" element={<AITriage />} />
         <Route path="/features/ehr-engine" element={<EHREngine />} />
@@ -60,6 +65,9 @@ export default function App() {
         <Route path="/terms" element={<Terms />} />
         <Route path="/doctors" element={<DoctorList />} />
         <Route path="/doctors/:id" element={<DoctorDetail />} />
+        <Route path="/departments/:id" element={<DepartmentDetail />} />
+        <Route path="/emergency" element={<Emergency />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
 
       {/* Shared Authenticated routes */}
@@ -73,8 +81,11 @@ export default function App() {
       <Route element={<ProtectedRoute roles={['PATIENT']} />}>
         <Route element={<MainLayout />}>
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
-          <Route path="/patient/book-appointment" element={<BookAppointment />} />
-          <Route path="/patient/appointments" element={<MyAppointments />} />
+          <Route path="/patient/appointments" element={<Outlet />}>
+            <Route index element={<MyAppointments />} />
+            <Route path="book-appointment" element={<BookAppointment />} />
+          </Route>
+          <Route path="/patient/book-appointment" element={<Navigate to="/patient/appointments/book-appointment" replace />} />
           <Route path="/patient/records" element={<MedicalHistory />} />
           <Route path="/patient/triage-tickets" element={<PatientTriageTickets />} />
         </Route>

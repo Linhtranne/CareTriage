@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-05-11T01:30:00Z",
+  "title": "Design System: CareTriage",
+  "extensions": {
+    "colorMeta": {
+      "living-teal": {
+        "role": "primary",
+        "displayName": "Living Teal",
+        "canonical": "oklch(68% 0.12 180)",
+        "tonalRamp": ["#0e4f49", "#0b5f58", "#08796d", "#039786", "#08bba3", "#20d6bc", "#53f0d4", "#91fee4"]
+      },
+      "warm-coral": {
+        "role": "secondary",
+        "displayName": "Warm Coral",
+        "canonical": "oklch(63% 0.22 15)",
+        "tonalRamp": ["#881337", "#9f1239", "#e11d48", "#f43f5e", "#fb7185", "#fda4af", "#fecdd3", "#fff1f2"]
+      },
+      "emerald-ink": {
+        "role": "neutral",
+        "displayName": "Emerald Ink",
+        "canonical": "oklch(32% 0.06 165)",
+        "tonalRamp": ["#022c22", "#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7"]
+      },
+      "cloud-white": {
+        "role": "neutral",
+        "displayName": "Cloud White",
+        "canonical": "oklch(98% 0.005 250)",
+        "tonalRamp": ["#0f172a", "#1e293b", "#334155", "#64748b", "#94a3b8", "#e2e8f0", "#f1f5f9", "#f8fafc"]
+      },
+      "meadow-mist": {
+        "role": "neutral",
+        "displayName": "Meadow Mist",
+        "canonical": "oklch(98% 0.01 155)",
+        "tonalRamp": ["#0e4f49", "#0b5f58", "#059669", "#10b981", "#6ee7b7", "#a7f3d0", "#d1fae5", "#f0fdf4"]
+      },
+      "signal-success": {
+        "role": "semantic",
+        "displayName": "Signal Success",
+        "canonical": "oklch(72% 0.15 165)",
+        "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#6ee7b7", "#d1fae5"]
+      },
+      "signal-warning": {
+        "role": "semantic",
+        "displayName": "Signal Warning",
+        "canonical": "oklch(78% 0.16 85)",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fef3c7"]
+      },
+      "signal-danger": {
+        "role": "semantic",
+        "displayName": "Signal Danger",
+        "canonical": "oklch(62% 0.22 28)",
+        "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fee2e2"]
+      },
+      "signal-info": {
+        "role": "semantic",
+        "displayName": "Signal Info",
+        "canonical": "oklch(62% 0.18 260)",
+        "tonalRamp": ["#1e3a5f", "#1e40af", "#2563eb", "#3b82f6", "#60a5fa", "#93bbfd", "#bfdbfe", "#dbeafe"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Landing page hero headlines only. Letter-spacing -0.02em for density at scale." },
+      "headline": { "displayName": "Headline", "purpose": "Section headers, page titles within the app shell." },
+      "title": { "displayName": "Title", "purpose": "Card headers, dialog titles, subsection labels." },
+      "body": { "displayName": "Body", "purpose": "All running text. Max line length 65-75ch." },
+      "label": { "displayName": "Label", "purpose": "Form labels, chip text, sidebar navigation, table headers." }
+    },
+    "shadows": [
+      { "name": "ambient-rest", "value": "0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06)", "purpose": "Cards, papers, containers at rest." },
+      { "name": "ambient-hover", "value": "0 4px 12px rgba(8, 187, 163, 0.3)", "purpose": "Primary button hover. Teal-tinted glow." },
+      { "name": "elevated", "value": "0 10px 25px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05)", "purpose": "Modals, dropdown menus, elevated panels." },
+      { "name": "deep-float", "value": "0 30px 60px rgba(0,0,0,0.05)", "purpose": "Feature showcase panels, sticky media frames." },
+      { "name": "sidebar-presence", "value": "4px 0 24px rgba(0, 0, 0, 0.06)", "purpose": "Fixed sidebar directional shadow." },
+      { "name": "appbar-whisper", "value": "0 2px 12px rgba(0,0,0,0.04)", "purpose": "Sticky top bar. Barely visible separator." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Layout transitions: sidebar collapse, margin shifts." },
+      { "name": "ease-entrance", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Scroll reveals, page entrances, slide-in animations." },
+      { "name": "duration-fast", "value": "200ms", "purpose": "Hover states, color transitions, opacity changes." },
+      { "name": "duration-normal", "value": "300ms", "purpose": "Layout shifts, sidebar toggle, navigation transitions." },
+      { "name": "duration-slow", "value": "500ms", "purpose": "Chat bubble fade-in, MUI Fade components." },
+      { "name": "duration-reveal", "value": "1500ms", "purpose": "Scroll reveal entrance animations." }
+    ],
+    "breakpoints": [
+      { "name": "xs", "value": "0px" },
+      { "name": "sm", "value": "600px" },
+      { "name": "md", "value": "900px" },
+      { "name": "lg", "value": "1200px" },
+      { "name": "xl", "value": "1536px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Standard action button. Living Teal gradient, no resting shadow, teal-glow hover.",
+      "html": "<button class=\"ds-btn-primary\">Xác nhận</button>",
+      "css": ".ds-btn-primary { background: linear-gradient(135deg, #08bba3 0%, #20d6bc 100%); color: #f8fafc; padding: 10px 24px; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.9375rem; font-weight: 600; border: none; border-radius: 10px; cursor: pointer; transition: box-shadow 0.2s, transform 0.2s; text-transform: none; } .ds-btn-primary:hover { box-shadow: 0 4px 12px rgba(8, 187, 163, 0.3); transform: translateY(-1px); } .ds-btn-primary:focus-visible { outline: 2px solid #08bba3; outline-offset: 2px; } .ds-btn-primary:active { transform: translateY(0); }"
+    },
+    {
+      "name": "CTA Button",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "Hero call-to-action. Larger, stronger shadow, lift on hover.",
+      "html": "<button class=\"ds-btn-cta\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/></svg> Kiểm tra triệu chứng</button>",
+      "css": ".ds-btn-cta { display: inline-flex; align-items: center; gap: 8px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #f8fafc; padding: 16px 48px; font-family: 'Inter', -apple-system, sans-serif; font-size: 1.1rem; font-weight: 600; border: none; border-radius: 16px; cursor: pointer; box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); text-transform: none; } .ds-btn-cta:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 15px 30px rgba(16, 185, 129, 0.4); } .ds-btn-cta:focus-visible { outline: 2px solid #08bba3; outline-offset: 2px; } .ds-btn-cta:active { transform: translateY(-1px) scale(1); }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Secondary action. Transparent with teal border.",
+      "html": "<button class=\"ds-btn-outline\">EN</button>",
+      "css": ".ds-btn-outline { background: transparent; color: #08bba3; padding: 6px 12px; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.72rem; font-weight: 700; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; cursor: pointer; transition: all 0.2s; text-transform: none; } .ds-btn-outline:hover { border-color: #08bba3; background: rgba(16, 185, 129, 0.05); } .ds-btn-outline:focus-visible { outline: 2px solid #08bba3; outline-offset: 2px; }"
+    },
+    {
+      "name": "Content Card",
+      "kind": "card",
+      "refersTo": "card-default",
+      "description": "Standard content container. Soft corners, ambient shadow, subtle border.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Lịch hẹn hôm nay</h3><p class=\"ds-card-body\">Bạn có 3 cuộc hẹn sắp tới.</p></div>",
+      "css": ".ds-card { background: #f8fafc; border-radius: 16px; padding: 24px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06); transition: box-shadow 0.2s, transform 0.2s; } .ds-card:hover { box-shadow: 0 10px 25px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.05); } .ds-card-title { font-family: 'Inter', -apple-system, sans-serif; font-size: 1.25rem; font-weight: 600; color: #1e293b; margin: 0 0 8px 0; line-height: 1.4; } .ds-card-body { font-family: 'Inter', -apple-system, sans-serif; font-size: 1rem; font-weight: 400; color: #64748b; margin: 0; line-height: 1.6; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input-default",
+      "description": "Standard form input. Outlined, teal focus ring.",
+      "html": "<div class=\"ds-input-wrap\"><label class=\"ds-input-label\">Email</label><input class=\"ds-input\" type=\"email\" placeholder=\"name@example.com\" /></div>",
+      "css": ".ds-input-wrap { display: flex; flex-direction: column; gap: 6px; } .ds-input-label { font-family: 'Inter', -apple-system, sans-serif; font-size: 0.875rem; font-weight: 600; color: #1e293b; line-height: 1.5; } .ds-input { font-family: 'Inter', -apple-system, sans-serif; font-size: 1rem; padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; background: #f8fafc; color: #1e293b; outline: none; transition: border-color 0.2s, box-shadow 0.2s; } .ds-input:focus { border-color: #08bba3; box-shadow: 0 0 0 3px rgba(8, 187, 163, 0.12); } .ds-input::placeholder { color: #94a3b8; }"
+    },
+    {
+      "name": "Sidebar Nav Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Sidebar navigation item with active and hover states.",
+      "html": "<nav class=\"ds-sidebar-nav\"><a class=\"ds-nav-item ds-nav-active\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"3\" width=\"7\" height=\"7\"/><rect x=\"14\" y=\"14\" width=\"7\" height=\"7\"/><rect x=\"3\" y=\"14\" width=\"7\" height=\"7\"/></svg> Dashboard</a><a class=\"ds-nav-item\" href=\"#\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\"/><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\"/><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\"/><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\"/></svg> Lịch hẹn</a></nav>",
+      "css": ".ds-sidebar-nav { display: flex; flex-direction: column; gap: 4px; padding: 8px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.875rem; font-weight: 500; color: #64748b; text-decoration: none; transition: all 0.2s; cursor: pointer; } .ds-nav-item:hover { background: rgba(16, 185, 129, 0.06); } .ds-nav-item svg { flex-shrink: 0; } .ds-nav-active { background: rgba(16, 185, 129, 0.12); color: #059669; font-weight: 700; } .ds-nav-active:hover { background: rgba(16, 185, 129, 0.16); } .ds-nav-active svg { color: #059669; }"
+    },
+    {
+      "name": "Role Chip",
+      "kind": "chip",
+      "refersTo": "chip-role",
+      "description": "Small role indicator badge used in sidebar and user cards.",
+      "html": "<span class=\"ds-chip-role\">Bác sĩ</span>",
+      "css": ".ds-chip-role { display: inline-block; padding: 2px 8px; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.6rem; font-weight: 700; color: #059669; background: rgba(16, 185, 129, 0.12); border-radius: 9999px; line-height: 1.4; text-transform: none; }"
+    },
+    {
+      "name": "Chat Bubble (Patient)",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Outgoing patient message in AI triage chat.",
+      "html": "<div class=\"ds-chat-patient\">Tôi bị đau đầu và sốt 2 ngày rồi.</div>",
+      "css": ".ds-chat-patient { max-width: 80%; align-self: flex-end; padding: 12px 16px; background: #059669; color: #fff; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.875rem; line-height: 1.6; border-radius: 16px 16px 4px 16px; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.15); }"
+    },
+    {
+      "name": "Chat Bubble (AI)",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Incoming AI triage response message.",
+      "html": "<div class=\"ds-chat-ai\">Xin chào! Tôi sẽ giúp bạn đánh giá triệu chứng. Bạn có thể mô tả thêm về cơn đau đầu không?</div>",
+      "css": ".ds-chat-ai { max-width: 85%; align-self: flex-start; padding: 12px 16px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #064e3b; font-family: 'Inter', -apple-system, sans-serif; font-size: 0.875rem; line-height: 1.6; border-radius: 16px 16px 16px 4px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Intelligent Corridor",
+    "overview": "CareTriage's visual system is a corridor that guides: every element has a direction, every surface leads somewhere, every interaction confirms progress. The aesthetic is bright, layered, and alive. Surfaces breathe with gentle depth; transitions move with the assurance of a clinician who knows the next step. The system trusts the user enough to stay minimal, but never so sparse that context is lost.\n\nThis is not a sterile hospital terminal. It is not a consumer wellness app padded with pastel illustrations and empty reassurance. It rejects the flatness of legacy medical software and the cluttered data-dump of old hospital management systems. The Intelligent Corridor is bright but purposeful, modern but never decorative for its own sake.",
+    "keyCharacteristics": [
+      "Bright, layered surfaces with gentle ambient depth",
+      "Living Teal as a confident, energetic primary; never clinical or cold",
+      "Soft, approachable interactions with generous radii and smooth transitions",
+      "Every interaction produces visible feedback (loading, success, error)",
+      "Semantic HTML structure; components built for reuse, not repetition"
+    ],
+    "rules": [
+      { "name": "The Meadow Ground Rule", "body": "Every page background is Meadow Mist (#f0fdf4), never pure white or pure black. Neutrals carry a faint green tint so the entire interface feels connected to the brand.", "section": "colors" },
+      { "name": "The Coral Scarcity Rule", "body": "Warm Coral appears only for destructive actions, errors, and urgent states. It is never used decoratively, never in gradients, never as an accent on non-critical elements.", "section": "colors" },
+      { "name": "The Weight Ladder Rule", "body": "Heading hierarchy is expressed through weight first, size second. Display (900) to Headline (700) to Title (600) to Body (400). Never use the same weight at two adjacent hierarchy levels.", "section": "typography" },
+      { "name": "The Tinted Glow Rule", "body": "Interactive element hover shadows use the element's own color tinted at low opacity, not neutral black shadows. The shadow feels like a reflection of the element.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do use Meadow Mist (#f0fdf4) as the universal page background.",
+      "Do provide visible feedback for every user interaction: loading spinners, success toasts, error messages.",
+      "Do use semantic HTML elements (nav, main, section, article, aside) before reaching for div.",
+      "Do tint hover shadows with the element's own brand color instead of neutral black.",
+      "Do use Inter at weight 600+ for labels and navigation; weight 400 for body text.",
+      "Do test all color combinations against WCAG AA contrast ratios.",
+      "Do use cubic-bezier(0.16, 1, 0.3, 1) for entrance animations.",
+      "Do lazy-load images, use WebP/SVG formats, and minify CSS/JS bundles."
+    ],
+    "donts": [
+      "Don't use pure white (#fff) or pure black (#000) anywhere.",
+      "Don't use border-left or border-right greater than 1px as a colored accent stripe.",
+      "Don't use gradient text (background-clip: text).",
+      "Don't use glassmorphism decoratively. Reserved for sidebar and top bar only.",
+      "Don't build interfaces that look like legacy hospital management software.",
+      "Don't create bland white-and-teal designs with no personality.",
+      "Don't leave any click, submit, or navigation action without visual feedback.",
+      "Don't nest cards inside cards.",
+      "Don't use bounce or elastic easing curves.",
+      "Don't abuse div elements when semantic HTML tags exist."
+    ]
+  }
+}

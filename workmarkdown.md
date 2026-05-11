@@ -98,11 +98,11 @@ Tài liệu này chứa đặc tả chi tiết cho các Task từ Sprint 8 trở
 ### US-014: Trang chủ & Thông tin giới thiệu
 **As a** visitor, **I want** to see hospital branding and introduction, **so that** I trust the services.
 
-#### [T-061] Landing page components (Hero, Services, CTA)
+#### [T-061] Landing page components (Hero, Services, CTA) [DONE]
 - **Thành phần:** Hero section, Lưới dịch vụ, Nút kêu gọi hành động.
 - **AC:** Hiển thị tốt trên Mobile, nội dung cấu hình qua CMS.
 
-#### [T-062] Vision & Mission page
+#### [T-062] Vision & Mission page [DONE]
 - **Mô tả:** Hiển thị sứ mệnh và tầm nhìn để người dùng hiểu giá trị cốt lõi của bệnh viện.
 - **Dữ liệu:** Tiêu đề, Banner, Sứ mệnh (Rich Text), Tầm nhìn (Rich Text), Danh sách Giá trị cốt lõi (Icons).
 - **AC:** 
@@ -110,7 +110,7 @@ Tài liệu này chứa đặc tả chi tiết cho các Task từ Sprint 8 trở
   - Hiển thị đúng định dạng Rich Text & Alt-text cho ảnh.
   - Tải trang < 2 giây.
 
-#### [T-063] Department detail page
+#### [T-063] Department detail page [DONE]
 - **Mô tả:** Thông tin chi tiết về phạm vi điều trị, bác sĩ và trang thiết bị của từng khoa.
 - **Dữ liệu:** Tên khoa, Ảnh bìa, Mô tả chi tiết, Danh sách bác sĩ (Ảnh, Tên, Học hàm), Trang thiết bị.
 - **AC:**
@@ -126,7 +126,7 @@ Tài liệu này chứa đặc tả chi tiết cho các Task từ Sprint 8 trở
 ### US-015: Hỗ trợ khẩn cấp & Liên hệ
 **As a** user, **I want** quick access to emergency info and contact forms.
 
-#### [T-064] Emergency Info page (Hotlines, First-aid, GPS)
+#### [T-064] Emergency Info page (Hotlines, First-aid, GPS) [DONE]
 - **Mô tả:** Trang liên hệ và hướng dẫn cấp cứu khẩn cấp.
 - **Dữ liệu:** Hotline (tel: links), Khoảng cách (tính theo GPS), Địa chỉ, Trạng thái (Mở cửa 24/7), Hướng dẫn sơ cứu.
 - **AC:**
@@ -136,7 +136,7 @@ Tài liệu này chứa đặc tả chi tiết cho các Task từ Sprint 8 trở
   - Hoạt động offline (dữ liệu cache) cho hướng dẫn sơ cứu.
 - **Business Rules:** Số 115 luôn đứng đầu. Thiết kế tối giản, font lớn.
 
-#### [T-065] Contact Form with Spam Protection
+#### [T-065] Contact Form with Spam Protection [DONE]
 - **Mô tả:** Biểu mẫu gửi yêu cầu hỗ trợ hoặc tư vấn.
 - **Dữ liệu:** Họ tên, Email (Validation), SĐT, Chủ đề, Nội dung.
 - **AC:**

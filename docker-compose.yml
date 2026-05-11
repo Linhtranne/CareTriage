@@ -50,5 +50,13 @@ services:
     depends_on:
       - backend
 
+  admin-frontend:
+    build: ./admin-frontend
+    container_name: caretriage-admin
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+
 volumes:
   mysql_data:
