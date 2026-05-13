@@ -8,7 +8,7 @@ on:
 
 jobs:
   frontend:
-    name: Frontend Build
+    name: Frontend (Client)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -21,10 +21,28 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  admin-frontend:
+    name: Admin Frontend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./admin-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: admin-frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
       - run: npm run build
 
   backend:
-    name: Backend Build & Test
+    name: Backend (Java)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,10 +54,11 @@ jobs:
           java-version: 17
           distribution: temurin
           cache: maven
-      - run: mvn package -DskipTests -B
+      - name: Build and Test
+        run: mvn clean package -B
 
   ai-service:
-    name: AI Service Check
+    name: AI Service (Python)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,5 +68,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: 'pip'
       - run: pip install -r requirements.txt
-      - run: python -c "from app.main import app; print('OK')"
+      - name: Smoke Test
+        run: python -c "from app.main import app; print('OK')"

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   Box,
   Button,
@@ -50,11 +50,11 @@ const getPriorityTone = (priority) => {
 const resolveSenderLabel = (senderType, t) => {
   const code = normalizeCode(senderType)
 
-  if (['USER', 'PATIENT'].includes(code)) return t('triage.sender_patient')
-  if (['STAFF', 'DOCTOR', 'NURSE', 'CLINICIAN'].includes(code)) return t('triage.sender_staff')
-  if (['AI', 'SYSTEM', 'BOT'].includes(code)) return t('triage.sender_ai')
+  if (['USER', 'PATIENT'].includes(code)) return t('triage_tickets.sender_patient')
+  if (['STAFF', 'DOCTOR', 'NURSE', 'CLINICIAN'].includes(code)) return t('triage_tickets.sender_staff')
+  if (['AI', 'SYSTEM', 'BOT'].includes(code)) return t('triage_tickets.sender_ai')
 
-  return senderType || t('triage.sender_ai')
+  return senderType || t('triage_tickets.sender_ai')
 }
 
 export default function TriageTickets() {
@@ -80,13 +80,14 @@ export default function TriageTickets() {
     } catch (error) {
       console.error('Failed to load triage tickets', error)
       setTickets([])
-      setListError(t('triage.list_load_failed'))
+      setListError(t('triage_tickets.list_load_failed'))
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect loads initial triage ticket list from server
     loadTickets()
   }, [])
 
@@ -109,7 +110,7 @@ export default function TriageTickets() {
     } catch (error) {
       console.error('Failed to load triage ticket detail', error)
       setChatHistory([])
-      setDetailError(t('triage.detail_load_failed'))
+      setDetailError(t('triage_tickets.detail_load_failed'))
     } finally {
       setDetailLoading(false)
     }
@@ -144,7 +145,7 @@ export default function TriageTickets() {
     return (
       <Chip
         size="small"
-        label={`${t('triage.priority')}: ${label}`}
+        label={`${t('triage_tickets.priority')}: ${label}`}
         color={tone.color}
         sx={{
           fontWeight: 700,
@@ -186,8 +187,8 @@ export default function TriageTickets() {
 
   return (
     <PatientPageShell
-      title={t('triage.title')}
-      subtitle={t('triage.subtitle')}
+      title={t('triage_tickets.title')}
+      subtitle={t('triage_tickets.subtitle')}
       maxWidth="xl"
       actions={
         <Button
@@ -218,7 +219,7 @@ export default function TriageTickets() {
             variant="outlined"
             action={
               <Button onClick={loadTickets} size="small" sx={{ fontWeight: 700, textTransform: 'none' }}>
-                {t('triage.retry')}
+                {t('triage_tickets.retry')}
               </Button>
             }
             sx={{ borderRadius: 3 }}
@@ -281,7 +282,7 @@ export default function TriageTickets() {
                             color: 'text.secondary'
                           }}
                         >
-                          {t('triage.ticket_no')} {ticket.ticketNumber}
+                          {t('triage_tickets.ticket_no')} {ticket.ticketNumber}
                         </Typography>
                         <Typography
                           variant="h6"
@@ -292,7 +293,7 @@ export default function TriageTickets() {
                             pr: 1
                           }}
                         >
-                          {ticket.title || t('triage.detail_title')}
+                          {ticket.title || t('triage_tickets.detail_title')}
                         </Typography>
                       </Box>
                       {statusChip(ticket.status)}
@@ -325,7 +326,7 @@ export default function TriageTickets() {
                       {ticket.severity && (
                         <Chip
                           size="small"
-                          label={`${t('triage.severity')}: ${ticket.severity}`}
+                          label={`${t('triage_tickets.severity')}: ${ticket.severity}`}
                           variant="outlined"
                           sx={{ fontWeight: 700, borderRadius: 999 }}
                         />
@@ -370,7 +371,7 @@ export default function TriageTickets() {
                           color: '#0f766e'
                         }}
                       >
-                        {t('triage.open_detail')}
+                        {t('triage_tickets.open_detail')}
                       </Button>
                     </Stack>
                   </Stack>
@@ -390,10 +391,10 @@ export default function TriageTickets() {
           >
             <Stack spacing={2} alignItems="flex-start">
               <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                {t('triage.no_tickets')}
+                {t('triage_tickets.no_tickets')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                {t('triage.empty_desc')}
+                {t('triage_tickets.empty_desc')}
               </Typography>
               <Button
                 variant="contained"
@@ -420,10 +421,10 @@ export default function TriageTickets() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1.2 }}>
-                {t('triage.detail_title')}
+                {t('triage_tickets.detail_title')}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                {selectedTicket?.ticketNumber ? `${t('triage.ticket_no')} ${selectedTicket.ticketNumber}` : ''}
+                {selectedTicket?.ticketNumber ? `${t('triage_tickets.ticket_no')} ${selectedTicket.ticketNumber}` : ''}
               </Typography>
             </Box>
             {selectedTicket && statusChip(selectedTicket.status)}
@@ -434,7 +435,7 @@ export default function TriageTickets() {
             <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
               <CircularProgress />
               <Typography variant="body2" color="text.secondary">
-                {t('triage.detail_loading')}
+                {t('triage_tickets.detail_loading')}
               </Typography>
             </Box>
           ) : detailError ? (
@@ -443,7 +444,7 @@ export default function TriageTickets() {
               variant="outlined"
               action={
                 <Button onClick={handleRetryDetail} size="small" sx={{ fontWeight: 700, textTransform: 'none' }}>
-                  {t('triage.retry')}
+                  {t('triage_tickets.retry')}
                 </Button>
               }
               sx={{ borderRadius: 3 }}
@@ -457,7 +458,7 @@ export default function TriageTickets() {
                   <Stack spacing={1.5}>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.status')}
+                        {t('triage_tickets.status')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {t(`triage.status_labels.${normalizeCode(selectedTicket.status)}`, selectedTicket.status || '-')}
@@ -465,7 +466,7 @@ export default function TriageTickets() {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.priority')}
+                        {t('triage_tickets.priority')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {t(`triage.priority_labels.${normalizeCode(selectedTicket.priority)}`, selectedTicket.priority || '-')}
@@ -473,7 +474,7 @@ export default function TriageTickets() {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.severity')}
+                        {t('triage_tickets.severity')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {selectedTicket.severity || '-'}
@@ -481,7 +482,7 @@ export default function TriageTickets() {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.category')}
+                        {t('triage_tickets.category')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {selectedTicket.categoryName || '-'}
@@ -489,7 +490,7 @@ export default function TriageTickets() {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.triage_officer')}
+                        {t('triage_tickets.triage_officer')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {selectedTicket.triageOfficerName || '-'}
@@ -497,7 +498,7 @@ export default function TriageTickets() {
                     </Box>
                     <Box>
                       <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage.created_at')}
+                        {t('triage_tickets.created_at')}
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
                         {formatDateTime(selectedTicket.createdAt)}
@@ -511,7 +512,7 @@ export default function TriageTickets() {
                 <Stack spacing={2.5}>
                   <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#ffffff' }}>
                     <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                      {t('triage.summary')}
+                      {t('triage_tickets.summary')}
                     </Typography>
                     <Typography variant="h6" sx={{ fontWeight: 900, mt: 0.5 }}>
                       {selectedTicket.title || '-'}
@@ -523,12 +524,12 @@ export default function TriageTickets() {
 
                   <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#ffffff' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 2 }}>
-                      {t('triage.chat_history')}
+                      {t('triage_tickets.chat_history')}
                     </Typography>
                     <Stack spacing={1.5}>
                       {chatHistory.length === 0 ? (
                         <Typography variant="body2" color="text.secondary">
-                          {t('triage.no_chat_history')}
+                          {t('triage_tickets.no_chat_history')}
                         </Typography>
                       ) : (
                         chatHistory.map((message) => {
@@ -578,7 +579,7 @@ export default function TriageTickets() {
               px: 3
             }}
           >
-            {t('triage.close')}
+            {t('triage_tickets.close')}
           </Button>
         </DialogActions>
       </Dialog>

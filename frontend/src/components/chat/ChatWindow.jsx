@@ -2,8 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, X, ChevronDown, WifiOff,
-  Sparkles, RotateCcw,
-  Phone, Video, Minus, Mic, Image as ImageIcon, Sticker, Smile, ThumbsUp, User
+  Sparkles, RotateCcw, History, MessageSquarePlus, Paperclip, Loader2
 } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
@@ -18,6 +17,12 @@ const ChatWindow = ({
   isLoadingHistory = false,
   hasMore = true,
   onClose,
+  onOpenHistory,
+  onNewChat,
+  onUploadAttachment,
+  isSessionReady = false,
+  isSessionLoading = false,
+  isUploadingAttachment = false,
   isOpen = false,
   isConnected = false,
   isAiOnline = false,
@@ -25,6 +30,7 @@ const ChatWindow = ({
 }) => {
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
+  const attachmentInputRef = useRef(null);
   const prevScrollHeightRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
   const [showScrollBtn, setShowScrollBtn] = useState(false);
@@ -51,6 +57,7 @@ const ChatWindow = ({
     if (isOpen) setTimeout(() => inputRef.current?.focus(), 300);
   }, [isOpen]);
 
+
   const handleScroll = (e) => {
     const el = e.currentTarget;
     const fromBottom = el.scrollHeight - el.scrollTop - el.clientHeight;
@@ -69,7 +76,7 @@ const ChatWindow = ({
   const handleSubmit = (e) => {
     e?.preventDefault();
     const content = inputValue.trim();
-    if (!content || isTyping || !isConnected) return;
+    if (!content || isTyping || !isConnected || !isSessionReady) return;
     onSendMessage?.(content);
     setInputValue('');
   };
@@ -83,11 +90,28 @@ const ChatWindow = ({
 
   const handleQuickReply = (text) => {
     console.log('[ChatWindow] Quick reply clicked:', text, { isTyping, isConnected });
-    if (isTyping || !isConnected) {
+    if (isTyping || !isConnected || !isSessionReady) {
       console.warn('[ChatWindow] Quick reply BLOCKED:', { isTyping, isConnected });
       return;
     }
     onSendMessage?.(text);
+  };
+
+  const handleAttachmentClick = () => {
+    if (!isSessionReady || isTyping || isUploadingAttachment) return;
+    attachmentInputRef.current?.click();
+  };
+
+  const handleAttachmentChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file || !onUploadAttachment || !isSessionReady) return;
+
+    try {
+      await onUploadAttachment(file);
+    } catch (error) {
+      console.error('[ChatWindow] Failed to upload attachment:', error);
+    }
   };
 
 
@@ -123,7 +147,27 @@ const ChatWindow = ({
               </p>
             </div>
 
-            <div className="flex items-center">
+            <div className="flex items-center gap-1">
+              {onOpenHistory && (
+                <button
+                  onClick={onOpenHistory}
+                  disabled={isTyping || isSessionLoading}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-50 text-slate-400 transition-colors disabled:opacity-40"
+                  title="Lịch sử chat"
+                >
+                  <History size={18} />
+                </button>
+              )}
+              {onNewChat && (
+                <button
+                  onClick={onNewChat}
+                  disabled={isTyping || isSessionLoading}
+                  className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-50 text-slate-400 transition-colors disabled:opacity-40"
+                  title="Chat mới"
+                >
+                  <MessageSquarePlus size={18} />
+                </button>
+              )}
               <button onClick={onClose} className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-50 text-slate-400 transition-colors">
                 <X size={22} strokeWidth={2.5} />
               </button>
@@ -172,7 +216,7 @@ const ChatWindow = ({
                       <button
                         key={qr}
                         onClick={() => handleQuickReply(qr)}
-                        disabled={!isConnected}
+                        disabled={!isConnected || isTyping || !isSessionReady}
                         className="text-[12px] font-semibold px-4 py-2 rounded-xl border border-emerald-100 text-emerald-700 bg-emerald-50/30 hover:bg-emerald-50 active:scale-95 transition-all disabled:opacity-40"
                       >
                         {qr}
@@ -232,7 +276,7 @@ const ChatWindow = ({
                   <button
                     key={qr}
                     onClick={() => handleQuickReply(qr)}
-                    disabled={isTyping || !isConnected}
+                    disabled={isTyping || !isConnected || !isSessionReady}
                     className="flex-shrink-0 text-[12px] font-semibold px-3.5 py-1.5 rounded-lg border border-emerald-100 text-emerald-700 bg-emerald-50/20 hover:bg-emerald-50 active:scale-95 transition-all disabled:opacity-40"
                   >
                     {qr}
@@ -253,6 +297,31 @@ const ChatWindow = ({
               </div>
             )}
 
+            {/* Upload Button */}
+            {onUploadAttachment && (
+              <div className="pb-[4px]">
+                <button
+                  onClick={handleAttachmentClick}
+                  disabled={!isSessionReady || isTyping || isUploadingAttachment}
+                  className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-95 disabled:opacity-40"
+                  title="Tải tài liệu lên"
+                >
+                  {isUploadingAttachment ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : (
+                    <Paperclip size={18} />
+                  )}
+                </button>
+                <input
+                  ref={attachmentInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.webp,.gif,.txt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*,text/plain"
+                  onChange={handleAttachmentChange}
+                />
+              </div>
+            )}
+
             {/* Input Field */}
             <div className="flex-1 relative flex items-end bg-slate-50 border border-slate-100 focus-within:border-emerald-400 focus-within:bg-white transition-all duration-200" style={{ borderRadius: '24px', minHeight: '44px' }}>
               <textarea
@@ -265,7 +334,7 @@ const ChatWindow = ({
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 onKeyDown={handleKeyDown}
-                disabled={isTyping || !isConnected}
+                disabled={isTyping || !isConnected || !isSessionReady}
                 placeholder="Aa"
                 className="flex-1 w-full text-[15px] resize-none bg-transparent border-none focus:ring-0 focus:outline-none focus-visible:outline-none disabled:opacity-50 m-0 !shadow-none"
                 style={{ 
@@ -285,14 +354,14 @@ const ChatWindow = ({
             <div className="pb-[4px]">
               <button
                 onClick={handleSubmit}
-                disabled={!inputValue.trim() || isTyping || !isConnected}
+                disabled={!inputValue.trim() || isTyping || !isConnected || !isSessionReady}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
-                  inputValue.trim() && !isTyping && isConnected 
-                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200 hover:scale-105 active:scale-95' 
+                  inputValue.trim() && !isTyping && isConnected && isSessionReady
+                    ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200 hover:scale-105 active:scale-95'
                     : 'bg-slate-100 text-slate-300'
                 }`}
               >
-                <Send size={20} fill="currentColor" className={inputValue.trim() ? "translate-x-[1px]" : ""} />
+                <Send size={20} fill="currentColor" className={inputValue.trim() && isSessionReady ? "translate-x-[1px]" : ""} />
               </button>
             </div>
           </div>

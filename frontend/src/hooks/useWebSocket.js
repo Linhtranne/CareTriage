@@ -15,7 +15,6 @@ export const WS_STATUS = {
 const useWebSocket = (config = {}) => {
   const {
     endpoint = '/ws-chat',
-    onConnect,
     heartbeatIncoming = 10000,
     heartbeatOutgoing = 10000,
     maxReconnectAttempts = 10
@@ -29,6 +28,7 @@ const useWebSocket = (config = {}) => {
   const clientRef = useRef(null);
   const reconnectCountRef = useRef(0);
   const reconnectTimerRef = useRef(null);
+  const doConnectRef = useRef(null);
   const statusRef = useRef(WS_STATUS.IDLE);
   const mountedRef = useRef(true);
   const { token } = useAuthStore();
@@ -49,7 +49,7 @@ const useWebSocket = (config = {}) => {
       reconnectTimerRef.current = null;
     }
     if (clientRef.current) {
-      try { clientRef.current.deactivate(); } catch (e) { /* ignore */ }
+      try { clientRef.current.deactivate(); } catch { /* ignore */ }
       clientRef.current = null;
     }
   }, []);
@@ -113,12 +113,16 @@ const useWebSocket = (config = {}) => {
       console.log(`[WS] Reconnecting in ${delay}ms (attempt ${reconnectCountRef.current}/${maxReconnectAttempts})`);
       
       if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      reconnectTimerRef.current = setTimeout(() => doConnect(), delay);
+      reconnectTimerRef.current = setTimeout(() => doConnectRef.current?.(), delay);
     };
 
     client.activate();
     clientRef.current = client;
   }, [endpoint, heartbeatIncoming, heartbeatOutgoing, maxReconnectAttempts]);
+
+  useEffect(() => {
+    doConnectRef.current = doConnect;
+  }, [doConnect]);
 
   // Initial connect
   useEffect(() => {

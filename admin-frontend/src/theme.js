@@ -28,7 +28,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+    fontFamily: "'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     h1: { fontWeight: 700, fontSize: '2.25rem', lineHeight: 1.2 },
     h2: { fontWeight: 700, fontSize: '1.875rem', lineHeight: 1.3 },
     h3: { fontWeight: 600, fontSize: '1.5rem', lineHeight: 1.4 },

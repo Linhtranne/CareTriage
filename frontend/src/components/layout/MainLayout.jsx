@@ -12,7 +12,10 @@ import {
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/authStore'
+import NotificationBell from './NotificationBell'
 import ChatWidget from '../chat/ChatWidget'
+
+import { Brain, Search } from 'lucide-react'
 
 const DRAWER_WIDTH = 260
 const COLLAPSED_WIDTH = 68
@@ -28,8 +31,10 @@ const menuByRole = {
   DOCTOR: [
     { textKey: 'sidebar.dashboard', icon: <Dashboard />, path: '/doctor/dashboard' },
     { textKey: 'sidebar.appointments', icon: <CalendarMonth />, path: '/doctor/appointments' },
-    { textKey: 'sidebar.tickets', icon: <MedicalServices />, path: '/doctor/tickets' },
+    { textKey: 'sidebar.tickets', icon: <MedicalServices />, path: '/doctor/triage-tickets' },
     { textKey: 'sidebar.patients', icon: <Person />, path: '/doctor/patients' },
+    { textKey: 'sidebar.ehr_extract', icon: <Brain size={20} />, path: '/doctor/ehr/upload' },
+    { textKey: 'sidebar.ehr_search', icon: <Search size={20} />, path: '/doctor/ehr/search' },
   ],
 }
 
@@ -305,13 +310,7 @@ export default function MainLayout() {
               >
                 {i18n.language?.startsWith('vi') ? 'EN' : 'VI'}
               </Button>
-              <Tooltip title="Thông báo">
-                <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                  <Badge badgeContent={0} color="error">
-                    <NotificationsNone sx={{ fontSize: 20 }} />
-                  </Badge>
-                </IconButton>
-              </Tooltip>
+              <NotificationBell />
 
               <Avatar
                 src={user?.avatarUrl}

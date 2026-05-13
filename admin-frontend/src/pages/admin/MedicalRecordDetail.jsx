@@ -1,14 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  Box, Typography, Card, CardContent, Grid, Divider, 
-  Chip, Button, IconButton, Avatar, Paper, Skeleton,
-  Alert, Stack, useTheme
+  Box, Typography, Card, CardContent, Grid, Divider,
+  Button, IconButton, Avatar, Paper, Skeleton,
+  Alert, Stack
 } from '@mui/material';
 import { 
   Printer, Download, ArrowLeft, Calendar, User, 
   Stethoscope, Pill, ClipboardList, Activity,
-  FileText, ImageIcon, Clock, ChevronRight
+  FileText, ImageIcon
 } from 'lucide-react';
 import medicalRecordApi from '../../api/medicalRecordApi';
 
@@ -45,7 +45,6 @@ const InfoItem = ({ label, value, fullWidth = false }) => (
 export default function MedicalRecordDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [record, setRecord] = useState(null);

@@ -1,26 +1,41 @@
 package com.caretriage.service.impl;
 
+import com.caretriage.dto.ChatAttachmentDTO;
 import com.caretriage.dto.ChatMessageDTO;
+import com.caretriage.entity.ChatAttachment;
 import com.caretriage.entity.ChatMessage;
 import com.caretriage.entity.ChatSession;
 import com.caretriage.entity.User;
 import com.caretriage.entity.TriageTicket;
 import com.caretriage.entity.TicketCategory;
 import com.caretriage.exception.ResourceNotFoundException;
+import com.caretriage.repository.ChatAttachmentRepository;
 import com.caretriage.repository.ChatMessageRepository;
 import com.caretriage.repository.ChatSessionRepository;
 import com.caretriage.repository.UserRepository;
 import com.caretriage.repository.TriageTicketRepository;
 import com.caretriage.repository.TicketCategoryRepository;
 import com.caretriage.service.ChatService;
+import com.caretriage.service.NotificationService;
+import com.caretriage.entity.Notification.NotificationType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.caretriage.service.AiClientService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import com.caretriage.service.AiClientService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.HashMap;
@@ -32,14 +47,21 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
 
+    private static final long MAX_ATTACHMENT_SIZE_BYTES = 20L * 1024 * 1024;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
     private final TriageTicketRepository triageTicketRepository;
     private final TicketCategoryRepository ticketCategoryRepository;
+    private final ChatAttachmentRepository chatAttachmentRepository;
+    private final WebClient.Builder webClientBuilder;
+    private final NotificationService notificationService;
+
+    @Value("${app.ai-service.url}")
+    private String aiServiceUrl;
 
     @Override
     @Transactional
@@ -74,6 +96,87 @@ public class ChatServiceImpl implements ChatService {
         return convertToDTO(savedMessage);
     }
 
+    @Override
+    @Transactional
+    public ChatAttachmentDTO uploadAttachment(Long userId, Long sessionId, MultipartFile file) {
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("ChatSession not found"));
+
+        if (!session.getUser().getId().equals(userId)) {
+            throw new RuntimeException("Unauthorized access to chat session");
+        }
+
+        if (session.getStatus() == ChatSession.SessionStatus.COMPLETED) {
+            throw new RuntimeException("Cannot upload file to a completed chat session");
+        }
+
+        if (file == null || file.isEmpty()) {
+            throw new RuntimeException("File upload is empty");
+        }
+
+        String originalFilename = Optional.ofNullable(file.getOriginalFilename())
+                .filter(name -> !name.isBlank())
+                .orElse("attachment");
+        String mimeType = normalizeMimeType(file.getContentType(), originalFilename);
+
+        if (!isSupportedAttachment(mimeType, originalFilename)) {
+            throw new RuntimeException("Unsupported file type. Please upload PDF, image, Word or text files.");
+        }
+
+        byte[] fileBytes;
+        try {
+            fileBytes = file.getBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("Cannot read uploaded file", e);
+        }
+
+        if (fileBytes.length > MAX_ATTACHMENT_SIZE_BYTES) {
+            throw new RuntimeException("File size exceeds 20MB limit");
+        }
+
+        ChatAttachment attachment = ChatAttachment.builder()
+                .chatSession(session)
+                .originalFilename(originalFilename)
+                .mimeType(mimeType)
+                .fileSize((long) fileBytes.length)
+                .fileContent(fileBytes)
+                .extractionStatus(ChatAttachment.ExtractionStatus.PROCESSING)
+                .build();
+        attachment = chatAttachmentRepository.save(attachment);
+
+        String systemMessageText;
+        try {
+            Map<String, Object> aiResponse = extractAttachmentContext(fileBytes, originalFilename, mimeType);
+            Map<String, Object> result = asStringObjectMap(aiResponse.get("result"));
+            attachment.setExtractedText(result.get("raw_text") != null ? String.valueOf(result.get("raw_text")) : null);
+            attachment.setExtractionStatus(ChatAttachment.ExtractionStatus.COMPLETED);
+            systemMessageText = "Đã tải lên tài liệu: " + originalFilename;
+        } catch (Exception e) {
+            log.error("Error extracting attachment for session {}: {}", sessionId, e.getMessage(), e);
+            attachment.setExtractionStatus(ChatAttachment.ExtractionStatus.FAILED);
+            systemMessageText = "Đã tải lên tài liệu: " + originalFilename + " nhưng hệ thống chưa phân tích được nội dung.";
+        }
+
+        attachment = chatAttachmentRepository.save(attachment);
+
+        ChatMessage systemMessage = ChatMessage.builder()
+                .chatSession(session)
+                .content(systemMessageText)
+                .senderType(ChatMessage.SenderType.SYSTEM)
+                .metadata(buildAttachmentMetadata(attachment))
+                .build();
+        ChatMessage savedSystemMessage = chatMessageRepository.save(systemMessage);
+
+        session.setLastMessageContent(savedSystemMessage.getContent());
+        session.setLastMessageTime(savedSystemMessage.getCreatedAt());
+        chatSessionRepository.save(session);
+
+        ChatMessageDTO savedSystemMessageDTO = convertToDTO(savedSystemMessage);
+        messagingTemplate.convertAndSend("/topic/chat/" + sessionId, savedSystemMessageDTO);
+
+        return convertToAttachmentDTO(attachment);
+    }
+
     @Async
     @Override
     @Transactional
@@ -105,6 +208,15 @@ public class ChatServiceImpl implements ChatService {
                     })
                     .collect(Collectors.toList());
 
+            List<Map<String, String>> attachmentHistory = chatAttachmentRepository
+                    .findByChatSessionIdAndExtractionStatusOrderByCreatedAtAsc(sessionId, ChatAttachment.ExtractionStatus.COMPLETED)
+                    .stream()
+                    .map(this::toAttachmentHistoryEntry)
+                    .collect(Collectors.toList());
+            if (!attachmentHistory.isEmpty()) {
+                history.addAll(0, attachmentHistory);
+            }
+
             // 3. Gọi AI Service
             Map<String, Object> aiResponse = aiClientService.analyzeSymptoms(sessionId.toString(), userMessage, history);
             String aiContent = (String) aiResponse.get("reply");
@@ -116,7 +228,7 @@ public class ChatServiceImpl implements ChatService {
                     .senderType(ChatMessage.SenderType.AI)
                     .metadata(objectMapper.writeValueAsString(aiResponse))
                     .build();
-            
+
             ChatMessage savedAiMessage = chatMessageRepository.save(aiMessage);
 
             // Cập nhật thông tin tin nhắn cuối cùng từ AI
@@ -124,13 +236,35 @@ public class ChatServiceImpl implements ChatService {
             session.setLastMessageTime(savedAiMessage.getCreatedAt());
             chatSessionRepository.save(session);
 
-            // 5. Broadcast tin nhắn AI trực tiếp qua WebSocket
-            messagingTemplate.convertAndSend(destination, convertToDTO(savedAiMessage));
-            log.info("AI response broadcasted to {}", destination);
+            // Smoke test: Trigger notification for user when AI responds
+            notificationService.createNotification(
+                session.getUser().getId(),
+                "Tin nhắn mới từ AI",
+                aiContent.length() > 50 ? aiContent.substring(0, 47) + "..." : aiContent,
+                NotificationType.CHAT,
+                session.getId(),
+                "CHAT_SESSION"
+            );
 
-            // 6. Auto-create triage ticket when triage is complete
             if (Boolean.TRUE.equals(aiResponse.get("is_complete"))) {
                 createTriageTicketIfNeeded(session, aiResponse, historyMessages);
+            }
+
+            ChatMessageDTO savedAiMessageDTO = convertToDTO(savedAiMessage);
+            Runnable broadcast = () -> {
+                messagingTemplate.convertAndSend(destination, savedAiMessageDTO);
+                log.info("AI response broadcasted to {}", destination);
+            };
+
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        broadcast.run();
+                    }
+                });
+            } else {
+                broadcast.run();
             }
 
         } catch (Exception e) {
@@ -229,6 +363,103 @@ public class ChatServiceImpl implements ChatService {
         chatSessionRepository.save(session);
     }
 
+    private Map<String, Object> extractAttachmentContext(byte[] fileBytes, String originalFilename, String mimeType) {
+        MultipartBodyBuilder builder = new MultipartBodyBuilder();
+        builder.part("file", new ByteArrayResource(fileBytes) {
+            @Override
+            public String getFilename() {
+                return originalFilename;
+            }
+        }).contentType(MediaType.parseMediaType(mimeType));
+
+        Object response = webClientBuilder.build()
+                .post()
+                .uri(aiServiceUrl + "/api/ehr/extract-file")
+                .body(BodyInserters.fromMultipartData(builder.build()))
+                .retrieve()
+                .bodyToMono(Object.class)
+                .block();
+        return asStringObjectMap(response);
+    }
+
+    private String normalizeMimeType(String mimeType, String originalFilename) {
+        if (mimeType != null && !mimeType.isBlank()) {
+            return mimeType;
+        }
+
+        String lower = originalFilename == null ? "" : originalFilename.toLowerCase();
+        if (lower.endsWith(".pdf")) return "application/pdf";
+        if (lower.endsWith(".doc")) return "application/msword";
+        if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        if (lower.endsWith(".png")) return "image/png";
+        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
+        if (lower.endsWith(".webp")) return "image/webp";
+        if (lower.endsWith(".gif")) return "image/gif";
+        if (lower.endsWith(".txt")) return "text/plain";
+        return "application/octet-stream";
+    }
+
+    private boolean isSupportedAttachment(String mimeType, String originalFilename) {
+        String lower = originalFilename == null ? "" : originalFilename.toLowerCase();
+        return mimeType.startsWith("image/")
+                || "application/pdf".equals(mimeType)
+                || "application/msword".equals(mimeType)
+                || "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(mimeType)
+                || "text/plain".equals(mimeType)
+                || lower.endsWith(".pdf")
+                || lower.endsWith(".doc")
+                || lower.endsWith(".docx")
+                || lower.endsWith(".png")
+                || lower.endsWith(".jpg")
+                || lower.endsWith(".jpeg")
+                || lower.endsWith(".webp")
+                || lower.endsWith(".gif")
+                || lower.endsWith(".txt");
+    }
+
+    private String buildAttachmentMetadata(ChatAttachment attachment) {
+        try {
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put("attachment_id", attachment.getId());
+            metadata.put("original_filename", attachment.getOriginalFilename());
+            metadata.put("mime_type", attachment.getMimeType());
+            metadata.put("file_size", attachment.getFileSize());
+            metadata.put("extraction_status", attachment.getExtractionStatus().name());
+            return objectMapper.writeValueAsString(metadata);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String buildAttachmentContext(ChatAttachment attachment) {
+        String extractedText = attachment.getExtractedText() == null ? "" : attachment.getExtractedText();
+        if (extractedText.length() > 4000) {
+            extractedText = extractedText.substring(0, 4000) + "...";
+        }
+
+        return "Tài liệu đính kèm: " + attachment.getOriginalFilename()
+                + "\nNội dung trích xuất:\n" + extractedText;
+    }
+
+    private Map<String, String> toAttachmentHistoryEntry(ChatAttachment attachment) {
+        Map<String, String> entry = new HashMap<>();
+        entry.put("role", "system");
+        entry.put("content", buildAttachmentContext(attachment));
+        return entry;
+    }
+
+    private ChatAttachmentDTO convertToAttachmentDTO(ChatAttachment attachment) {
+        return ChatAttachmentDTO.builder()
+                .id(attachment.getId())
+                .sessionId(attachment.getChatSession().getId())
+                .originalFilename(attachment.getOriginalFilename())
+                .mimeType(attachment.getMimeType())
+                .fileSize(attachment.getFileSize())
+                .extractionStatus(attachment.getExtractionStatus())
+                .createdAt(attachment.getCreatedAt())
+                .build();
+    }
+
     private ChatMessageDTO convertToDTO(ChatMessage message) {
         return ChatMessageDTO.builder()
                 .id(message.getId())
@@ -263,13 +494,13 @@ public class ChatServiceImpl implements ChatService {
             return;
         }
 
-        Map<String, Object> triageResult = (Map<String, Object>) aiResponse.get("triage_result");
-        String summary = triageResult != null && triageResult.get("summary") != null
+        Map<String, Object> triageResult = asStringObjectMap(aiResponse.get("triage_result"));
+        String summary = triageResult.get("summary") != null
                 ? String.valueOf(triageResult.get("summary"))
                 : buildConversationSummary(historyMessages);
 
-        String urgency = triageResult != null ? String.valueOf(triageResult.getOrDefault("urgency_level", "MEDIUM")) : "MEDIUM";
-        String suggestedDepartment = triageResult != null ? String.valueOf(triageResult.getOrDefault("suggested_department", "Nội tổng quát")) : "Nội tổng quát";
+        String urgency = String.valueOf(triageResult.getOrDefault("urgency_level", "MEDIUM"));
+        String suggestedDepartment = String.valueOf(triageResult.getOrDefault("suggested_department", "Nội tổng quát"));
 
         TriageTicket.Priority priority = mapPriority(urgency);
         TriageTicket.Severity severity = mapSeverity(urgency);
@@ -302,6 +533,19 @@ public class ChatServiceImpl implements ChatService {
                 .map(m -> m.getSenderType() + ": " + m.getContent())
                 .collect(Collectors.joining("\n"));
         return transcript.length() > 2000 ? transcript.substring(0, 2000) : transcript;
+    }
+
+    private Map<String, Object> asStringObjectMap(Object value) {
+        if (!(value instanceof Map<?, ?> rawMap)) {
+            return new HashMap<>();
+        }
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            if (entry.getKey() instanceof String key) {
+                result.put(key, entry.getValue());
+            }
+        }
+        return result;
     }
 
     private String extractMetadataForTicket(Map<String, Object> triageResult, Long sessionId) {

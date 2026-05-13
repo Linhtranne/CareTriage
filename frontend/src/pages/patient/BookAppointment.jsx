@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Paper,
   Stepper,
@@ -70,33 +70,7 @@ export default function BookAppointment() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [reason, setReason] = useState('');
 
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  useEffect(() => {
-    if (selectedDept) {
-      fetchDoctors(selectedDept.id);
-    } else {
-      fetchDoctors();
-    }
-  }, [selectedDept]);
-
-  useEffect(() => {
-    if (selectedDoctor) {
-      fetchDoctorSchedules(selectedDoctor.id);
-      // Reset subsequent steps when doctor changes
-      setSelectedSlot(null);
-    }
-  }, [selectedDoctor]);
-
-  useEffect(() => {
-    if (selectedDoctor && selectedDate) {
-      fetchSlots(selectedDoctor.id, format(selectedDate, 'yyyy-MM-dd'));
-    }
-  }, [selectedDoctor, selectedDate]);
-
-  const fetchDepartments = async () => {
+  async function fetchDepartments() {
     try {
       const res = await publicApi.getDepartments({ size: 100 });
       setDepartments(res.data?.content || []);
@@ -104,9 +78,9 @@ export default function BookAppointment() {
       console.error('Failed to fetch departments', err);
       setDepartments([]);
     }
-  };
+  }
 
-  const fetchDoctors = async (deptId) => {
+  async function fetchDoctors(deptId) {
     try {
       const res = await publicApi.getDoctors({ departmentId: deptId, size: 100 });
       setDoctors(res.data?.content || []);
@@ -114,9 +88,9 @@ export default function BookAppointment() {
       console.error('Failed to fetch doctors', err);
       setDoctors([]);
     }
-  };
+  }
 
-  const fetchDoctorSchedules = async (doctorId) => {
+  async function fetchDoctorSchedules(doctorId) {
     try {
       const res = await appointmentApi.getDoctorSchedules(doctorId);
       setDoctorSchedules(res.data || []);
@@ -124,9 +98,9 @@ export default function BookAppointment() {
       console.error('Failed to fetch doctor schedules', err);
       setDoctorSchedules([]);
     }
-  };
+  }
 
-  const fetchSlots = async (doctorId, dateStr) => {
+  async function fetchSlots(doctorId, dateStr) {
     setLoading(true);
     try {
       const res = await appointmentApi.getAvailableSlots(doctorId, dateStr);
@@ -137,9 +111,35 @@ export default function BookAppointment() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
-  // Logic to check if a doctor works on a specific date (T-030 Step 4)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect triggers async server fetch for initial department options
+    fetchDepartments();
+  }, []);
+
+  useEffect(() => {
+    if (selectedDept) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect refetches doctors when department filter changes
+      fetchDoctors(selectedDept.id);
+    } else {
+      fetchDoctors();
+    }
+  }, [selectedDept]);
+
+  useEffect(() => {
+    if (selectedDoctor) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect syncs schedule data for selected doctor
+      fetchDoctorSchedules(selectedDoctor.id);
+    }
+  }, [selectedDoctor]);
+
+  useEffect(() => {
+    if (selectedDoctor && selectedDate) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- effect refreshes server-available slots based on doctor/date selection
+      fetchSlots(selectedDoctor.id, format(selectedDate, 'yyyy-MM-dd'));
+    }
+  }, [selectedDoctor, selectedDate]);
   const isDoctorWorkingOn = (date) => {
     if (doctorSchedules.length === 0) return true; // Fallback if no schedule info
     const dayOfWeek = format(date, 'EEEE').toUpperCase();
@@ -232,7 +232,7 @@ export default function BookAppointment() {
                       '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }
                     }}
                   >
-                    <CardActionArea onClick={() => { setSelectedDoctor(doc); setError(''); }}>
+                    <CardActionArea onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setError(''); }}>
                       <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar src={doc.avatarUrl} sx={{ width: 64, height: 64, bgcolor: '#10b981' }}>
                           {doc.fullName.charAt(0)}

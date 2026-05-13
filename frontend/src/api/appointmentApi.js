@@ -30,6 +30,14 @@ const appointmentApi = {
 
   getDoctorSchedules: (doctorId) => {
     return axiosClient.get(`/api/v1/schedules/doctor/${doctorId}`)
+  },
+
+  getDoctorTodayAppointments: () => {
+    return axiosClient.get('/api/v1/appointments/doctor/today')
+  },
+
+  updateStatus: (id, data) => {
+    return axiosClient.put(`/api/v1/appointments/${id}/status`, data)
   }
 };
 

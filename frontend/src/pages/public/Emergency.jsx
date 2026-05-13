@@ -1,36 +1,29 @@
-import React, { useState, useEffect } from 'react'
-import { 
-  Box, Container, Typography, Grid, Paper, Button, 
-  Stack, Divider, List, ListItem, ListItemIcon, ListItemText,
-  useTheme, Alpha
+import { useState, useEffect } from 'react'
+import {
+  Box, Container, Typography, Grid, Paper, Button,
+  Stack, List, ListItem, ListItemIcon, ListItemText,
 } from '@mui/material'
-import { 
-  PhoneInTalk, NearMe, AccessTime, Info, 
-  HealthAndSafety, LocalHospital, Warning, Directions
+import {
+  PhoneInTalk, NearMe, AccessTime,
+  HealthAndSafety, Warning, Directions
 } from '@mui/icons-material'
 
+const HOSPITAL_COORDS = { lat: 21.0028, lng: 105.8286 }
 
 export default function Emergency() {
-  const theme = useTheme()
   const [distance, setDistance] = useState(null)
-  const [userLocation, setUserLocation] = useState(null)
-
-  // Simulation of hospital location (Hanoi Medical University Hospital as example)
-  const hospitalCoords = { lat: 21.0028, lng: 105.8286 }
 
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
         const { latitude, longitude } = position.coords
-        setUserLocation({ lat: latitude, lng: longitude })
-        
         // Simple Haversine distance formula
         const R = 6371 // km
-        const dLat = (latitude - hospitalCoords.lat) * Math.PI / 180
-        const dLon = (longitude - hospitalCoords.lng) * Math.PI / 180
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                  Math.cos(hospitalCoords.lat * Math.PI / 180) * Math.cos(latitude * Math.PI / 180) * 
-                  Math.sin(dLon/2) * Math.sin(dLon/2)
+        const dLat = (latitude - HOSPITAL_COORDS.lat) * Math.PI / 180
+        const dLon = (longitude - HOSPITAL_COORDS.lng) * Math.PI / 180
+        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                  Math.cos(HOSPITAL_COORDS.lat * Math.PI / 180) * Math.cos(latitude * Math.PI / 180) *
+                  Math.sin(dLon / 2) * Math.sin(dLon / 2)
         const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
         setDistance((R * c).toFixed(1))
       })
@@ -135,7 +128,7 @@ export default function Emergency() {
                 <Button 
                   fullWidth variant="contained" 
                   startIcon={<Directions />}
-                  href={`https://www.google.com/maps/dir/?api=1&destination=${hospitalCoords.lat},${hospitalCoords.lng}`}
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${HOSPITAL_COORDS.lat},${HOSPITAL_COORDS.lng}`}
                   target="_blank"
                   sx={{ py: 1.5, borderRadius: 3, fontWeight: 800, bgcolor: '#10b981' }}
                 >

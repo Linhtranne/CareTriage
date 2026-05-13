@@ -1,5 +1,4 @@
-import React from 'react'
-import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
+import { Box, Container, Typography, Grid, Button } from '@mui/material'
 import { motion } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { 
@@ -7,7 +6,6 @@ import {
   ShieldCheck, 
   ArrowRightLeft, 
   Database,
-  Lock,
   Workflow,
   Server
 } from 'lucide-react'

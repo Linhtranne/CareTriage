@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -23,8 +24,8 @@ public class AdminDashboardController {
 
     @GetMapping("/stats")
     @Operation(summary = "Get dashboard statistics")
-    public ResponseEntity<ApiResponse<AdminDashboardResponse>> getStats() {
-        AdminDashboardResponse stats = adminDashboardService.getDashboardStats();
+    public ResponseEntity<ApiResponse<AdminDashboardResponse>> getStats(@RequestParam(name = "period", defaultValue = "7d") String period) {
+        AdminDashboardResponse stats = adminDashboardService.getDashboardStats(period);
         return ResponseEntity.ok(ApiResponse.success("Dashboard stats retrieved successfully", stats));
     }
 }

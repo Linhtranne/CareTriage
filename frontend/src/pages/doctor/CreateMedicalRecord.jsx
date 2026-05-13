@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Container,
   Typography,
@@ -15,7 +15,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Divider,
   Stack,
   Alert,
   CircularProgress,
@@ -29,16 +28,13 @@ import {
   ChevronLeft,
   Stethoscope,
   Pill,
-  FileText,
-  Calendar,
-  AlertCircle
+  Calendar
 } from 'lucide-react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import medicalRecordApi from '../../api/medicalRecordApi';
-import appointmentApi from '../../api/appointmentApi';
 
 // Validation Schema
 const schema = yup.object().shape({
@@ -75,7 +71,7 @@ export default function CreateMedicalRecord() {
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  const { control, handleSubmit, formState: { errors }, reset } = useForm({
+  const { control, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(schema),
     defaultValues: {
       symptoms: '',

@@ -4,7 +4,7 @@ import {
   Button, TextField, Box, IconButton, Typography,
   FormControl, InputLabel, Select, MenuItem,
   CircularProgress, alpha, useTheme, Fade,
-  Avatar, Tooltip
+  Avatar
 } from '@mui/material'
 import { X, Upload, CheckCircle, Info, Image as ImageIcon } from 'lucide-react'
 import { useForm, Controller } from 'react-hook-form'
@@ -48,18 +48,23 @@ export default function DepartmentDialog({ open, onClose, onSave, department }) 
           imageUrl: department.imageUrl || '',
           status: department.status
         })
-        setImagePreview(department.imageUrl || '')
-      } else {
-        reset({
-          code: '',
-          name: '',
-          description: '',
-          imageUrl: '',
-          status: 'ACTIVE'
-        })
-        setImagePreview('')
+        const timer = setTimeout(() => {
+          setImagePreview(department.imageUrl || '')
+        }, 0)
+        return () => clearTimeout(timer)
       }
-      setServerError('')
+
+      reset({
+        code: '',
+        name: '',
+        description: '',
+        imageUrl: '',
+        status: 'ACTIVE'
+      })
+      const timer = setTimeout(() => {
+        setImagePreview('')
+      }, 0)
+      return () => clearTimeout(timer)
     }
   }, [open, department, reset])
 
@@ -98,7 +103,6 @@ export default function DepartmentDialog({ open, onClose, onSave, department }) 
       // Since we don't have an upload API yet, we'll simulate it by keeping the local URL
       // In a real app, you'd upload this file to S3/Cloudinary and get a URL back
       const url = URL.createObjectURL(file)
-      setImagePreview(url)
       setValue('imageUrl', url) // Mocking the URL
     }
   }

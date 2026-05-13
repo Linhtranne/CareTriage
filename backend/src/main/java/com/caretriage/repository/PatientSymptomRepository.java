@@ -13,6 +13,8 @@ public interface PatientSymptomRepository extends JpaRepository<PatientSymptom, 
 
     List<PatientSymptom> findByPatientIdOrderByCreatedAtDesc(Long patientId);
 
+    List<PatientSymptom> findByPatientId(Long patientId);
+
     @Query("SELECT DISTINCT ps.patient.id FROM PatientSymptom ps WHERE LOWER(ps.symptomName) LIKE LOWER(CONCAT('%', :name, '%'))")
     List<Long> findPatientIdsBySymptomName(@Param("name") String name);
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Box, Container, Typography, Grid, Button, Paper, Avatar } from '@mui/material'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Calendar, Clock, Bell, ArrowRight, ShieldCheck, Zap, Users, BarChart3 } from 'lucide-react'
@@ -7,24 +7,33 @@ import Navbar from '../../../components/public/Navbar'
 
 export default function SmartBooking() {
   const { t } = useTranslation()
-  const [queue, setQueue] = useState([
-    { id: 1, name: t('smart_booking_page.sim_patient_1'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
-    { id: 2, name: t('smart_booking_page.sim_patient_2'), status: t('smart_booking_page.sim_status_priority'), type: t('smart_booking_page.sim_type_urgent'), priority: 'urgent' },
-    { id: 3, name: t('smart_booking_page.sim_patient_3'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
-  ])
+
+  const translatedPatients = useMemo(
+    () => ([
+      { id: 1, name: t('smart_booking_page.sim_patient_1'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
+      { id: 2, name: t('smart_booking_page.sim_patient_2'), status: t('smart_booking_page.sim_status_priority'), type: t('smart_booking_page.sim_type_urgent'), priority: 'urgent' },
+      { id: 3, name: t('smart_booking_page.sim_patient_3'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
+    ]),
+    [t]
+  )
+  const [queueOrder, setQueueOrder] = useState([1, 2, 3])
+
+  const queue = useMemo(
+    () => queueOrder.map(id => translatedPatients.find(item => item.id === id)).filter(Boolean),
+    [queueOrder, translatedPatients]
+  )
 
   // Simple shuffle animation to show priority shift
   useEffect(() => {
     const timer = setInterval(() => {
-      setQueue(prev => {
+      setQueueOrder(prev => {
         const next = [...prev]
-        // Ensure urgent is always at top for the demonstration
-        const urgentIdx = next.findIndex(p => p.priority === 'urgent')
+        const urgentId = translatedPatients.find(item => item.priority === 'urgent')?.id
+        const urgentIdx = urgentId ? next.indexOf(urgentId) : -1
         if (urgentIdx > 0) {
           const [urgent] = next.splice(urgentIdx, 1)
           next.unshift(urgent)
         } else {
-          // just cycle for visual interest if already at top
           const [first, ...rest] = next
           return [...rest, first]
         }
@@ -32,16 +41,7 @@ export default function SmartBooking() {
       })
     }, 5000)
     return () => clearInterval(timer)
-  }, [])
-
-  // Sync names when language changes
-  useEffect(() => {
-    setQueue([
-      { id: 1, name: t('smart_booking_page.sim_patient_1'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
-      { id: 2, name: t('smart_booking_page.sim_patient_2'), status: t('smart_booking_page.sim_status_priority'), type: t('smart_booking_page.sim_type_urgent'), priority: 'urgent' },
-      { id: 3, name: t('smart_booking_page.sim_patient_3'), status: t('smart_booking_page.sim_status_waiting'), type: t('smart_booking_page.sim_type_standard'), priority: 'normal' },
-    ])
-  }, [t])
+  }, [translatedPatients])
 
   const staggerContainer = {
     hidden: { opacity: 0 },

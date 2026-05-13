@@ -11,9 +11,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
+import com.caretriage.dto.ChatAttachmentDTO;
 import com.caretriage.dto.ChatSessionDTO;
 import java.util.Map;
 import java.util.HashMap;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 
 
 @RestController
@@ -50,6 +53,17 @@ public class ChatSessionController {
         return ResponseEntity.ok(convertToDTO(session));
     }
 
+    @PostMapping(value = "/sessions/{sessionId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ChatAttachmentDTO> uploadAttachment(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long sessionId,
+            @RequestParam("file") MultipartFile file) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return ResponseEntity.ok(chatService.uploadAttachment(user.getId(), sessionId, file));
+    }
+
     @GetMapping("/sessions/active")
     public ResponseEntity<ChatSessionDTO> getActiveSession(
             @AuthenticationPrincipal UserDetails userDetails) {
@@ -80,13 +94,25 @@ public class ChatSessionController {
 
     @GetMapping("/sessions/{sessionId}/history")
     public ResponseEntity<?> getHistory(
+            @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long sessionId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
-        org.springframework.data.domain.Pageable pageable = org.springframework.data.util.Streamable.of(org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending())).stream().findFirst().get();
-        // Since we want newest first for infinite scroll (bottom-up), but traditional paging is top-down.
-        // Actually for infinite scroll (scroll up to load more), we need descending order.
-        return ResponseEntity.ok(chatService.getSessionHistory(sessionId, org.springframework.data.domain.PageRequest.of(page, size, org.springframework.data.domain.Sort.by("createdAt").descending())));
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        boolean ownsSession = chatService.getUserSessions(user.getId()).stream()
+                .anyMatch(session -> session.getId().equals(sessionId));
+        if (!ownsSession) {
+            return ResponseEntity.status(org.springframework.http.HttpStatus.FORBIDDEN).build();
+        }
+
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                page,
+                size,
+                org.springframework.data.domain.Sort.by("createdAt").descending()
+        );
+        return ResponseEntity.ok(chatService.getSessionHistory(sessionId, pageable));
     }
 
     private ChatSessionDTO convertToDTO(ChatSession session) {

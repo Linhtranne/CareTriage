@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { 
-  Box, Container, Grid, Typography, Avatar, Chip, 
-  Button, Card, CardContent, Divider, Skeleton,
+  Box, Container, Grid, Typography, Avatar, Chip,
+  Button, Divider, Skeleton,
   useTheme, alpha, Stack, IconButton, Paper, Tab, Tabs
 } from '@mui/material'
-import { 
-  MapPin, Stethoscope, Clock, Heart, Share2, 
-  ChevronLeft, Star, Award, Calendar, ChevronRight,
-  Info, ShieldCheck, CheckCircle2
+import {
+  Stethoscope, Clock, Heart, Share2,
+  ChevronLeft, Calendar, ChevronRight,
+  ShieldCheck, CheckCircle2
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import publicApi from '../../api/publicApi'
 import { format, addDays, isSameDay } from 'date-fns'
 import { vi } from 'date-fns/locale'

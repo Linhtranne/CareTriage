@@ -3,15 +3,16 @@ import {
   Box, Typography, TextField, InputAdornment, Chip, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Button, FormControl,
   InputLabel, Select, MenuItem, Alert, Snackbar, Card, CardContent,
-  ToggleButtonGroup, ToggleButton, Avatar, Stack, useTheme, alpha, Divider, Grid, Zoom
+  ToggleButtonGroup, ToggleButton, Avatar, Stack, useTheme, alpha, Divider, Grid, Zoom,
+  Menu, Drawer, ListItemIcon, ListItemText,
 } from '@mui/material'
 import {
-  Search, PersonOff, PersonOutlined, Edit, Visibility,
+  Search, Edit, Visibility, MoreVert,
   AdminPanelSettings, LocalHospital, Person, FilterList,
   CheckCircle, Cancel, Close, Lock, LockOpen,
   Cake, Wc, Home, Bloodtype, Warning, HistoryEdu,
-  WorkspacePremium, Timeline, School, Business,
-  ContactPage, LocalHospital as HospitalIcon,
+  WorkspacePremium, Timeline, School,
+  LocalHospital as HospitalIcon,
 } from '@mui/icons-material'
 import { Tabs, Tab } from '@mui/material'
 
@@ -26,6 +27,20 @@ const roleConfig = {
   DOCTOR: { color: 'success', icon: <LocalHospital sx={{ fontSize: 16 }} />, label: 'Bác sĩ' },
   ADMIN: { color: 'warning', icon: <AdminPanelSettings sx={{ fontSize: 16 }} />, label: 'Quản trị' },
 }
+
+const ProfileInfoItem = ({ icon, label, value }) => (
+  <Box sx={{ mb: 2 }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5, opacity: 0.8 }}>
+      {icon}
+      <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {label}
+      </Typography>
+    </Stack>
+    <Typography variant="body2" sx={{ fontWeight: 700, pl: 3.5 }}>
+      {value || '---'}
+    </Typography>
+  </Box>
+)
 
 export default function UserManagement() {
   const theme = useTheme()
@@ -47,6 +62,7 @@ export default function UserManagement() {
   const [toggleDialog, setToggleDialog] = useState({ open: false, user: null })
   const [detailDialog, setDetailDialog] = useState({ open: false, user: null })
   const [editDialog, setEditDialog] = useState({ open: false, user: null })
+  const [actionMenu, setActionMenu] = useState({ anchorEl: null, user: null })
   const [selectedRole, setSelectedRole] = useState('')
   const [activeTab, setActiveTab] = useState(0)
   const [editForm, setEditForm] = useState({})
@@ -76,14 +92,62 @@ export default function UserManagement() {
       const data = res.data.data
       setUsers(data.content || [])
       setTotalElements(data.totalElements || 0)
-    } catch (err) {
+    } catch {
       setSnackbar({ open: true, message: 'Failed to load users', severity: 'error' })
     } finally {
       setLoading(false)
     }
   }, [paginationModel.page, paginationModel.pageSize, searchDebounced, roleFilter])
 
-  useEffect(() => { fetchUsers() }, [fetchUsers])
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchUsers()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [fetchUsers])
+
+  const openDetailDrawer = (user) => {
+    setActiveTab(0)
+    setDetailDialog({ open: true, user })
+  }
+
+  const openActionMenu = (event, user) => {
+    setActionMenu({ anchorEl: event.currentTarget, user })
+  }
+
+  const closeActionMenu = () => {
+    setActionMenu({ anchorEl: null, user: null })
+  }
+
+  const handleActionMenu = (action) => {
+    if (!actionMenu.user) return
+    action(actionMenu.user)
+    closeActionMenu()
+  }
+
+  const isActionMenuSelf = Boolean(
+    actionMenu.user && (
+      String(actionMenu.user.id) === String(currentUser?.id) ||
+      actionMenu.user.email === currentUser?.email ||
+      actionMenu.user.username === currentUser?.username
+    ),
+  )
+
+  const openEditDialog = (user) => {
+    setEditDialog({ open: true, user })
+    setEditForm({ ...user })
+  }
+
+  const openRoleDialog = (user) => {
+    setRoleDialog({ open: true, user })
+    const currentRole = (user.roles?.[0] || 'PATIENT').replace('ROLE_', '').toUpperCase()
+    setSelectedRole(currentRole)
+  }
+
+  const openToggleDialog = (user) => {
+    setToggleDialog({ open: true, user })
+  }
 
   // Handle role change
   const handleRoleChange = async () => {
@@ -128,20 +192,6 @@ export default function UserManagement() {
       setSaving(false)
     }
   }
-
-  const ProfileInfoItem = ({ icon, label, value }) => (
-    <Box sx={{ mb: 2 }}>
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5, opacity: 0.8 }}>
-        {icon}
-        <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          {label}
-        </Typography>
-      </Stack>
-      <Typography variant="body2" sx={{ fontWeight: 700, pl: 3.5 }}>
-        {value || '---'}
-      </Typography>
-    </Box>
-  )
 
   // DataGrid columns
   const columns = [
@@ -193,6 +243,7 @@ export default function UserManagement() {
       headerName: 'Username',
       flex: 1.2,
       minWidth: 180,
+      hide: true,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontWeight: 700, color: 'primary.main', bgcolor: alpha(theme.palette.primary.main, 0.05), px: 1.5, py: 0.5, borderRadius: 2 }}>
           @{params.value}
@@ -204,6 +255,7 @@ export default function UserManagement() {
       headerName: 'Số điện thoại',
       flex: 1.2,
       minWidth: 180,
+      hide: true,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontWeight: 700, letterSpacing: '0.05em' }}>
           {params.value || '---'}
@@ -298,82 +350,24 @@ export default function UserManagement() {
       sortable: false,
       filterable: false,
       renderCell: (params) => {
-        const isSelf = String(params.row.id) === String(currentUser?.id) || 
-                       params.row.email === currentUser?.email ||
-                       params.row.username === currentUser?.username
         return (
-          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-            <Tooltip title="Hồ sơ chi tiết">
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Tooltip title="Tác vụ">
               <IconButton
                 size="small"
-                onClick={() => setDetailDialog({ open: true, user: params.row })}
-                sx={{ 
-                  color: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15), transform: 'translateY(-2px)' },
-                  transition: 'all 0.2s'
+                onClick={(event) => {
+                  event.stopPropagation()
+                  openActionMenu(event, params.row)
+                }}
+                sx={{
+                  color: 'text.secondary',
+                  bgcolor: alpha(theme.palette.primary.main, 0.06),
+                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.14), transform: 'translateY(-2px)' },
+                  transition: 'all 0.2s',
                 }}
               >
-                <Visibility fontSize="small" />
+                <MoreVert fontSize="small" />
               </IconButton>
-            </Tooltip>
-            
-            <Tooltip title="Chỉnh sửa hồ sơ">
-              <IconButton
-                size="small"
-                onClick={() => {
-                  setEditDialog({ open: true, user: params.row })
-                  setEditForm({ ...params.row })
-                }}
-                sx={{ 
-                  color: 'primary.main',
-                  bgcolor: alpha(theme.palette.primary.main, 0.08),
-                  '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.15), transform: 'translateY(-2px)' },
-                  transition: 'all 0.2s'
-                }}
-              >
-                <Edit fontSize="small" />
-              </IconButton>
-            </Tooltip>
-            
-            <Tooltip title={isSelf ? "Không thể tự đổi vai trò" : "Thay đổi vai trò"}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={isSelf}
-                  onClick={() => {
-                    setRoleDialog({ open: true, user: params.row })
-                    const currentRole = (params.row.roles?.[0] || 'PATIENT').replace('ROLE_', '').toUpperCase()
-                    setSelectedRole(currentRole)
-                  }}
-                  sx={{ 
-                    color: 'warning.main',
-                    bgcolor: alpha(theme.palette.warning.main, 0.08),
-                    '&:hover': { bgcolor: alpha(theme.palette.warning.main, 0.15), transform: 'translateY(-2px)' },
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  <AdminPanelSettings fontSize="small" />
-                </IconButton>
-              </span>
-            </Tooltip>
-
-            <Tooltip title={isSelf ? "Không thể tự khóa mình" : (params.row.isActive ? "Khóa tài khoản" : "Kích hoạt lại")}>
-              <span>
-                <IconButton
-                  size="small"
-                  disabled={isSelf}
-                  onClick={() => setToggleDialog({ open: true, user: params.row })}
-                  sx={{ 
-                    color: params.row.isActive ? 'error.main' : 'success.main',
-                    bgcolor: alpha(params.row.isActive ? theme.palette.error.main : theme.palette.success.main, 0.08),
-                    '&:hover': { bgcolor: alpha(params.row.isActive ? theme.palette.error.main : theme.palette.success.main, 0.15), transform: 'translateY(-2px)' },
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {params.row.isActive ? <Lock fontSize="small" /> : <LockOpen fontSize="small" />}
-                </IconButton>
-              </span>
             </Tooltip>
           </Stack>
         )
@@ -495,15 +489,16 @@ export default function UserManagement() {
           columns={columns}
           loading={loading}
           rowCount={totalElements}
-          getRowHeight={() => 120}
-          getEstimatedRowHeight={() => 120}
-          columnHeaderHeight={70}
-          density="comfortable"
+          getRowHeight={() => 112}
+          getEstimatedRowHeight={() => 112}
+          columnHeaderHeight={68}
+          density="standard"
           paginationMode="server"
           paginationModel={paginationModel}
           onPaginationModelChange={setPaginationModel}
           pageSizeOptions={[5, 10, 20, 50]}
           disableRowSelectionOnClick
+          onRowClick={(params) => openDetailDrawer(params.row)}
           disableVirtualization
           getRowId={(row) => row.id}
           sx={{
@@ -523,6 +518,7 @@ export default function UserManagement() {
             '& .MuiDataGrid-row': {
               transition: 'background-color 0.2s',
               overflow: 'visible !important',
+              cursor: 'pointer',
               '&:hover': {
                 bgcolor: alpha(theme.palette.primary.main, 0.04),
               },
@@ -546,6 +542,54 @@ export default function UserManagement() {
           }}
         />
       </Card>
+
+      <Menu
+        anchorEl={actionMenu.anchorEl}
+        open={Boolean(actionMenu.anchorEl)}
+        onClose={closeActionMenu}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        slotProps={{
+          paper: {
+            sx: {
+              mt: 1,
+              minWidth: 240,
+              borderRadius: 3,
+              overflow: 'hidden',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.14)',
+              border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
+            },
+          },
+        }}
+      >
+        <MenuItem onClick={() => handleActionMenu(openDetailDrawer)} dense>
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            <Visibility fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Xem chi tiết" primaryTypographyProps={{ fontWeight: 700 }} />
+        </MenuItem>
+        <MenuItem onClick={() => handleActionMenu(openEditDialog)} dense>
+          <ListItemIcon sx={{ minWidth: 36 }}>
+            <Edit fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Chỉnh sửa hồ sơ" primaryTypographyProps={{ fontWeight: 700 }} />
+        </MenuItem>
+        <MenuItem onClick={() => handleActionMenu(openRoleDialog)} dense disabled={isActionMenuSelf}>
+          <ListItemIcon sx={{ minWidth: 36, color: isActionMenuSelf ? 'text.disabled' : 'warning.main' }}>
+            <AdminPanelSettings fontSize="small" />
+          </ListItemIcon>
+          <ListItemText primary="Thay đổi vai trò" primaryTypographyProps={{ fontWeight: 700 }} />
+        </MenuItem>
+        <MenuItem onClick={() => handleActionMenu(openToggleDialog)} dense disabled={isActionMenuSelf}>
+          <ListItemIcon sx={{ minWidth: 36, color: isActionMenuSelf ? 'text.disabled' : actionMenu.user?.isActive ? 'error.main' : 'success.main' }}>
+            {actionMenu.user?.isActive ? <Lock fontSize="small" /> : <LockOpen fontSize="small" />}
+          </ListItemIcon>
+          <ListItemText
+            primary={actionMenu.user?.isActive ? 'Khóa tài khoản' : 'Kích hoạt lại'}
+            primaryTypographyProps={{ fontWeight: 700 }}
+          />
+        </MenuItem>
+      </Menu>
 
       {/* ===== Role Change Dialog (T-018) ===== */}
       <Dialog
@@ -744,142 +788,143 @@ export default function UserManagement() {
         </DialogActions>
       </Dialog>
 
-      {/* ===== User Detail Dialog (Redesigned T-030) ===== */}
-      <Dialog
+      {/* ===== User Detail Drawer (Master-Detail) ===== */}
+      <Drawer
+        anchor="right"
         open={detailDialog.open}
         onClose={() => setDetailDialog({ open: false, user: null })}
-        maxWidth="md"
-        fullWidth
-        TransitionComponent={Zoom}
-        TransitionProps={{ timeout: 400 }}
-        slotProps={{ 
-          paper: { 
-            sx: { 
-              borderRadius: 6,
-              overflow: 'hidden',
-              background: 'rgba(255, 255, 255, 0.98)',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 40px 80px rgba(0,0,0,0.15)',
-            } 
-          } 
+        ModalProps={{ keepMounted: true }}
+        PaperProps={{
+          sx: {
+            width: { xs: '100vw', sm: 560, md: 640 },
+            maxWidth: '100vw',
+            borderTopLeftRadius: { xs: 0, sm: 6 },
+            borderBottomLeftRadius: { xs: 0, sm: 6 },
+            overflow: 'hidden',
+            background: 'rgba(255, 255, 255, 0.98)',
+            backdropFilter: 'blur(20px)',
+            boxShadow: '0 40px 80px rgba(0,0,0,0.15)',
+          },
         }}
       >
-        <Box sx={{ height: 120, background: 'linear-gradient(135deg, #08BBA3 0%, #064E3B 100%)', position: 'relative' }}>
-          <IconButton
-            onClick={() => setDetailDialog({ open: false, user: null })}
-            sx={{ position: 'absolute', right: 16, top: 16, color: '#fff', bgcolor: 'rgba(0,0,0,0.2)', '&:hover': { bgcolor: 'rgba(0,0,0,0.4)' } }}
-          >
-            <Close />
-          </IconButton>
-        </Box>
-        
-        <DialogContent sx={{ p: 0, mt: -6 }}>
-          {detailDialog.user && (
-            <Box>
-              <Box sx={{ px: 4, display: 'flex', alignItems: 'flex-end', gap: 3, mb: 4 }}>
-                <Avatar
-                  src={detailDialog.user.avatarUrl}
-                  sx={{ 
-                    width: 120, 
-                    height: 120, 
-                    border: '6px solid #fff',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
-                    bgcolor: 'primary.main',
-                    fontSize: '3rem',
-                    fontWeight: 900
-                  }}
+        <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ height: 120, background: 'linear-gradient(135deg, #08BBA3 0%, #064E3B 100%)', position: 'relative' }}>
+            <IconButton
+              onClick={() => setDetailDialog({ open: false, user: null })}
+              sx={{ position: 'absolute', right: 16, top: 16, color: '#fff', bgcolor: 'rgba(0,0,0,0.2)', '&:hover': { bgcolor: 'rgba(0,0,0,0.4)' } }}
+            >
+              <Close />
+            </IconButton>
+          </Box>
+
+          <DialogContent sx={{ p: 0, mt: -6, flex: 1, overflowY: 'auto' }}>
+            {detailDialog.user && (
+              <Box>
+                <Box sx={{ px: 4, display: 'flex', alignItems: 'flex-end', gap: 3, mb: 4 }}>
+                  <Avatar
+                    src={detailDialog.user.avatarUrl}
+                    sx={{
+                      width: 120,
+                      height: 120,
+                      border: '6px solid #fff',
+                      boxShadow: '0 10px 30px rgba(0,0,0,0.1)',
+                      bgcolor: 'primary.main',
+                      fontSize: '3rem',
+                      fontWeight: 900,
+                    }}
+                  >
+                    {detailDialog.user.fullName?.[0]?.toUpperCase()}
+                  </Avatar>
+                  <Box sx={{ pb: 1, flex: 1 }}>
+                    <Typography variant="h4" sx={{ fontWeight: 900, color: 'text.primary' }}>
+                      {detailDialog.user.fullName}
+                    </Typography>
+                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <Chip
+                        label={`@${detailDialog.user.username}`}
+                        size="small"
+                        sx={{ fontWeight: 800, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}
+                      />
+                      <Chip
+                        label={detailDialog.user.isActive ? 'Active' : 'Locked'}
+                        size="small"
+                        color={detailDialog.user.isActive ? 'success' : 'error'}
+                        sx={{ fontWeight: 800 }}
+                      />
+                    </Stack>
+                  </Box>
+                </Box>
+
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, v) => setActiveTab(v)}
+                  sx={{ px: 4, borderBottom: 1, borderColor: 'divider' }}
                 >
-                  {detailDialog.user.fullName?.[0]?.toUpperCase()}
-                </Avatar>
-                <Box sx={{ pb: 1, flex: 1 }}>
-                  <Typography variant="h4" sx={{ fontWeight: 900, color: 'text.primary' }}>
-                    {detailDialog.user.fullName}
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                    <Chip 
-                      label={`@${detailDialog.user.username}`} 
-                      size="small" 
-                      sx={{ fontWeight: 800, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }} 
-                    />
-                    <Chip 
-                      label={detailDialog.user.isActive ? 'Active' : 'Locked'} 
-                      size="small" 
-                      color={detailDialog.user.isActive ? 'success' : 'error'}
-                      sx={{ fontWeight: 800 }}
-                    />
-                  </Stack>
+                  <Tab label="Tài khoản" sx={{ fontWeight: 800 }} />
+                  <Tab label="Hồ sơ chi tiết" sx={{ fontWeight: 800 }} />
+                </Tabs>
+
+                <Box sx={{ p: 4 }}>
+                  {activeTab === 0 && (
+                    <Grid container spacing={4}>
+                      <Grid xs={12} md={6}>
+                        <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.secondary', display: 'block', mb: 2 }}>Liên hệ</Typography>
+                        <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Email" value={detailDialog.user.email} />
+                        <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Số điện thoại" value={detailDialog.user.phone} />
+                      </Grid>
+                      <Grid xs={12} md={6}>
+                        <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.secondary', display: 'block', mb: 2 }}>Hệ thống</Typography>
+                        <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Ngày tham gia" value={new Date(detailDialog.user.createdAt).toLocaleDateString('vi-VN')} />
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', color: 'text.secondary', display: 'block', mb: 1 }}>Vai trò</Typography>
+                          <Stack direction="row" spacing={1}>
+                            {(detailDialog.user.roles || []).map(role => (
+                              <Chip key={role} label={role.replace('ROLE_', '')} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
+                            ))}
+                          </Stack>
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  )}
+
+                  {activeTab === 1 && (
+                    <Box>
+                      {detailDialog.user.roles?.includes('ROLE_DOCTOR') ? (
+                        <Grid container spacing={3}>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<School color="primary" />} label="Học hàm/Học vị" value={detailDialog.user.degrees} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<HospitalIcon color="primary" />} label="Bệnh viện" value={detailDialog.user.hospitalName} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<WorkspacePremium color="primary" />} label="Chuyên khoa" value={detailDialog.user.specialization} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<Timeline color="primary" />} label="Kinh nghiệm" value={`${detailDialog.user.experienceYears || 0} năm`} /></Grid>
+                          <Grid xs={12}><ProfileInfoItem icon={<HistoryEdu color="primary" />} label="Tiểu sử" value={detailDialog.user.bio} /></Grid>
+                        </Grid>
+                      ) : detailDialog.user.roles?.includes('ROLE_PATIENT') ? (
+                        <Grid container spacing={3}>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<Cake color="primary" />} label="Ngày sinh" value={detailDialog.user.dateOfBirth} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<Wc color="primary" />} label="Giới tính" value={detailDialog.user.gender} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<Bloodtype color="primary" />} label="Nhóm máu" value={detailDialog.user.bloodType} /></Grid>
+                          <Grid xs={12} sm={6}><ProfileInfoItem icon={<Search color="primary" />} label="Số BHYT" value={detailDialog.user.insuranceNumber} /></Grid>
+                          <Grid xs={12}><ProfileInfoItem icon={<Home color="primary" />} label="Địa chỉ" value={detailDialog.user.address} /></Grid>
+                          <Grid xs={12}><ProfileInfoItem icon={<Warning color="error" />} label="Dị ứng" value={detailDialog.user.allergies} /></Grid>
+                          <Grid xs={12}><ProfileInfoItem icon={<HospitalIcon color="warning" />} label="Bệnh lý mãn tính" value={detailDialog.user.chronicConditions} /></Grid>
+                        </Grid>
+                      ) : (
+                        <Box sx={{ textAlign: 'center', py: 4 }}>
+                          <Typography color="text.secondary" sx={{ fontWeight: 600 }}>Tài khoản này không có thông tin hồ sơ chi tiết.</Typography>
+                        </Box>
+                      )}
+                    </Box>
+                  )}
                 </Box>
               </Box>
-
-              <Tabs 
-                value={activeTab} 
-                onChange={(_, v) => setActiveTab(v)} 
-                sx={{ px: 4, borderBottom: 1, borderColor: 'divider' }}
-              >
-                <Tab label="Tài khoản" sx={{ fontWeight: 800 }} />
-                <Tab label="Hồ sơ chi tiết" sx={{ fontWeight: 800 }} />
-              </Tabs>
-
-              <Box sx={{ p: 4 }}>
-                {activeTab === 0 && (
-                  <Grid container spacing={4}>
-                    <Grid xs={12} md={6}>
-                      <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.secondary', display: 'block', mb: 2 }}>Liên hệ</Typography>
-                      <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Email" value={detailDialog.user.email} />
-                      <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Số điện thoại" value={detailDialog.user.phone} />
-                    </Grid>
-                    <Grid xs={12} md={6}>
-                      <Typography variant="overline" sx={{ fontWeight: 900, color: 'text.secondary', display: 'block', mb: 2 }}>Hệ thống</Typography>
-                      <ProfileInfoItem icon={<Search fontSize="small" color="primary" />} label="Ngày tham gia" value={new Date(detailDialog.user.createdAt).toLocaleDateString('vi-VN')} />
-                      <Box sx={{ mt: 2 }}>
-                        <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', color: 'text.secondary', display: 'block', mb: 1 }}>Vai trò</Typography>
-                        <Stack direction="row" spacing={1}>
-                          {(detailDialog.user.roles || []).map(role => (
-                            <Chip key={role} label={role.replace('ROLE_', '')} size="small" variant="outlined" sx={{ fontWeight: 800 }} />
-                          ))}
-                        </Stack>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                )}
-
-                {activeTab === 1 && (
-                  <Box>
-                    {detailDialog.user.roles?.includes('ROLE_DOCTOR') ? (
-                      <Grid container spacing={3}>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<School color="primary" />} label="Học hàm/Học vị" value={detailDialog.user.degrees} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<HospitalIcon color="primary" />} label="Bệnh viện" value={detailDialog.user.hospitalName} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<WorkspacePremium color="primary" />} label="Chuyên khoa" value={detailDialog.user.specialization} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<Timeline color="primary" />} label="Kinh nghiệm" value={`${detailDialog.user.experienceYears || 0} năm`} /></Grid>
-                        <Grid xs={12}><ProfileInfoItem icon={<HistoryEdu color="primary" />} label="Tiểu sử" value={detailDialog.user.bio} /></Grid>
-                      </Grid>
-                    ) : detailDialog.user.roles?.includes('ROLE_PATIENT') ? (
-                      <Grid container spacing={3}>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<Cake color="primary" />} label="Ngày sinh" value={detailDialog.user.dateOfBirth} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<Wc color="primary" />} label="Giới tính" value={detailDialog.user.gender} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<Bloodtype color="primary" />} label="Nhóm máu" value={detailDialog.user.bloodType} /></Grid>
-                        <Grid xs={12} sm={6}><ProfileInfoItem icon={<Search color="primary" />} label="Số BHYT" value={detailDialog.user.insuranceNumber} /></Grid>
-                        <Grid xs={12}><ProfileInfoItem icon={<Home color="primary" />} label="Địa chỉ" value={detailDialog.user.address} /></Grid>
-                        <Grid xs={12}><ProfileInfoItem icon={<Warning color="error" />} label="Dị ứng" value={detailDialog.user.allergies} /></Grid>
-                        <Grid xs={12}><ProfileInfoItem icon={<HospitalIcon color="warning" />} label="Bệnh lý mãn tính" value={detailDialog.user.chronicConditions} /></Grid>
-                      </Grid>
-                    ) : (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Typography color="text.secondary" sx={{ fontWeight: 600 }}>Tài khoản này không có thông tin hồ sơ chi tiết.</Typography>
-                      </Box>
-                    )}
-                  </Box>
-                )}
-              </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 4, pt: 0 }}>
-          <Button fullWidth onClick={() => setDetailDialog({ open: false, user: null })} variant="contained" sx={{ fontWeight: 900, borderRadius: 3, py: 1.5 }}>
-            Đóng
-          </Button>
-        </DialogActions>
-      </Dialog>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ p: 4, pt: 0, flexShrink: 0 }}>
+            <Button fullWidth onClick={() => setDetailDialog({ open: false, user: null })} variant="contained" sx={{ fontWeight: 900, borderRadius: 3, py: 1.5 }}>
+              Đóng
+            </Button>
+          </DialogActions>
+        </Box>
+      </Drawer>
 
       {/* ===== Edit Profile Dialog (New T-031) ===== */}
       <Dialog

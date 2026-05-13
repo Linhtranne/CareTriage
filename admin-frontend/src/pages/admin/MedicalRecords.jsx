@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
-  Box, Typography, Card, CardContent, TextField, 
-  InputAdornment, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Paper,
+  Box, Typography, Card, CardContent, TextField,
+  InputAdornment, Table, TableBody, TableCell,
+  TableContainer, TableHead, TableRow,
   IconButton, Chip, Tooltip, TablePagination,
   CircularProgress, Avatar
 } from '@mui/material';
-import { Search, Eye, FileText, User, Calendar, MapPin } from 'lucide-react';
+import { Search, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import medicalRecordApi from '../../api/medicalRecordApi';
 
@@ -18,11 +18,7 @@ export default function MedicalRecords() {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  useEffect(() => {
-    fetchRecords();
-  }, []);
-
-  const fetchRecords = async () => {
+  const fetchRecords = useCallback(async () => {
     try {
       setLoading(true);
       // Giả sử có API lấy tất cả records hoặc search
@@ -37,7 +33,15 @@ export default function MedicalRecords() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchRecords();
+    }, 0);
+
+    return () => clearTimeout(timer);
+  }, [fetchRecords]);
 
   const handleSearch = (e) => setSearch(e.target.value);
 

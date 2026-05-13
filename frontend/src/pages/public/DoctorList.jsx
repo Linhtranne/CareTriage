@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Box, Container, Grid, Typography, TextField, 
-  Avatar, Button, FormControl, Select, MenuItem,
+  Box, Container, Grid, Typography, TextField,
+  Avatar, Button, Select, MenuItem,
   Pagination, Skeleton, Chip, InputAdornment
 } from '@mui/material'
-import { 
-  Search, MapPin, Stethoscope, Clock, Award, X
+import {
+  Search, MapPin, Clock, Award, X
 } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import publicApi from '../../api/publicApi'
@@ -240,6 +240,7 @@ export default function DoctorList() {
   }, [filters])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- refresh doctor/department list when filter state changes
     fetchData()
   }, [fetchData])
 

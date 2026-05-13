@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { Bot } from 'lucide-react';
 
 const decodeHTML = (html) => {
   if (!html) return '';

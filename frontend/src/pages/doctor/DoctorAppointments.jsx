@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -37,8 +37,7 @@ import {
   User,
   FileText,
   Phone,
-  AlertCircle,
-  MoreVertical
+  AlertCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -57,7 +56,6 @@ const STATUS_MAP = {
 export default function DoctorAppointments() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
-  const [filteredAppointments, setFilteredAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [tabValue, setTabValue] = useState(0); // 0: Tất cả, 1: Chờ khám, 2: Đang khám, 3: Hoàn thành
   const [searchQuery, setSearchQuery] = useState('');
@@ -88,14 +86,15 @@ export default function DoctorAppointments() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch and periodic refresh are required for server data synchronization
     fetchTodayAppointments();
-    
+
     // Auto-refresh every 5 minutes (T-033 Step 2)
     const interval = setInterval(fetchTodayAppointments, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, [fetchTodayAppointments]);
 
-  useEffect(() => {
+  const filteredAppointments = useMemo(() => {
     let result = appointments;
 
     // Filter by Tab (T-033 Step 3)
@@ -106,14 +105,14 @@ export default function DoctorAppointments() {
     // Filter by Search (AC-4)
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      result = result.filter(a => 
-        a.patientName.toLowerCase().includes(q) || 
+      result = result.filter(a =>
+        a.patientName.toLowerCase().includes(q) ||
         a.id.toString().includes(q) ||
         (a.patientPhone && a.patientPhone.includes(q))
       );
     }
 
-    setFilteredAppointments(result);
+    return result;
   }, [appointments, tabValue, searchQuery]);
 
   const handleOpenStatusDialog = (appt, status) => {

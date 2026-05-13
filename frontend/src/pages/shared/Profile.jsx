@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+
+
 import {
   Box,
   Container,
@@ -14,7 +16,6 @@ import {
   IconButton,
   Fade,
   Grow,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -35,7 +36,6 @@ import {
 import {
   Edit as EditIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
   Person as PersonIcon,
@@ -48,11 +48,8 @@ import {
   WorkspacePremium as SpecializationIcon,
   Timeline as ExperienceIcon,
   CameraAlt as CameraIcon,
-  LocalHospital as LocalHospitalIcon,
-  Logout as LogoutIcon,
   MedicalServices as MedicalServicesIcon,
   Close as CloseIcon,
-  Settings as SettingsIcon,
   ContactPage as ContactPageIcon,
   HealthAndSafety as HealthIcon,
   Upload as UploadIcon,
@@ -60,7 +57,6 @@ import {
   Lock as LockIcon,
   Shield as ShieldIcon,
   VpnKey as KeyIcon,
-  Security as SecurityIcon,
   CreditCard as CardIcon,
   ContactPhone as ContactPhoneIcon,
   Business as BusinessIcon,
@@ -286,12 +282,13 @@ const Profile = () => {
   const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef(null);
   const [provincesList, setProvincesList] = useState([]);
-  const [districtsList, setDistrictsList] = useState([]);
-  const [wardsList, setWardsList] = useState([]);
   const [selectedProv, setSelectedProv] = useState(null);
   const [selectedDist, setSelectedDist] = useState(null);
   const [selectedWard, setSelectedWard] = useState(null);
   const [streetAddr, setStreetAddr] = useState('');
+
+  const districtsList = useMemo(() => selectedProv?.districts || [], [selectedProv]);
+  const wardsList = useMemo(() => selectedDist?.wards || [], [selectedDist]);
 
   useEffect(() => {
     fetch('https://provinces.open-api.vn/api/?depth=3')
@@ -300,26 +297,6 @@ const Profile = () => {
       .catch(e => console.error('Failed to load provinces from API:', e));
   }, []);
 
-  useEffect(() => {
-    if (selectedProv) {
-      setDistrictsList(selectedProv.districts || []);
-    } else {
-      setDistrictsList([]);
-    }
-    setSelectedDist(null);
-    setWardsList([]);
-    setSelectedWard(null);
-  }, [selectedProv]);
-
-  useEffect(() => {
-    if (selectedDist) {
-      setWardsList(selectedDist.wards || []);
-    } else {
-      setWardsList([]);
-    }
-    setSelectedWard(null);
-  }, [selectedDist]);
-
   // Password state
   const [passForm, setPassForm] = useState({
     currentPassword: '',
@@ -327,11 +304,8 @@ const Profile = () => {
     confirmPassword: '',
   });
 
-  useEffect(() => {
-    fetchProfile();
-  }, []);
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
       const response = await axiosClient.get('/api/users/profile');
@@ -345,7 +319,12 @@ const Profile = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [t]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial profile bootstrap on mount
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -419,7 +398,7 @@ const Profile = () => {
         }
         setTimeout(() => setSuccess(null), 3000);
       }
-    } catch (err) {
+    } catch {
       setError(t('profile.error'));
     } finally {
       setSaving(false);
@@ -519,7 +498,7 @@ const Profile = () => {
       setSuccess(t('auth.password_updated', 'Password updated successfully!'));
       setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => setSuccess(null), 3000);
-    } catch (err) {
+    } catch {
       setError(t('auth.password_update_failed', 'Failed to update password.'));
     } finally {
       setSaving(false);
@@ -753,7 +732,11 @@ const Profile = () => {
                             options={provincesList}
                             getOptionLabel={(option) => option.name}
                             value={selectedProv}
-                            onChange={(e, v) => setSelectedProv(v)}
+                            onChange={(e, v) => {
+                              setSelectedProv(v);
+                              setSelectedDist(null);
+                              setSelectedWard(null);
+                            }}
                             renderInput={(params) => (
                               <TextField {...params} label={t('profile.province')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
                             )}
@@ -764,7 +747,10 @@ const Profile = () => {
                             options={districtsList}
                             getOptionLabel={(option) => option.name}
                             value={selectedDist}
-                            onChange={(e, v) => setSelectedDist(v)}
+                            onChange={(e, v) => {
+                              setSelectedDist(v);
+                              setSelectedWard(null);
+                            }}
                             disabled={!selectedProv}
                             renderInput={(params) => (
                               <TextField {...params} label={t('profile.district')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />

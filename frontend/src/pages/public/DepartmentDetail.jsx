@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react'
-import { 
-  Box, Container, Typography, Grid, Paper, Stack, Button, 
+import { useEffect, useState } from 'react'
+import {
+  Box, Container, Typography, Grid, Paper, Stack, Button,
   Avatar, CircularProgress, Divider, Breadcrumbs, Link,
-  List, ListItem, ListItemIcon, ListItemText
+  List, ListItem, ListItemIcon, ListItemText, Skeleton
 } from '@mui/material'
 import { useParams, useNavigate, Link as RouterLink } from 'react-router-dom'
 import { 
@@ -39,8 +39,36 @@ export default function DepartmentDetail() {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <CircularProgress />
+      <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc', pb: 10 }}>
+        <Box
+          sx={{
+            pt: 15,
+            pb: 8,
+            px: 3,
+            background: 'linear-gradient(135deg, #064e3b 0%, #065f46 100%)',
+            color: 'white'
+          }}
+        >
+          <Container maxWidth="xl">
+            <Skeleton variant="text" width={220} height={30} sx={{ bgcolor: 'rgba(255,255,255,0.25)', mb: 2 }} />
+            <Skeleton variant="text" width="55%" height={72} sx={{ bgcolor: 'rgba(255,255,255,0.3)', mb: 2 }} />
+            <Skeleton variant="text" width="40%" height={38} sx={{ bgcolor: 'rgba(255,255,255,0.2)' }} />
+          </Container>
+        </Box>
+        <Container maxWidth="xl" sx={{ mt: 6 }}>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, md: 8 }}>
+              <Skeleton variant="rectangular" height={260} sx={{ borderRadius: 5, mb: 3 }} />
+              <Skeleton variant="rectangular" height={220} sx={{ borderRadius: 5 }} />
+            </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Paper sx={{ p: 4, borderRadius: 6, textAlign: 'center' }}>
+                <CircularProgress size={32} sx={{ mb: 2 }} />
+                <Typography color="text.secondary">Đang tải thông tin chuyên khoa...</Typography>
+              </Paper>
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
     )
   }
@@ -64,15 +92,16 @@ export default function DepartmentDetail() {
         color: 'white'
       }}>
         <Container maxWidth="xl">
-          <Breadcrumbs sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
+          <Breadcrumbs aria-label="breadcrumb" sx={{ color: 'rgba(255,255,255,0.7)', mb: 3 }}>
             <Link component={RouterLink} to="/" sx={{ color: 'inherit', textDecoration: 'none' }}>Trang chủ</Link>
-            <Typography sx={{ color: 'white' }}>Chuyên khoa</Typography>
+            <Link component={RouterLink} to="/doctors" sx={{ color: 'inherit', textDecoration: 'none' }}>Đội ngũ bác sĩ</Link>
+            <Typography sx={{ color: 'white' }}>{department.name}</Typography>
           </Breadcrumbs>
           <Grid container spacing={4} alignItems="center">
             <Grid size={{ xs: 12, md: 8 }}>
               <Typography variant="h2" sx={{ fontWeight: 900, mb: 2 }}>{department.name}</Typography>
               <Typography variant="h5" sx={{ opacity: 0.9, fontWeight: 400, fontStyle: 'italic' }}>
-                "Chăm sóc sức khỏe tận tâm, kiến tạo tương lai bền vững."
+                {department.description || 'Đồng hành cùng người bệnh với đội ngũ chuyên môn sâu và quy trình điều trị an toàn.'}
               </Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { md: 'right' } }}>

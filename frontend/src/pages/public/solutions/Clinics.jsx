@@ -1,4 +1,3 @@
-import React from 'react'
 import { 
   Box, 
   Container, 
@@ -10,12 +9,10 @@ import {
   alpha
 } from '@mui/material'
 import { motion } from 'framer-motion'
-import { 
-  Zap, 
-  ShieldCheck, 
+import {
+  Zap,
   ChevronRight,
   Layout,
-  Clock,
   Heart
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'

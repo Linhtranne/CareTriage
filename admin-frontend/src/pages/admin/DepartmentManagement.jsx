@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Box, Typography, Button, Paper, TextField, InputAdornment,
-  IconButton, Chip, Avatar, Tooltip, Zoom, Fade, useTheme, alpha,
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  FormControl, InputLabel, Select, MenuItem, FormHelperText
+  IconButton, Chip, Avatar, Tooltip, Zoom, useTheme, alpha,
+  Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material'
 import {
   Add, Search, Edit, Delete, LocalHospital, FilterList,
@@ -42,7 +41,7 @@ export default function DepartmentManagement() {
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
 
-  const fetchDepartments = async () => {
+  const fetchDepartments = useCallback(async () => {
     setLoading(true)
     try {
       const response = await adminApi.getDepartments({
@@ -59,11 +58,15 @@ export default function DepartmentManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [paginationModel.page, paginationModel.pageSize, search])
 
   useEffect(() => {
-    fetchDepartments()
-  }, [paginationModel, search])
+    const timer = setTimeout(() => {
+      fetchDepartments()
+    }, 0)
+
+    return () => clearTimeout(timer)
+  }, [fetchDepartments])
 
   const handleOpenDialog = (dept = null) => {
     setEditingDept(dept)

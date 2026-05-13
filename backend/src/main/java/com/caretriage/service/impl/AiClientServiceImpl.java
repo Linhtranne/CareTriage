@@ -69,7 +69,8 @@ public class AiClientServiceImpl implements AiClientService {
             request.put("conversation_history", history);
 
             log.info("Calling AI Service at: {} for session: {}", url, sessionId);
-            return restTemplate.postForObject(url, request, Map.class);
+            Object response = restTemplate.postForObject(url, request, Object.class);
+            return asStringObjectMap(response);
         } catch (Exception e) {
             log.error("Error calling AI Service: {}", e.getMessage());
             Map<String, Object> errorResponse = new HashMap<>();
@@ -77,5 +78,18 @@ public class AiClientServiceImpl implements AiClientService {
             errorResponse.put("is_complete", false);
             return errorResponse;
         }
+    }
+
+    private Map<String, Object> asStringObjectMap(Object value) {
+        if (!(value instanceof Map<?, ?> rawMap)) {
+            return new HashMap<>();
+        }
+        Map<String, Object> result = new HashMap<>();
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            if (entry.getKey() instanceof String key) {
+                result.put(key, entry.getValue());
+            }
+        }
+        return result;
     }
 }

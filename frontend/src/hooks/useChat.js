@@ -2,6 +2,47 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import useWebSocket from './useWebSocket';
 import chatApi from '../api/chatApi';
 
+const getMessageTime = (message) => {
+  const time = new Date(message.createdAt || 0).getTime();
+  return Number.isNaN(time) ? 0 : time;
+};
+
+const sortMessagesByTime = (messages) => [...messages].sort((a, b) => getMessageTime(a) - getMessageTime(b));
+
+const mergeChatMessage = (messages, msg) => {
+  const merged = [...messages];
+  const id = msg.id != null ? String(msg.id) : null;
+  const existingIdIndex = id
+    ? merged.findIndex((item) => item.id != null && String(item.id) === id)
+    : -1;
+  const optimisticIndex = msg.senderType === 'USER'
+    ? merged.findIndex((item) => item.isOptimistic && item.senderType === 'USER' && item.content === msg.content)
+    : -1;
+
+  if (existingIdIndex !== -1) {
+    merged[existingIdIndex] = { ...merged[existingIdIndex], ...msg, isOptimistic: false };
+    if (optimisticIndex !== -1 && optimisticIndex !== existingIdIndex) {
+      merged.splice(optimisticIndex, 1);
+    }
+    return merged;
+  }
+
+  if (optimisticIndex !== -1) {
+    merged[optimisticIndex] = { ...msg, status: 'DELIVERED' };
+    return merged;
+  }
+
+  if (!msg.id) {
+    const last = merged[merged.length - 1];
+    if (last && last.content === msg.content && last.senderType === msg.senderType && !last.isOptimistic) {
+      return merged;
+    }
+  }
+
+  merged.push(msg);
+  return merged;
+};
+
 /**
  * useChat — quản lý tin nhắn cho 1 chat session.
  * 
@@ -32,7 +73,7 @@ const useChat = (sessionId) => {
     return () => {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
       if (subscriptionRef.current) {
-        try { subscriptionRef.current.unsubscribe(); } catch (e) { /* ignore */ }
+        try { subscriptionRef.current.unsubscribe(); } catch { /* ignore */ }
         subscriptionRef.current = null;
       }
     };
@@ -46,7 +87,7 @@ const useChat = (sessionId) => {
 
     try {
       const res = await chatApi.getHistory(targetSessionId, pageNumber, 20);
-      
+
       // Guard: session đã thay đổi trong khi loading
       if (sessionIdRef.current !== targetSessionId) return;
 
@@ -55,17 +96,17 @@ const useChat = (sessionId) => {
 
       if (newMessages.length < 20) setHasMore(false);
 
-      setMessages((prev) => {
-        const unique = newMessages.filter((m) => {
-          if (!m.id) return true;
-          if (seenIdsRef.current.has(m.id)) return false;
-          seenIdsRef.current.add(m.id);
-          return true;
-        });
-        if (unique.length === 0) return prev;
-        const reversed = [...unique].reverse();
-        return pageNumber > 0 ? [...reversed, ...prev] : reversed;
+      const unique = newMessages.filter((m) => {
+        if (!m.id) return true;
+        const messageId = String(m.id);
+        if (seenIdsRef.current.has(messageId)) return false;
+        seenIdsRef.current.add(messageId);
+        return true;
       });
+
+      if (unique.length === 0) return;
+
+      setMessages((prev) => sortMessagesByTime(unique.reduce((acc, msg) => mergeChatMessage(acc, msg), prev)));
     } catch (err) {
       console.error('[Chat] Failed to load messages:', err);
     } finally {
@@ -97,45 +138,11 @@ const useChat = (sessionId) => {
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
     }
 
-    // Dedup by ID using ref (outside state updater to prevent StrictMode bugs)
-    if (msg.id) {
-      if (seenIdsRef.current.has(msg.id)) {
-        console.log('[Chat] ✗ DEDUP: msg id', msg.id, 'already seen → SKIPPING');
-        return;
-      }
-      seenIdsRef.current.add(msg.id);
+    if (msg.id && !seenIdsRef.current.has(String(msg.id))) {
+      seenIdsRef.current.add(String(msg.id));
     }
 
-    // Add message
-    setMessages((prev) => {
-      // Reconcile optimistic USER message
-      if (msg.senderType === 'USER') {
-        const idx = prev.findIndex((m) => m.isOptimistic && m.content === msg.content);
-        if (idx !== -1) {
-          const updated = [...prev];
-          updated[idx] = { ...msg, status: 'DELIVERED' };
-          console.log('[Chat] ✓ Reconciled optimistic USER msg, id:', msg.id);
-          return updated;
-        }
-      }
-
-      // Double check if it somehow exists in prev (pure check)
-      if (msg.id && prev.some(m => m.id === msg.id)) {
-        return prev;
-      }
-
-      // Dedup by content if no ID
-      if (!msg.id) {
-        const last = prev[prev.length - 1];
-        if (last && last.content === msg.content && last.senderType === msg.senderType && !last.isOptimistic) {
-          console.log('[Chat] ✗ DEDUP by content → SKIPPING');
-          return prev;
-        }
-      }
-
-      console.log('[Chat] ✓ ADDING message:', msg.senderType, msg.id, '→ new length:', prev.length + 1);
-      return [...prev, msg];
-    });
+    setMessages((prev) => sortMessagesByTime(mergeChatMessage(prev, msg)));
   }, []);
 
 
@@ -144,6 +151,7 @@ const useChat = (sessionId) => {
     if (!sessionId) return;
 
     // Reset state
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPage(0);
     setMessages([]);
     setHasMore(true);
@@ -181,7 +189,7 @@ const useChat = (sessionId) => {
     // Cleanup: unsubscribe khi effect re-runs hoặc unmount
     return () => {
       if (subscriptionRef.current) {
-        try { subscriptionRef.current.unsubscribe(); } catch (e) { /* connection already dead */ }
+        try { subscriptionRef.current.unsubscribe(); } catch { /* connection already dead */ }
         subscriptionRef.current = null;
         console.log(`[Chat] Unsubscribed (connection #${connectionId})`);
       }

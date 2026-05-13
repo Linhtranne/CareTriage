@@ -16,6 +16,9 @@ const DoctorDashboard = lazy(() => import('./pages/doctor/Dashboard'))
 const DoctorAppointments = lazy(() => import('./pages/doctor/DoctorAppointments'))
 const TriageTicketInbox = lazy(() => import('./pages/doctor/TriageTicketInbox'))
 const PatientTriageTickets = lazy(() => import('./pages/patient/TriageTickets'))
+const EHRUpload = lazy(() => import('./pages/doctor/EHRUpload'))
+const EHRResult = lazy(() => import('./pages/doctor/EHRResult'))
+const EHRSearch = lazy(() => import('./pages/doctor/EHRSearch'))
 const CreateMedicalRecord = lazy(() => import('./pages/doctor/CreateMedicalRecord'))
 const Profile = lazy(() => import('./pages/shared/Profile'))
 const VisionMission = lazy(() => import('./pages/public/VisionMission'))
@@ -98,6 +101,9 @@ export default function App() {
           <Route path="/doctor/appointments" element={<DoctorAppointments />} />
           <Route path="/doctor/triage-tickets" element={<TriageTicketInbox />} />
           <Route path="/doctor/medical-records/create/:appointmentId" element={<CreateMedicalRecord />} />
+          <Route path="/doctor/ehr/upload" element={<EHRUpload />} />
+          <Route path="/doctor/ehr/result/:noteId" element={<EHRResult />} />
+          <Route path="/doctor/ehr/search" element={<EHRSearch />} />
         </Route>
       </Route>
 

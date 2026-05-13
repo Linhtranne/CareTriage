@@ -1,8 +1,7 @@
-import { Box, Typography, Button, Fade, Grid, Card, CardContent, Paper, Container, Stack, Avatar, IconButton, Tooltip, Zoom, CircularProgress } from '@mui/material'
+import { Box, Typography, Button, Fade, Grid, Card, CardContent, Paper } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
 import {
   MedicalServices, Chat, ArrowForward, Description, Biotech, Storage, Security, VerifiedUser,
-  Psychology, EventAvailable, LocalHospital, Person, Code, ChevronRight, Star, CheckCircle as CheckCircle2
 } from '@mui/icons-material'
 import { keyframes } from '@emotion/react'
 import { useEffect, useRef, useState } from 'react'
@@ -306,100 +305,10 @@ function Reveal({ children, delay = 0 }) {
   )
 }
 
-// Feature Explorer (Sticky-Scroll presentation)
-function FeatureExplorer({ items }) {
-  const [activeIndex, setActiveIndex] = useState(0)
-  const containerRef = useRef(null)
-
-  useEffect(() => {
-    const observerOptions = {
-      root: null,
-      rootMargin: '-40% 0px -40% 0px',
-      threshold: 0.1
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const index = parseInt(entry.target.getAttribute('data-index'))
-          setActiveIndex(index)
-        }
-      })
-    }, observerOptions)
-
-    const children = containerRef.current?.querySelectorAll('.explorer-step')
-    children?.forEach(child => observer.observe(child))
-
-    return () => observer.disconnect()
-  }, [items])
-
-  return (
-    <Box ref={containerRef} sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 6, position: 'relative', py: 6 }}>
-      {/* Left Column: Scrolling Text */}
-      <Box sx={{ flex: 1 }}>
-        {items.map((item, idx) => (
-          <Box
-            key={idx}
-            className="explorer-step"
-            data-index={idx}
-            sx={{
-              height: '65vh', display: 'flex', flexDirection: 'column', justifyContent: 'center',
-              opacity: activeIndex === idx ? 1 : 0.25,
-              transform: activeIndex === idx ? 'translateX(0)' : 'translateX(-20px)',
-              transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-              px: { xs: 2, md: 4 },
-              position: 'relative', zIndex: 2,
-            }}
-          >
-            <Typography variant="h4" sx={{ fontWeight: 900, color: activeIndex === idx ? '#064e3b' : '#9ca3af', mb: 2, transition: 'color 0.3s' }}>
-              {item.title}
-            </Typography>
-            <Typography variant="body1" sx={{ color: activeIndex === idx ? '#374151' : '#9ca3af', lineHeight: 1.8, fontSize: '1.15rem', transition: 'color 0.3s' }}>
-              {item.description}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-
-      {/* Right Column: Sticky Media Frame */}
-      <Box
-        sx={{
-          flex: 3, position: { xs: 'relative', md: 'sticky' }, top: { xs: 0, md: '15vh' },
-          height: { xs: '360px', md: '65vh' }, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          borderRadius: 6, overflow: 'hidden',
-          background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(16, 185, 129, 0.15)',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.04)',
-          zIndex: 2,
-        }}
-      >
-        {items.map((item, idx) => (
-          <Fade in={activeIndex === idx} key={idx} timeout={500}>
-            <Box
-              sx={{
-                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                display: activeIndex === idx ? 'flex' : 'none',
-                alignItems: 'center', justifyContent: 'center', p: 2
-              }}
-            >
-              {item.media}
-            </Box>
-          </Fade>
-        ))}
-      </Box>
-    </Box>
-  )
-}
-
 // Animations
 const float = keyframes`
   0%, 100% { transform: translateY(0px); }
   50% { transform: translateY(-12px); }
-`
-
-const pulse = keyframes`
-  0%, 100% { opacity: 0.6; transform: scale(1); }
-  50% { opacity: 1; transform: scale(1.03); }
 `
 
 const slideTrack = keyframes`
@@ -414,45 +323,8 @@ const slideInLeft = keyframes`
 
 export default function Landing() {
   const navigate = useNavigate()
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const [chatStep, setChatStep] = useState(0)
-
-
-  const problemItems = [
-    {
-      title: t('problems.wait'),
-      description: t('problems.wait_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⏰</Typography>
-    },
-    {
-      title: t('problems.specialty'),
-      description: t('problems.specialty_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⚠️</Typography>
-    },
-    {
-      title: t('problems.records'),
-      description: t('problems.records_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>📂</Typography>
-    }
-  ];
-
-  const solutionItems = [
-    {
-      title: t('solutions.triage'),
-      description: t('solutions.triage_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>🤖</Typography>
-    },
-    {
-      title: t('solutions.routing'),
-      description: t('solutions.routing_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⚡</Typography>
-    },
-    {
-      title: t('solutions.ehr'),
-      description: t('solutions.ehr_desc'),
-      media: <Typography variant="h1" sx={{ color: 'rgba(16, 185, 129, 0.15)', fontWeight: 900, fontSize: '12rem' }}>🔒</Typography>
-    }
-  ];
 
   const explorerItems = [
     {
@@ -619,6 +491,7 @@ export default function Landing() {
               variant="contained" size="large"
               startIcon={<Chat />} endIcon={<ArrowForward />}
               onClick={() => navigate('/register')}
+              aria-label={t('hero.action')}
               sx={{
                 px: 6, py: 2, fontSize: '1.1rem', borderRadius: 4,
                 background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -631,6 +504,30 @@ export default function Landing() {
               }}
             >
               {t('hero.action')}
+            </Button>
+            <Button
+              variant="outlined"
+              size="large"
+              onClick={() => navigate('/about')}
+              aria-label={t('about_page.hero_title')}
+              sx={{
+                px: 5,
+                py: 2,
+                fontSize: '1.05rem',
+                borderRadius: 4,
+                borderColor: 'rgba(5, 150, 105, 0.6)',
+                color: '#065f46',
+                background: 'rgba(255, 255, 255, 0.45)',
+                backdropFilter: 'blur(8px)',
+                '&:hover': {
+                  borderColor: '#047857',
+                  background: 'rgba(16, 185, 129, 0.1)',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              {t('about_page.hero_title')}
             </Button>
           </Box>
         </Box>
@@ -703,6 +600,30 @@ export default function Landing() {
                 </Grid>
               ))}
             </Grid>
+
+            <Box sx={{ textAlign: 'center', mb: 5 }}>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => navigate('/features/ai-triage')}
+                aria-label={t('triage.title')}
+                sx={{
+                  borderColor: '#059669',
+                  color: '#047857',
+                  px: 4,
+                  py: 1.5,
+                  borderWidth: '2px',
+                  '&:hover': {
+                    borderColor: '#047857',
+                    background: 'rgba(16, 185, 129, 0.08)',
+                    transform: 'translateY(-2px)'
+                  },
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {t('triage.title')}
+              </Button>
+            </Box>
 
             {/* Live Simulated Dialogue Box Centered Below */}
             <Box sx={{ maxWidth: 600, mx: 'auto' }}>
@@ -825,10 +746,12 @@ export default function Landing() {
             </Box>
           </Box>
 
-          <Box sx={{ textAlign: 'center', mt: 6 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6, gap: 2.5, flexWrap: 'wrap' }}>
             <Button
-              variant="outlined" size="large"
-              onClick={() => navigate('/register')}
+              variant="outlined"
+              size="large"
+              onClick={() => navigate('/features/ehr-engine')}
+              aria-label={t('ehr.title')}
               sx={{
                 borderColor: '#059669', color: '#059669', px: 5, py: 1.5, fontSize: '1.05rem',
                 borderWidth: '2px',
@@ -838,6 +761,27 @@ export default function Landing() {
                   background: 'rgba(16, 185, 129, 0.05)',
                   borderWidth: '2px',
                   transform: 'scale(1.05)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              {t('ehr.title')}
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={() => navigate('/register')}
+              aria-label={t('ehr.action')}
+              sx={{
+                px: 5,
+                py: 1.5,
+                fontSize: '1.05rem',
+                borderRadius: 3,
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                boxShadow: '0 10px 24px rgba(16, 185, 129, 0.3)',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 14px 28px rgba(16, 185, 129, 0.35)',
                 },
                 transition: 'all 0.3s ease',
               }}

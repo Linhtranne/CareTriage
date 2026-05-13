@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { 
   Box, Typography, Card, CardContent, Grid, TextField, 
   MenuItem, Select, FormControl, InputLabel, IconButton,
@@ -52,10 +52,6 @@ const MedicalHistory = () => {
     return locale ? format(date, pattern, { locale }) : format(date, pattern);
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, [user]);
-
   const fetchHistory = async () => {
     try {
       setLoading(true);
@@ -69,6 +65,11 @@ const MedicalHistory = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect performs initial/identity-based history fetch from server
+    fetchHistory();
+  }, [user]);
 
   const filteredRecords = useMemo(() => {
     return records.filter(record => {
@@ -238,7 +239,7 @@ const MedicalHistory = () => {
             }} />
           )}
 
-          {filteredRecords.map((record, index) => (
+          {filteredRecords.map((record) => (
             <motion.div key={record.id} variants={itemVariants} style={{ marginBottom: '24px', position: 'relative', paddingLeft: isMobile ? 0 : '40px' }}>
               {/* Node Icon */}
               <Box sx={{

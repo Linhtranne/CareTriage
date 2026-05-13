@@ -48,4 +48,19 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     @Query("SELECT COUNT(a) FROM Appointment a WHERE a.patient.id = :patientId AND a.status = :status")
     long countByPatientIdAndStatus(@Param("patientId") Long patientId, @Param("status") Appointment.AppointmentStatus status);
+
+    @Query("SELECT a.status, COUNT(a) FROM Appointment a GROUP BY a.status")
+    List<Object[]> countAppointmentsByStatus();
+
+    @Query("SELECT a.status, COUNT(a) FROM Appointment a " +
+           "WHERE a.appointmentDate BETWEEN :startDate AND :endDate " +
+           "GROUP BY a.status")
+    List<Object[]> countAppointmentsByStatusBetween(@Param("startDate") LocalDate startDate,
+                                                    @Param("endDate") LocalDate endDate);
+
+    @Query("SELECT a.appointmentDate, COUNT(a) FROM Appointment a " +
+           "WHERE a.appointmentDate BETWEEN :startDate AND :endDate " +
+           "GROUP BY a.appointmentDate ORDER BY a.appointmentDate ASC")
+    List<Object[]> countAppointmentsByDateBetween(@Param("startDate") LocalDate startDate,
+                                                   @Param("endDate") LocalDate endDate);
 }

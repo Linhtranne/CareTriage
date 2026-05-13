@@ -23,8 +23,8 @@ export const adminApi = {
     return axiosClient.patch(`${ADMIN_BASE_URL}/${id}/profile`, data)
   },
 
-  getDashboardStats: () => {
-    return axiosClient.get('/api/v1/admin/dashboard/stats')
+  getDashboardStats: (params = {}) => {
+    return axiosClient.get('/api/v1/admin/dashboard/stats', { params })
   },
 
   // Department Management

@@ -1,12 +1,12 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { 
   Box, Container, Typography, Grid, Paper, TextField, 
   Button, Stack, Alert, Snackbar, CircularProgress,
-  IconButton
+  IconButton, Divider
 } from '@mui/material'
-import { 
-  Send, Phone, Email, LocationOn, 
-  Facebook, Twitter, LinkedIn, Instagram 
+import {
+  Send, Phone, Email, LocationOn, Security,
+  Facebook, Twitter, LinkedIn, Instagram
 } from '@mui/icons-material'
 import contactApi from '../../api/contactApi'
 
@@ -44,8 +44,7 @@ export default function Contact() {
     } catch (err) {
       setError(err.response?.data?.message || 'Gửi yêu cầu thất bại. Vui lòng thử lại.')
     } finally {
-      setLoading(true) // Simulation delay
-      setTimeout(() => setLoading(false), 1000)
+      setLoading(false)
     }
   }
 

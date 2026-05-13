@@ -7,7 +7,7 @@ import {
 } from '@mui/material'
 import {
   Dashboard, Person, LocalHospital, Logout, MedicalServices,
-  CalendarMonth, Campaign, NotificationsNone, Settings,
+  Campaign, NotificationsNone, Settings,
   Menu as MenuIcon,
 } from '@mui/icons-material'
 import useAuthStore from '../../store/authStore'
@@ -77,7 +77,6 @@ const menuByRole = {
     { text: 'Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
     { text: 'Quản lý người dùng', icon: <Person />, path: '/admin/users' },
     { text: 'Quản lý chuyên khoa', icon: <LocalHospital />, path: '/admin/departments' },
-    { text: 'Lịch hẹn hệ thống', icon: <CalendarMonth />, path: '/admin/appointments' },
     { text: 'Hồ sơ bệnh án', icon: <MedicalServices />, path: '/admin/records' },
     { text: 'Quản lý nội dung', icon: <Campaign />, path: '/admin/cms' },
   ],

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Typography,
   Box,
@@ -20,7 +20,6 @@ import {
   CircularProgress,
   Stack,
   Divider,
-  Alert,
   Tooltip
 } from '@mui/material';
 import {
@@ -30,7 +29,6 @@ import {
   FileText,
   AlertCircle,
   XCircle,
-  MoreVertical,
   CheckCircle2,
   CalendarCheck,
   ChevronRight,
@@ -97,10 +95,6 @@ export default function MyAppointments() {
     }
   };
 
-  useEffect(() => {
-    fetchAppointments();
-  }, [tabValue]);
-
   const fetchAppointments = async () => {
     setLoading(true);
     try {
@@ -109,7 +103,7 @@ export default function MyAppointments() {
       if (tabValue === 1) status = 'PENDING,CONFIRMED'; // Upcoming
       else if (tabValue === 2) status = 'COMPLETED';
       else if (tabValue === 3) status = 'CANCELLED';
-      
+
       const res = await appointmentApi.getMyAppointments(status);
       setAppointments(res.data);
     } catch (err) {
@@ -118,6 +112,11 @@ export default function MyAppointments() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect loads appointments when active tab status filter changes
+    fetchAppointments();
+  }, [tabValue]);
 
   const handleOpenCancel = (e, appt, returnFocusTarget = null) => {
     e.stopPropagation();

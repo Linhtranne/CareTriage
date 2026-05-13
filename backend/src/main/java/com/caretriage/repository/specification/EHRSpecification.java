@@ -1,20 +1,21 @@
 package com.caretriage.repository.specification;
 
-import com.caretriage.entity.PatientCondition;
-import com.caretriage.entity.PatientMedication;
-import com.caretriage.entity.PatientSymptom;
-import com.caretriage.entity.User;
+import com.caretriage.entity.*;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EHRSpecification {
 
-    public static Specification<User> searchPatients(String symptom, String medication, String condition, String severity) {
+    public static Specification<User> searchPatients(
+            String symptom, String medication, String condition, 
+            String severity, LocalDate dateFrom, LocalDate dateTo) {
+        
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
 
@@ -53,6 +54,24 @@ public class EHRSpecification {
                 Root<PatientCondition> subRoot = subquery.from(PatientCondition.class);
                 subquery.select(subRoot.get("patient").get("id"));
                 subquery.where(cb.like(cb.lower(subRoot.get("conditionName")), "%" + condition.toLowerCase() + "%"));
+                predicates.add(cb.in(root.get("id")).value(subquery));
+            }
+
+            // Filter by ClinicalNote date range
+            if (dateFrom != null || dateTo != null) {
+                Subquery<Long> subquery = query.subquery(Long.class);
+                Root<ClinicalNote> subRoot = subquery.from(ClinicalNote.class);
+                subquery.select(subRoot.get("patient").get("id"));
+                
+                List<Predicate> subPreds = new ArrayList<>();
+                if (dateFrom != null) {
+                    subPreds.add(cb.greaterThanOrEqualTo(subRoot.get("createdAt"), dateFrom.atStartOfDay()));
+                }
+                if (dateTo != null) {
+                    subPreds.add(cb.lessThanOrEqualTo(subRoot.get("createdAt"), dateTo.atTime(23, 59, 59)));
+                }
+                
+                subquery.where(subPreds.toArray(new Predicate[0]));
                 predicates.add(cb.in(root.get("id")).value(subquery));
             }
 

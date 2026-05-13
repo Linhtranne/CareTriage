@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from 'react'
-import { 
-  Box, Container, Typography, TextField, Button, Grid, 
+import { useState, useEffect } from 'react'
+import {
+  Box, Container, Typography, TextField, Button, Grid,
   Paper, Stack, Alert, CircularProgress, Tabs, Tab,
-  Card, CardContent, Divider, Fade, useTheme
+  Card, CardContent, Divider, Fade
 } from '@mui/material'
-import { alpha } from '@mui/material/styles'
 import { 
   Save, Refresh, Translate, Language, Dashboard, 
   SettingsSuggest, Web, ViewQuilt 
@@ -12,7 +11,6 @@ import {
 import landingApi from '../api/landingApi'
 
 export default function CMSManagement() {
-  const theme = useTheme()
   const [lang, setLang] = useState('vi')
   const [content, setContent] = useState({})
   const [loading, setLoading] = useState(false)
@@ -32,7 +30,11 @@ export default function CMSManagement() {
   }
 
   useEffect(() => {
-    fetchContent(lang)
+    const timer = setTimeout(() => {
+      fetchContent(lang)
+    }, 0)
+
+    return () => clearTimeout(timer)
   }, [lang])
 
   const handleSave = async () => {
@@ -42,7 +44,7 @@ export default function CMSManagement() {
       await landingApi.updateContent(content, lang)
       setMessage('Cập nhật nội dung thành công!')
       setTimeout(() => setMessage(''), 5000)
-    } catch (err) {
+    } catch {
       setMessage('Lỗi khi cập nhật nội dung.')
     } finally {
       setSaving(false)

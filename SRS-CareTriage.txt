@@ -42,7 +42,7 @@ Version: 2.0 | Date: 2026-04-28
          * AI phân tích triệu chứng, hỏi câu hỏi phụ
          * Đề xuất chuyên khoa và mức độ ưu tiên
          * Tự động tạo Triage Ticket gửi đến bác sĩ
-      * Trích xuất Bệnh án Điện tử (EHR Data Extraction) ⭐ MỚI
+      * Trích xuất Bệnh án Điện tử (EHR Data Extraction)
          * Upload file PDF/Word hoặc nhập text ghi chú lâm sàng
          * AI tự động trích xuất: thuốc, liều lượng, triệu chứng, bệnh lý, xét nghiệm
          * Chuẩn hóa dữ liệu vào các bảng có cấu trúc

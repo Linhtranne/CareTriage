@@ -9,9 +9,9 @@ import com.caretriage.repository.TriageTicketRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -25,8 +25,8 @@ public class TriageAppointmentStatusSyncListener {
     private final TriageTicketRepository triageTicketRepository;
 
     @Async
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onAppointmentStatusChanged(AppointmentStatusChangedEvent event) {
         if (event.triageTicketId() == null) {
             return;
@@ -53,8 +53,8 @@ public class TriageAppointmentStatusSyncListener {
     }
 
     @Async
-    @EventListener
-    @Transactional
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void onTriageTicketStatusChanged(TriageTicketStatusChangedEvent event) {
         Appointment appointment = appointmentRepository.findByTriageTicketId(event.ticketId()).orElse(null);
         if (appointment == null) {

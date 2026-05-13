@@ -1,4 +1,3 @@
-import React from 'react'
 import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
 import { motion } from 'framer-motion'
 import { Brain, Activity, Zap, ArrowRight, ShieldCheck, Terminal, Heart } from 'lucide-react'

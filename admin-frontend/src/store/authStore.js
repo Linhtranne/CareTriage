@@ -36,7 +36,7 @@ export const getHighestPriorityLandingPage = (user) => {
 
 const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       token: null,
       refreshToken: null,

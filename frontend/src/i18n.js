@@ -6,7 +6,12 @@ const resources = {
   en: {
     translation: {
       common: {
-        not_provided: 'Not provided'
+        not_provided: 'Not provided',
+        refresh: 'Refresh',
+        view_all: 'View All',
+        patient: 'Patient',
+        no_dept: 'No specialty',
+        unknown: 'Unknown'
       },
       nav: {
         login: 'Log In',
@@ -207,6 +212,8 @@ const resources = {
         users: 'User Management',
         departments: 'Departments',
         appointments_admin: 'All Appointments',
+        ehr_extract: 'EHR Extraction',
+        ehr_search: 'EHR Search',
         profile: 'Personal Profile',
         logout: 'Log Out'
       },
@@ -267,7 +274,27 @@ const resources = {
         support_title: 'Need help?',
         support_desc: 'Contact the care team or go to emergency care if symptoms worsen.',
         contact_support: 'Contact support',
-        emergency: 'Emergency'
+        emergency: 'Emergency',
+        upcoming_appointment: 'Upcoming Appointment',
+        no_upcoming: 'No upcoming appointments',
+        total_records: 'Total health records',
+        active_tickets: 'Active Triage Tickets',
+        triage_status: 'Current triage status',
+        recent_records: 'Recent Medical Records',
+        no_records_yet: 'No records found yet',
+        view_all_records: 'View All Records',
+        doctor: {
+          title: 'Doctor Overview',
+          error_load: 'Failed to load doctor dashboard data. Please try again.',
+          total_today: 'Total Today',
+          waiting: 'Waiting',
+          in_progress: 'In Progress',
+          pending_tickets: 'Pending Tickets',
+          today_schedule: 'Today\'s Schedule',
+          no_appointments: 'No appointments for today.',
+          pending_triage: 'Pending Triage Tickets',
+          no_tickets: 'No pending triage tickets.'
+        }
       },
       appointments: {
         title: 'My Appointments',
@@ -346,7 +373,7 @@ const resources = {
         back: 'Back',
         confirm_booking: 'Confirm Booking'
       },
-      triage: {
+      triage_tickets: {
         title: 'Priority Classification',
         subtitle: 'Track triage tickets, care priority, and conversations with the care team.',
         loading: 'Loading triage tickets...',
@@ -557,7 +584,12 @@ const resources = {
   vi: {
     translation: {
       common: {
-        not_provided: 'Chưa cập nhật'
+        not_provided: 'Chưa cập nhật',
+        refresh: 'Làm mới',
+        view_all: 'Xem tất cả',
+        patient: 'Bệnh nhân',
+        no_dept: 'Chưa có chuyên khoa',
+        unknown: 'Không xác định'
       },
       nav: {
         login: 'Đăng nhập',
@@ -758,6 +790,8 @@ const resources = {
         users: 'Quản lý người dùng',
         departments: 'Khoa/Phòng',
         appointments_admin: 'Lịch hẹn hệ thống',
+        ehr_extract: 'Phân tích EHR',
+        ehr_search: 'Tìm kiếm EHR',
         profile: 'Hồ sơ cá nhân',
         logout: 'Đăng xuất'
       },
@@ -817,7 +851,27 @@ const resources = {
         support_title: 'Cần hỗ trợ?',
         support_desc: 'Liên hệ đội ngũ chăm sóc hoặc đến cấp cứu nếu triệu chứng nặng hơn.',
         contact_support: 'Liên hệ hỗ trợ',
-        emergency: 'Cấp cứu'
+        emergency: 'Cấp cứu',
+        upcoming_appointment: 'Lịch khám sắp tới',
+        no_upcoming: 'Chưa có lịch khám',
+        total_records: 'Tổng số hồ sơ sức khỏe',
+        active_tickets: 'Phiếu sơ chẩn đang mở',
+        triage_status: 'Trạng thái sơ chẩn hiện tại',
+        recent_records: 'Hồ sơ bệnh án gần đây',
+        no_records_yet: 'Chưa có hồ sơ bệnh án nào',
+        view_all_records: 'Xem tất cả hồ sơ',
+        doctor: {
+          title: 'Tổng quan Bác sĩ',
+          error_load: 'Không thể tải dữ liệu dashboard bác sĩ. Vui lòng thử lại.',
+          total_today: 'Tổng lịch hôm nay',
+          waiting: 'Chờ xử lý',
+          in_progress: 'Đang khám',
+          pending_tickets: 'Ticket triage chờ',
+          today_schedule: 'Lịch khám hôm nay',
+          no_appointments: 'Hôm nay chưa có lịch khám.',
+          pending_triage: 'Phiếu triage chờ xử lý',
+          no_tickets: 'Không có ticket chờ xử lý.'
+        }
       },
       appointments: {
         title: 'Lịch hẹn của tôi',
@@ -896,7 +950,7 @@ const resources = {
         back: 'Quay lại',
         confirm_booking: 'Xác nhận đặt lịch'
       },
-      triage: {
+      triage_tickets: {
         title: 'Phân loại ưu tiên',
         subtitle: 'Theo dõi phiếu phân loại, mức ưu tiên và trao đổi với đội ngũ y tế.',
         loading: 'Đang tải phiếu phân loại...',
@@ -1150,7 +1204,7 @@ export const loadCmsContent = async () => {
 loadCmsContent();
 
 // Listen for language changes to reload CMS content
-i18n.on('languageChanged', (lng) => {
+i18n.on('languageChanged', () => {
   loadCmsContent();
 });
 

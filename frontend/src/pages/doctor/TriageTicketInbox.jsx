@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import {
   Box, Container, Typography, Paper, Table, TableHead, TableBody, TableRow, TableCell,
-  Button, Chip, CircularProgress, Dialog, DialogTitle, DialogContent, Stack, TextField, 
-  MenuItem, Alert, IconButton, InputAdornment, Tooltip, Avatar, Grid, Divider,
-  Fade, Zoom, useTheme
+  Button, Chip, CircularProgress, Dialog, DialogTitle, DialogContent, Stack, TextField,
+  MenuItem, Alert, IconButton, InputAdornment, Tooltip, Avatar, Grid,
+  Zoom
 } from '@mui/material'
-import { 
-  Search, FilterList, Refresh, ChevronRight, MessageSquare, 
+import {
+  Search, Filter, RefreshCw, ChevronRight, MessageSquare,
   Clock, User, Stethoscope, AlertTriangle, CheckCircle2,
   Calendar, ArrowRight
 } from 'lucide-react'
@@ -58,6 +58,7 @@ export default function TriageTicketInbox() {
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bootstrap inbox data and departments on mount
     loadTickets()
     loadDepartments()
   }, [])
@@ -148,7 +149,7 @@ export default function TriageTicketInbox() {
         </Box>
         <Tooltip title="Làm mới danh sách">
           <IconButton onClick={loadTickets} sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
-            <Refresh size={20} />
+            <RefreshCw size={20} />
           </IconButton>
         </Tooltip>
       </Stack>
@@ -186,7 +187,7 @@ export default function TriageTicketInbox() {
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <FilterList size={18} />
+                <Filter size={18} />
               </InputAdornment>
             ),
           }}

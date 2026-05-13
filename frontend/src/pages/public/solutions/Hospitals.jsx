@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -52,7 +52,7 @@ const theme = createTheme({
     },
   },
   typography: {
-    fontFamily: "'Inter', sans-serif",
+    fontFamily: "'Be Vietnam Pro', 'Inter', sans-serif",
     h1: { fontWeight: 900, letterSpacing: '-0.03em' },
     h2: { fontWeight: 900, letterSpacing: '-0.02em' },
     h3: { fontWeight: 700, letterSpacing: '-0.01em' },
