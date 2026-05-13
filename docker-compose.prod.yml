@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: caretriage-mysql-prod
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_prod_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    networks:
+      - caretriage-net
+
+  backend:
+    image: ${DOCKER_USERNAME}/caretriage-backend:latest
+    container_name: caretriage-backend-prod
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      AI_SERVICE_URL: http://ai-service:8000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - caretriage-net
+
+  ai-service:
+    image: ${DOCKER_USERNAME}/caretriage-ai:latest
+    container_name: caretriage-ai-prod
+    restart: unless-stopped
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GEMINI_MODEL_NAME: ${GEMINI_MODEL_NAME:-gemini-2.5-pro}
+    networks:
+      - caretriage-net
+
+  frontend:
+    image: ${DOCKER_USERNAME}/caretriage-frontend:latest
+    container_name: caretriage-frontend-prod
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - caretriage-net
+
+  admin-frontend:
+    image: ${DOCKER_USERNAME}/caretriage-admin:latest
+    container_name: caretriage-admin-prod
+    restart: unless-stopped
+    ports:
+      - "81:80"
+    depends_on:
+      - backend
+    networks:
+      - caretriage-net
+
+volumes:
+  mysql_prod_data:
+
+networks:
+  caretriage-net:
+    driver: bridge

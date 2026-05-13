@@ -18,6 +18,35 @@ export const adminApi = {
   toggleActive: (id) => {
     return axiosClient.patch(`${ADMIN_BASE_URL}/${id}/status`)
   },
+
+  updateProfile: (id, data) => {
+    return axiosClient.patch(`${ADMIN_BASE_URL}/${id}/profile`, data)
+  },
+
+  getDashboardStats: (params = {}) => {
+    return axiosClient.get('/api/v1/admin/dashboard/stats', { params })
+  },
+
+  // Department Management
+  getDepartments: (params = {}) => {
+    return axiosClient.get('/api/v1/departments', { params })
+  },
+
+  getDepartmentById: (id) => {
+    return axiosClient.get(`/api/v1/departments/${id}`)
+  },
+
+  createDepartment: (data) => {
+    return axiosClient.post('/api/v1/departments', data)
+  },
+
+  updateDepartment: (id, data) => {
+    return axiosClient.put(`/api/v1/departments/${id}`, data)
+  },
+
+  deleteDepartment: (id) => {
+    return axiosClient.delete(`/api/v1/departments/${id}`)
+  },
 }
 
 export default adminApi

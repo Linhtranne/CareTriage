@@ -10,12 +10,14 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/admin/users")
 @RequiredArgsConstructor
 @Tag(name = "Admin User Management", description = "Admin endpoints for managing users")
+@PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
 public class AdminUserController {
 
     private final AdminUserService adminUserService;
@@ -53,5 +55,14 @@ public class AdminUserController {
     public ResponseEntity<ApiResponse<AdminUserResponse>> toggleActive(@PathVariable Long id) {
         AdminUserResponse user = adminUserService.toggleUserActive(id);
         return ResponseEntity.ok(ApiResponse.success("User status updated successfully", user));
+    }
+
+    @PatchMapping("/{id}/profile")
+    @Operation(summary = "Update user profile details (Admin)")
+    public ResponseEntity<ApiResponse<AdminUserResponse>> updateProfile(
+            @PathVariable Long id,
+            @RequestBody AdminUserResponse request) {
+        AdminUserResponse user = adminUserService.updateUserProfile(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Hồ sơ người dùng đã được cập nhật thành công", user));
     }
 }

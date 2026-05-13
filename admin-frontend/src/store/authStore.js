@@ -16,20 +16,27 @@ export const ROLE_LANDING_PAGES = {
   'ADMIN': '/admin/dashboard'
 }
 
-export const getHighestPriorityLandingPage = (roles) => {
-  if (!roles || roles.length === 0) return '/dashboard'
+export const getHighestPriorityLandingPage = (user) => {
+  if (!user) return '/login'
   
-  const cleanRoles = roles.map(r => r.replace('ROLE_', '').toUpperCase())
+  if (user.role) {
+    const cleanRole = user.role.replace('ROLE_', '').toUpperCase()
+    return ROLE_LANDING_PAGES[cleanRole] || '/admin/dashboard'
+  }
   
-  const sortedRoles = [...cleanRoles].sort((a, b) => (ROLE_PRIORITY[b] || 0) - (ROLE_PRIORITY[a] || 0))
-  const highestRole = sortedRoles[0]
+  if (user.roles && user.roles.length > 0) {
+    const cleanRoles = user.roles.map(r => r.replace('ROLE_', '').toUpperCase())
+    const sortedRoles = [...cleanRoles].sort((a, b) => (ROLE_PRIORITY[b] || 0) - (ROLE_PRIORITY[a] || 0))
+    const highestRole = sortedRoles[0]
+    return ROLE_LANDING_PAGES[highestRole] || '/admin/dashboard'
+  }
   
-  return ROLE_LANDING_PAGES[highestRole] || '/dashboard'
+  return '/admin/dashboard'
 }
 
 const useAuthStore = create(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       token: null,
       refreshToken: null,
@@ -41,6 +48,23 @@ const useAuthStore = create(
         try {
           const res = await axiosClient.post('/api/auth/login', { email, password })
           const { token, refreshToken, user } = res.data.data
+          
+          // Check if user has an admin role before allowing login to Admin Portal
+          const userRoles = []
+          if (user?.role) userRoles.push(user.role)
+          if (user?.roles) userRoles.push(...user.roles)
+          const cleanRoles = userRoles.map(r => r.replace('ROLE_', '').toUpperCase())
+          
+          const hasAdminRole = cleanRoles.some(role => ['SUPER_ADMIN', 'CONTENT_ADMIN', 'ADMIN'].includes(role))
+          
+          if (!hasAdminRole) {
+            set({ isLoading: false })
+            return { 
+              success: false, 
+              message: 'Tài khoản của bạn không có quyền truy cập trang quản trị. Vui lòng đăng nhập ở cổng dành cho Bác sĩ/Bệnh nhân.' 
+            }
+          }
+
           set({ user, token, refreshToken, isAuthenticated: true, isLoading: false })
           return { success: true }
         } catch (error) {

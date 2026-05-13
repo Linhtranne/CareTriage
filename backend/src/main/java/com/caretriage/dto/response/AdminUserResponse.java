@@ -26,4 +26,22 @@ public class AdminUserResponse {
     private Boolean twoFactorSms;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // Patient Profile Fields
+    private java.time.LocalDate dateOfBirth;
+    private String gender;
+    private String address;
+    private String bloodType;
+    private String allergies;
+    private String insuranceNumber;
+    private String emergencyContactName;
+    private String emergencyContactPhone;
+    private String chronicConditions;
+
+    // Doctor Profile Fields
+    private String bio;
+    private String specialization;
+    private Integer experienceYears;
+    private String degrees;
+    private String hospitalName;
 }

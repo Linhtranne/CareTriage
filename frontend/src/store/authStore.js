@@ -60,7 +60,7 @@ const useAuthStore = create(
       register: async (data) => {
         set({ isLoading: true })
         try {
-          const res = await axiosClient.post('/api/auth/register', data)
+          await axiosClient.post('/api/auth/register', data)
           set({ isLoading: false })
           return { success: true, message: 'Đăng ký thành công' }
         } catch (error) {

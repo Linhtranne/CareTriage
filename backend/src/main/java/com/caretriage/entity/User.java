@@ -51,8 +51,8 @@ public class User {
     @Column(length = 20)
     private String phone;
 
-    @Size(max = 255, message = "Avatar URL must not exceed 255 characters")
-    @Column(name = "avatar_url")
+    @Lob
+    @Column(name = "avatar_url", columnDefinition = "LONGTEXT")
     private String avatarUrl;
 
     @Column(name = "refresh_token")

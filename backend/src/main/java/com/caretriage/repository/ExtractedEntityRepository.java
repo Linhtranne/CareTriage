@@ -15,6 +15,8 @@ public interface ExtractedEntityRepository extends JpaRepository<ExtractedEntity
 
     List<ExtractedEntity> findByClinicalNoteIdAndEntityType(Long clinicalNoteId, ExtractedEntity.EntityType entityType);
 
+    List<ExtractedEntity> findByEntityValueContainingIgnoreCase(String value);
+
     @Query("SELECT DISTINCT ee.clinicalNote.patient.id FROM ExtractedEntity ee " +
            "WHERE ee.entityType = :entityType AND LOWER(ee.entityValue) LIKE LOWER(CONCAT('%', :value, '%'))")
     List<Long> findPatientIdsByEntityTypeAndValue(@Param("entityType") ExtractedEntity.EntityType entityType, @Param("value") String value);

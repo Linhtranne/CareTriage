@@ -1,34 +1,61 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Suspense, lazy } from 'react'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { CircularProgress, Box } from '@mui/material'
 import MainLayout from './components/layout/MainLayout'
 import PublicLayout from './components/layout/PublicLayout'
-import Landing from './pages/public/Landing'
-import Login from './pages/auth/Login'
-import Register from './pages/auth/Register'
-import PatientDashboard from './pages/patient/Dashboard'
-import DoctorDashboard from './pages/doctor/Dashboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
-import Profile from './pages/shared/Profile'
-import NotFound from './pages/NotFound'
+
+const Landing = lazy(() => import('./pages/public/Landing'))
+const Login = lazy(() => import('./pages/auth/Login'))
+const Register = lazy(() => import('./pages/auth/Register'))
+const PatientDashboard = lazy(() => import('./pages/patient/Dashboard'))
+const BookAppointment = lazy(() => import('./pages/patient/BookAppointment'))
+const MyAppointments = lazy(() => import('./pages/patient/MyAppointments'))
+const MedicalHistory = lazy(() => import('./pages/patient/MedicalHistory'))
+const DoctorDashboard = lazy(() => import('./pages/doctor/Dashboard'))
+const DoctorAppointments = lazy(() => import('./pages/doctor/DoctorAppointments'))
+const TriageTicketInbox = lazy(() => import('./pages/doctor/TriageTicketInbox'))
+const PatientTriageTickets = lazy(() => import('./pages/patient/TriageTickets'))
+const EHRUpload = lazy(() => import('./pages/doctor/EHRUpload'))
+const EHRResult = lazy(() => import('./pages/doctor/EHRResult'))
+const EHRSearch = lazy(() => import('./pages/doctor/EHRSearch'))
+const CreateMedicalRecord = lazy(() => import('./pages/doctor/CreateMedicalRecord'))
+const Profile = lazy(() => import('./pages/shared/Profile'))
+const VisionMission = lazy(() => import('./pages/public/VisionMission'))
+const DepartmentDetail = lazy(() => import('./pages/public/DepartmentDetail'))
+const Emergency = lazy(() => import('./pages/public/Emergency'))
+const Contact = lazy(() => import('./pages/public/Contact'))
+const NotFound = lazy(() => import('./pages/NotFound'))
 
 // Detailed feature pages
-import AITriage from './pages/public/features/AITriage'
-import EHREngine from './pages/public/features/EHREngine'
-import SmartBooking from './pages/public/features/SmartBooking'
-import Hospitals from './pages/public/solutions/Hospitals'
-import Clinics from './pages/public/solutions/Clinics'
-import Individuals from './pages/public/solutions/Individuals'
-import APIDocs from './pages/public/developers/APIDocs'
-import Security from './pages/public/developers/Security'
-import Terms from './pages/public/Terms'
+const AITriage = lazy(() => import('./pages/public/features/AITriage'))
+const EHREngine = lazy(() => import('./pages/public/features/EHREngine'))
+const SmartBooking = lazy(() => import('./pages/public/features/SmartBooking'))
+const Hospitals = lazy(() => import('./pages/public/solutions/Hospitals'))
+const Clinics = lazy(() => import('./pages/public/solutions/Clinics'))
+const Individuals = lazy(() => import('./pages/public/solutions/Individuals'))
+const APIDocs = lazy(() => import('./pages/public/developers/APIDocs'))
+const Security = lazy(() => import('./pages/public/developers/Security'))
+const Terms = lazy(() => import('./pages/public/Terms'))
+const DoctorList = lazy(() => import('./pages/public/DoctorList'))
+const DoctorDetail = lazy(() => import('./pages/public/DoctorDetail'))
+
+const FallbackLoader = () => (
+  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#f8fafc' }}>
+    <CircularProgress size={60} sx={{ color: '#10b981' }} />
+  </Box>
+)
 
 export default function App() {
   return (
-    <Routes>
+    <Suspense fallback={<FallbackLoader />}>
+      <Routes>
       {/* Public routes */}
       <Route element={<PublicLayout />}>
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/about" element={<VisionMission />} />
         
         <Route path="/features/ai-triage" element={<AITriage />} />
         <Route path="/features/ehr-engine" element={<EHREngine />} />
@@ -39,6 +66,11 @@ export default function App() {
         <Route path="/developers/api-docs" element={<APIDocs />} />
         <Route path="/developers/security" element={<Security />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/doctors" element={<DoctorList />} />
+        <Route path="/doctors/:id" element={<DoctorDetail />} />
+        <Route path="/departments/:id" element={<DepartmentDetail />} />
+        <Route path="/emergency" element={<Emergency />} />
+        <Route path="/contact" element={<Contact />} />
       </Route>
 
       {/* Shared Authenticated routes */}
@@ -52,6 +84,13 @@ export default function App() {
       <Route element={<ProtectedRoute roles={['PATIENT']} />}>
         <Route element={<MainLayout />}>
           <Route path="/patient/dashboard" element={<PatientDashboard />} />
+          <Route path="/patient/appointments" element={<Outlet />}>
+            <Route index element={<MyAppointments />} />
+            <Route path="book-appointment" element={<BookAppointment />} />
+          </Route>
+          <Route path="/patient/book-appointment" element={<Navigate to="/patient/appointments/book-appointment" replace />} />
+          <Route path="/patient/records" element={<MedicalHistory />} />
+          <Route path="/patient/triage-tickets" element={<PatientTriageTickets />} />
         </Route>
       </Route>
 
@@ -59,11 +98,18 @@ export default function App() {
       <Route element={<ProtectedRoute roles={['DOCTOR']} />}>
         <Route element={<MainLayout />}>
           <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
+          <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+          <Route path="/doctor/triage-tickets" element={<TriageTicketInbox />} />
+          <Route path="/doctor/medical-records/create/:appointmentId" element={<CreateMedicalRecord />} />
+          <Route path="/doctor/ehr/upload" element={<EHRUpload />} />
+          <Route path="/doctor/ehr/result/:noteId" element={<EHRResult />} />
+          <Route path="/doctor/ehr/search" element={<EHRSearch />} />
         </Route>
       </Route>
 
       <Route path="/404" element={<NotFound />} />
       <Route path="*" element={<Navigate to="/404" replace />} />
     </Routes>
+    </Suspense>
   )
 }

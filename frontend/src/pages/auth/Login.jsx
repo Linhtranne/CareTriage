@@ -166,45 +166,13 @@ export default function Login() {
     }
   }, [isAuthenticated, user, navigate])
 
-  const [tTitle, setTTitle] = useState('Đăng nhập')
-  const [tSubtitle, setTSubtitle] = useState('Hệ thống điều phối y tế CareTriage')
-  const [tPassword, setTPassword] = useState('MẬT KHẨU')
-  const [tBtn, setTBtn] = useState('ĐĂNG NHẬP')
-  const [tAsk, setTAsk] = useState('Chưa có tài khoản?')
-  const [tRegister, setTRegister] = useState('ĐĂNG KÝ NGAY')
-
-  useEffect(() => {
-    if (!i18n.language || i18n.language.startsWith('vi')) {
-      setTTitle('Đăng nhập')
-      setTSubtitle('Hệ thống điều phối y tế CareTriage')
-      setTPassword('MẬT KHẨU')
-      setTBtn('ĐĂNG NHẬP')
-      setTAsk('Chưa có tài khoản?')
-      setTRegister('ĐĂNG KÝ NGAY')
-      return
-    }
-
-    const translateText = async (text) => {
-      try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
-        const data = await res.json()
-        return data[0].map(item => item[0]).join('')
-      } catch (err) {
-        return text
-      }
-    }
-
-    const performTranslation = async () => {
-      setTTitle(await translateText('Đăng nhập'))
-      setTSubtitle(await translateText('Hệ thống điều phối y tế CareTriage'))
-      setTPassword(await translateText('MẬT KHẨU'))
-      setTBtn(await translateText('ĐĂNG NHẬP'))
-      setTAsk(await translateText('Chưa có tài khoản?'))
-      setTRegister(await translateText('ĐĂNG KÝ NGAY'))
-    }
-
-    performTranslation()
-  }, [i18n.language])
+  const isVietnamese = !i18n.language || i18n.language.startsWith('vi')
+  const tTitle = isVietnamese ? 'Đăng nhập' : 'Login'
+  const tSubtitle = isVietnamese ? 'Hệ thống điều phối y tế CareTriage' : 'CareTriage healthcare coordination system'
+  const tPassword = isVietnamese ? 'MẬT KHẨU' : 'PASSWORD'
+  const tBtn = isVietnamese ? 'ĐĂNG NHẬP' : 'LOG IN'
+  const tAsk = isVietnamese ? 'Chưa có tài khoản?' : 'Don’t have an account?'
+  const tRegister = isVietnamese ? 'ĐĂNG KÝ NGAY' : 'REGISTER NOW'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -275,7 +243,7 @@ export default function Login() {
             fontSize: { xs: '15vw', md: '12vw' },
             lineHeight: 0.8,
             color: '#064e3b',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: "'Be Vietnam Pro', sans-serif",
             letterSpacing: '-0.05em',
             textTransform: 'uppercase',
           }}
@@ -289,7 +257,7 @@ export default function Login() {
             fontSize: { xs: '15vw', md: '12vw' },
             lineHeight: 0.8,
             color: '#059669',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: "'Be Vietnam Pro', sans-serif",
             letterSpacing: '-0.05em',
             textTransform: 'uppercase',
             mt: { xs: 1, md: 2 },

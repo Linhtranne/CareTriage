@@ -17,9 +17,15 @@ public interface ClinicalNoteRepository extends JpaRepository<ClinicalNote, Long
 
     List<ClinicalNote> findByExtractionStatus(ClinicalNote.ExtractionStatus status);
 
+    List<ClinicalNote> findByPatientIdAndExtractionStatus(Long patientId, ClinicalNote.ExtractionStatus status);
+
+    List<ClinicalNote> findByPatientIdAndDoctorId(Long patientId, Long doctorId);
+
     @Query("SELECT cn FROM ClinicalNote cn WHERE cn.patient.id = :patientId AND cn.noteType = :noteType ORDER BY cn.createdAt DESC")
     List<ClinicalNote> findByPatientIdAndNoteType(@Param("patientId") Long patientId, @Param("noteType") ClinicalNote.NoteType noteType);
 
     @Query("SELECT COUNT(cn) FROM ClinicalNote cn WHERE cn.patient.id = :patientId")
     long countByPatientId(@Param("patientId") Long patientId);
+
+    long countByExtractionStatus(ClinicalNote.ExtractionStatus status);
 }

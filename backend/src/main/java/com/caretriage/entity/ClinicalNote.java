@@ -18,7 +18,7 @@ import java.util.List;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
-public class ClinicalNote {
+public class ClinicalNote extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,6 +31,10 @@ public class ClinicalNote {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
     private User doctor;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "appointment_id")
+    private Appointment appointment;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "note_type", nullable = false, length = 20)
@@ -50,14 +54,6 @@ public class ClinicalNote {
     @Builder.Default
     private ExtractionStatus extractionStatus = ExtractionStatus.PENDING;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @UpdateTimestamp
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     @OneToMany(mappedBy = "clinicalNote", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<ExtractedEntity> extractedEntities = new ArrayList<>();
@@ -67,6 +63,6 @@ public class ClinicalNote {
     }
 
     public enum ExtractionStatus {
-        PENDING, PROCESSING, COMPLETED, FAILED
+        PENDING, PROCESSING, COMPLETED, FAILED, ARCHIVED
     }
 }

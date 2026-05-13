@@ -10,7 +10,10 @@ export default function ProtectedRoute({ roles }) {
   }
 
   // Map user roles (extract base role names e.g. ROLE_SUPER_ADMIN -> SUPER_ADMIN)
-  const userRoles = user?.roles || []
+  const userRoles = []
+  if (user?.role) userRoles.push(user.role)
+  if (user?.roles) userRoles.push(...user.roles)
+  
   const cleanRoles = userRoles.map(r => r.replace('ROLE_', '').toUpperCase())
 
   if (roles && !roles.some(role => cleanRoles.includes(role.toUpperCase()))) {

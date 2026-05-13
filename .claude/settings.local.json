@@ -1,0 +1,19 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx impeccable *)",
+      "Bash(npm *)",
+      "Bash(mvn *)",
+      "Bash(git *)",
+      "Bash(npx *)",
+      "Bash(curl *)",
+      "PowerShell(npm run *)",
+      "PowerShell(mvn test *)",
+      "PowerShell(mvn *)",
+      "PowerShell(python -c \"import bcrypt; print\\(bcrypt.hashpw\\(b'Password123@', bcrypt.gensalt\\(\\)\\).decode\\(\\)\\)\")",
+      "PowerShell(python -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main\")",
+      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main; print\\('OK'\\)\")",
+      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")"
+    ]
+  }
+}

@@ -163,57 +163,16 @@ export default function Register() {
     }
   }, [isAuthenticated, user, navigate])
   
-  const [tTitle, setTTitle] = useState('Tạo tài khoản')
-  const [tSubtitle, setTSubtitle] = useState('Đăng ký thông tin để bắt đầu sử dụng CareTriage')
-  const [tFullName, setTFullName] = useState('HỌ VÀ TÊN')
-  const [tPhone, setTPhone] = useState('SỐ ĐIỆN THOẠI')
-  const [tRole, setTRole] = useState('VAI TRÒ')
-  const [tPassword, setTPassword] = useState('MẬT KHẨU')
-  const [tConfirmPassword, setTConfirmPassword] = useState('XÁC NHẬN MẬT KHẨU')
-  const [tBtn, setTBtn] = useState('ĐĂNG KÝ')
-  const [tAsk, setTAsk] = useState('Đã có tài khoản?')
-  const [tLogin, setTLogin] = useState('ĐĂNG NHẬP')
-
-  useEffect(() => {
-    if (!i18n.language || i18n.language.startsWith('vi')) {
-      setTTitle('Tạo tài khoản')
-      setTSubtitle('Đăng ký thông tin để bắt đầu sử dụng CareTriage')
-      setTFullName('HỌ VÀ TÊN')
-      setTPhone('SỐ ĐIỆN THOẠI')
-      setTRole('VAI TRÒ')
-      setTPassword('MẬT KHẨU')
-      setTConfirmPassword('XÁC NHẬN MẬT KHẨU')
-      setTBtn('ĐĂNG KÝ')
-      setTAsk('Đã có tài khoản?')
-      setTLogin('ĐĂNG NHẬP')
-      return
-    }
-
-    const translateText = async (text) => {
-      try {
-        const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=vi&tl=en&dt=t&q=${encodeURIComponent(text)}`)
-        const data = await res.json()
-        return data[0].map(item => item[0]).join('')
-      } catch (err) {
-        return text
-      }
-    }
-
-    const performTranslation = async () => {
-      setTTitle(await translateText('Tạo tài khoản'))
-      setTSubtitle(await translateText('Đăng ký thông tin để bắt đầu sử dụng CareTriage'))
-      setTFullName(await translateText('HỌ VÀ TÊN'))
-      setTPhone(await translateText('SỐ ĐIỆN THOẠI'))
-      setTRole(await translateText('VAI TRÒ'))
-      setTPassword(await translateText('MẬT KHẨU'))
-      setTConfirmPassword(await translateText('XÁC NHẬN MẬT KHẨU'))
-      setTBtn(await translateText('ĐĂNG KÝ'))
-      setTAsk(await translateText('Đã có tài khoản?'))
-      setTLogin(await translateText('ĐĂNG NHẬP'))
-    }
-
-    performTranslation()
-  }, [i18n.language])
+  const isVietnamese = !i18n.language || i18n.language.startsWith('vi')
+  const tSubtitle = isVietnamese ? 'Đăng ký thông tin để bắt đầu sử dụng CareTriage' : 'Register to start using CareTriage'
+  const tFullName = isVietnamese ? 'HỌ VÀ TÊN' : 'FULL NAME'
+  const tPhone = isVietnamese ? 'SỐ ĐIỆN THOẠI' : 'PHONE NUMBER'
+  const tRole = isVietnamese ? 'VAI TRÒ' : 'ROLE'
+  const tPassword = isVietnamese ? 'MẬT KHẨU' : 'PASSWORD'
+  const tConfirmPassword = isVietnamese ? 'XÁC NHẬN MẬT KHẨU' : 'CONFIRM PASSWORD'
+  const tBtn = isVietnamese ? 'ĐĂNG KÝ' : 'REGISTER'
+  const tAsk = isVietnamese ? 'Đã có tài khoản?' : 'Already have an account?'
+  const tLogin = isVietnamese ? 'ĐĂNG NHẬP' : 'LOG IN'
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value })
@@ -232,19 +191,33 @@ export default function Register() {
       return
     }
     if (!form.email.trim()) {
-      setError('Email không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Email không được để trống' : 'Email cannot be empty')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(form.email)) {
+      setError(i18n.language.startsWith('vi') ? 'Email không hợp lệ' : 'Invalid email address')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
     }
     if (!form.phone.trim()) {
-      setError('Số điện thoại không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Số điện thoại không được để trống' : 'Phone number cannot be empty')
+      setIsShaking(true)
+      setTimeout(() => setIsShaking(false), 600)
+      return
+    }
+    const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/
+    if (!phoneRegex.test(form.phone)) {
+      setError(i18n.language.startsWith('vi') ? 'Số điện thoại không hợp lệ (10 số, ví dụ: 0912345678)' : 'Invalid phone number (10 digits, e.g., 0912345678)')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
     }
     if (!form.password.trim()) {
-      setError('Mật khẩu không được để trống')
+      setError(i18n.language.startsWith('vi') ? 'Mật khẩu không được để trống' : 'Password cannot be empty')
       setIsShaking(true)
       setTimeout(() => setIsShaking(false), 600)
       return
@@ -308,7 +281,7 @@ export default function Register() {
             fontSize: { xs: '15vw', md: '12vw' },
             lineHeight: 0.8,
             color: '#064e3b',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: "'Be Vietnam Pro', sans-serif",
             letterSpacing: '-0.05em',
             textTransform: 'uppercase',
           }}
@@ -322,7 +295,7 @@ export default function Register() {
             fontSize: { xs: '15vw', md: '12vw' },
             lineHeight: 0.8,
             color: '#059669',
-            fontFamily: 'system-ui, sans-serif',
+            fontFamily: "'Be Vietnam Pro', sans-serif",
             letterSpacing: '-0.05em',
             textTransform: 'uppercase',
             mt: { xs: 1, md: 2 },

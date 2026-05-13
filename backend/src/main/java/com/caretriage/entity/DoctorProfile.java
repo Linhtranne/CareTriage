@@ -5,6 +5,8 @@ import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.time.LocalDateTime;
 
 @Entity
@@ -37,9 +39,14 @@ public class DoctorProfile {
     @Column(name = "hospital_name")
     private String hospitalName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    private Department department;
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+        name = "doctor_departments",
+        joinColumns = @JoinColumn(name = "doctor_profile_id"),
+        inverseJoinColumns = @JoinColumn(name = "department_id")
+    )
+    @Builder.Default
+    private Set<Department> departments = new HashSet<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

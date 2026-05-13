@@ -12,7 +12,8 @@ import java.time.LocalDateTime;
 @Table(name = "medical_records", indexes = {
     @Index(name = "idx_medrec_patient", columnList = "patient_id"),
     @Index(name = "idx_medrec_doctor", columnList = "doctor_id"),
-    @Index(name = "idx_medrec_appointment", columnList = "appointment_id")
+    @Index(name = "idx_medrec_appointment", columnList = "appointment_id"),
+    @Index(name = "idx_medrec_created", columnList = "created_at")
 })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -40,6 +41,9 @@ public class MedicalRecord {
 
     @Column(columnDefinition = "TEXT")
     private String symptoms;
+
+    @Column(name = "treatment_plan", columnDefinition = "TEXT")
+    private String treatmentPlan;
 
     @Column(columnDefinition = "TEXT")
     private String prescription;
