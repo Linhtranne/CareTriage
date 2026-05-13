@@ -58,6 +58,14 @@ public class User {
     @Column(name = "refresh_token")
     private String refreshToken;
 
+    @Column(name = "two_factor_email", nullable = false)
+    @Builder.Default
+    private Boolean twoFactorEmail = false;
+
+    @Column(name = "two_factor_sms", nullable = false)
+    @Builder.Default
+    private Boolean twoFactorSms = false;
+
     @Column(nullable = false)
     @Builder.Default
     private Boolean isActive = true;
@@ -74,6 +82,12 @@ public class User {
     )
     @Builder.Default
     private Set<Role> roles = new HashSet<>();
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private PatientProfile patientProfile;
+
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private DoctorProfile doctorProfile;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -5,42 +5,34 @@ import {
   ListItemIcon, ListItemText, Box, Avatar, Menu, MenuItem, Divider, Button,
 } from '@mui/material'
 import {
-  Menu as MenuIcon, Dashboard, CalendarMonth, Chat, Assignment,
-  Person, LocalHospital, Logout, MedicalServices,
+  Menu as MenuIcon, Dashboard, Person, LocalHospital, Logout, MedicalServices,
+  CalendarMonth, Campaign
 } from '@mui/icons-material'
-import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/authStore'
 
 const DRAWER_WIDTH = 260
 
 const menuByRole = {
-  PATIENT: [
-    { textKey: 'sidebar.dashboard', icon: <Dashboard />, path: '/patient/dashboard' },
-    { textKey: 'sidebar.appointments', icon: <CalendarMonth />, path: '/patient/appointments' },
-    { textKey: 'sidebar.ai_triage', icon: <Chat />, path: '/patient/triage' },
-    { textKey: 'sidebar.records', icon: <Assignment />, path: '/patient/records' },
+  SUPER_ADMIN: [
+    { text: 'System Dashboard', icon: <Dashboard />, path: '/super-admin/dashboard' },
   ],
-  DOCTOR: [
-    { textKey: 'sidebar.dashboard', icon: <Dashboard />, path: '/doctor/dashboard' },
-    { textKey: 'sidebar.appointments', icon: <CalendarMonth />, path: '/doctor/appointments' },
-    { textKey: 'sidebar.tickets', icon: <MedicalServices />, path: '/doctor/tickets' },
-    { textKey: 'sidebar.patients', icon: <Person />, path: '/doctor/patients' },
+  CONTENT_ADMIN: [
+    { text: 'Content Management', icon: <Campaign />, path: '/content-admin/posts' },
+  ],
+  ADMIN: [
+    { text: 'Admin Dashboard', icon: <Dashboard />, path: '/admin/dashboard' },
+    { text: 'User Management', icon: <Person />, path: '/admin/users' },
   ],
 }
 
 export default function MainLayout() {
   const [drawerOpen, setDrawerOpen] = useState(true)
   const [anchorEl, setAnchorEl] = useState(null)
-  const { t, i18n } = useTranslation()
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
   const location = useLocation()
 
-  const rawMenu = menuByRole[user?.role] || []
-  const menu = rawMenu.map(item => ({
-    ...item,
-    text: t(item.textKey)
-  }))
+  const menu = menuByRole[user?.role] || []
 
   const handleLogout = () => {
     logout()
@@ -59,18 +51,19 @@ export default function MainLayout() {
           '& .MuiDrawer-paper': {
             width: DRAWER_WIDTH,
             boxSizing: 'border-box',
-            borderRight: '1px solid #e2e8f0',
-            backgroundColor: '#fff',
+            borderRight: '1px solid #1e293b',
+            backgroundColor: '#0f172a',
+            color: '#f8fafc',
           },
         }}
       >
         <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <MedicalServices sx={{ color: 'primary.main', fontSize: 32 }} />
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
-            CareTriage
+            Admin Portal
           </Typography>
         </Box>
-        <Divider />
+        <Divider sx={{ borderColor: '#334155' }} />
         <List sx={{ px: 1, pt: 1 }}>
           {menu.map((item) => (
             <ListItemButton
@@ -79,12 +72,15 @@ export default function MainLayout() {
               selected={location.pathname === item.path}
               sx={{
                 borderRadius: 2, mb: 0.5,
+                color: '#cbd5e1',
+                '& .MuiListItemIcon-root': { color: '#94a3b8' },
                 '&.Mui-selected': {
-                  backgroundColor: 'primary.main',
-                  color: '#fff',
-                  '& .MuiListItemIcon-root': { color: '#fff' },
-                  '&:hover': { backgroundColor: 'primary.dark' },
+                  backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                  color: '#38bdf8',
+                  '& .MuiListItemIcon-root': { color: '#38bdf8' },
+                  '&:hover': { backgroundColor: 'rgba(56, 189, 248, 0.2)' },
                 },
+                '&:hover': { backgroundColor: '#1e293b' },
               }}
             >
               <ListItemIcon sx={{ minWidth: 40 }}>{item.icon}</ListItemIcon>
@@ -100,9 +96,8 @@ export default function MainLayout() {
           position="sticky" 
           elevation={0}
           sx={{
-            backgroundColor: 'rgba(255, 255, 255, 0.7)',
-            backdropFilter: 'blur(10px)',
-            borderBottom: '1px solid rgba(226, 232, 240, 0.8)',
+            backgroundColor: '#fff',
+            borderBottom: '1px solid #e2e8f0',
             color: 'text.primary',
           }}
         >
@@ -112,24 +107,9 @@ export default function MainLayout() {
             </IconButton>
             <Box sx={{ flexGrow: 1 }} />
             
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={() => i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi')}
-              sx={{ 
-                mr: 2,
-                borderColor: 'rgba(16, 185, 129, 0.3)', 
-                color: 'primary.main', 
-                fontWeight: 700,
-                minWidth: 45
-              }}
-            >
-              {i18n.language && i18n.language.startsWith('vi') ? 'EN' : 'VI'}
-            </Button>
-
             <IconButton onClick={(e) => setAnchorEl(e.currentTarget)}>
               <Avatar sx={{ bgcolor: 'primary.main', width: 36, height: 36 }}>
-                {user?.fullName?.[0] || 'U'}
+                {user?.fullName?.[0] || 'A'}
               </Avatar>
             </IconButton>
             <Menu
@@ -143,13 +123,9 @@ export default function MainLayout() {
                 </Typography>
               </MenuItem>
               <Divider />
-              <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile'); }}>
-                <ListItemIcon><Person fontSize="small" /></ListItemIcon>
-                {t('sidebar.profile')}
-              </MenuItem>
               <MenuItem onClick={handleLogout}>
                 <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
-                {t('sidebar.logout')}
+                Logout
               </MenuItem>
             </Menu>
           </Toolbar>
@@ -159,7 +135,7 @@ export default function MainLayout() {
           sx={{ 
             flexGrow: 1, 
             p: 3, 
-            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+            background: '#f1f5f9',
             minHeight: 'calc(100vh - 64px)'
           }}
         >

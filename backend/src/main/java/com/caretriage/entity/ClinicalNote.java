@@ -24,11 +24,13 @@ public class ClinicalNote {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "patient_id", nullable = false)
-    private Long patientId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private User patient;
 
-    @Column(name = "doctor_id", nullable = false)
-    private Long doctorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor_id", nullable = false)
+    private User doctor;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "note_type", nullable = false, length = 20)
