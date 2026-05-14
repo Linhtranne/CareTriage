@@ -15,7 +15,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +31,7 @@ public class DepartmentServiceImpl implements DepartmentService {
 
     private final DepartmentRepository departmentRepository;
     private final DoctorProfileRepository doctorProfileRepository;
+    private final com.caretriage.service.FirebaseStorageService firebaseStorageService;
 
     @Override
     public PagedResponse<DepartmentResponse> getAllDepartments(String search, Pageable pageable) {
@@ -133,7 +140,61 @@ public class DepartmentServiceImpl implements DepartmentService {
             throw new RuntimeException("Không thể xóa chuyên khoa này vì vẫn còn " + doctorCount + " bác sĩ đang trực thuộc.");
         }
 
+        // Clean up image from Firebase
+        if (department.getImageUrl() != null) {
+            firebaseStorageService.deleteFile(department.getImageUrl());
+        }
+
         departmentRepository.delete(department);
+    }
+
+    @Override
+    public String uploadImage(MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new RuntimeException("Vui lòng chọn file để upload");
+        }
+
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+            throw new RuntimeException("Dung lượng ảnh tối đa là 5MB");
+        }
+
+        try {
+            // 1. Verify Magic Bytes / Parse with ImageIO
+            BufferedImage originalImage = ImageIO.read(file.getInputStream());
+            if (originalImage == null) {
+                throw new RuntimeException("File không phải là định dạng ảnh hợp lệ (hoặc bị lỗi)");
+            }
+
+            // 2. Limit Dimensions (Prevent Image Bombs)
+            int maxWidth = 4096;
+            int maxHeight = 4096;
+            if (originalImage.getWidth() > maxWidth || originalImage.getHeight() > maxHeight) {
+                throw new RuntimeException("Kích thước ảnh quá lớn (tối đa 4096x4096px)");
+            }
+
+            // 3. Re-encode image (Strip malicious payloads/metadata)
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            String targetExtension = "png";
+            String targetContentType = "image/png";
+            
+            // Re-drawing into a new BufferedImage also helps strip extra metadata/hidden blocks
+            BufferedImage sanitizedImage = new BufferedImage(
+                    originalImage.getWidth(), originalImage.getHeight(), BufferedImage.TYPE_INT_ARGB);
+            Graphics2D g2d = sanitizedImage.createGraphics();
+            g2d.drawImage(originalImage, 0, 0, null);
+            g2d.dispose();
+
+            ImageIO.write(sanitizedImage, targetExtension, baos);
+            byte[] sanitizedBytes = baos.toByteArray();
+
+            // 4. Random filename without original name
+            String identifier = "dept-" + System.currentTimeMillis();
+            
+            return firebaseStorageService.uploadFile("departments", identifier, sanitizedBytes, targetContentType, targetExtension);
+
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi xử lý hình ảnh: " + e.getMessage());
+        }
     }
 
     private DepartmentResponse mapToResponse(Department department) {

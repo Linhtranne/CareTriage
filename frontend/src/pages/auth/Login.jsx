@@ -162,7 +162,11 @@ export default function Login() {
   useEffect(() => {
     if (isAuthenticated && user) {
       const targetPath = getHighestPriorityLandingPage(user)
-      navigate(targetPath, { replace: true })
+      if (targetPath.startsWith('http')) {
+        window.location.href = targetPath
+      } else {
+        navigate(targetPath, { replace: true })
+      }
     }
   }, [isAuthenticated, user, navigate])
 
@@ -197,7 +201,11 @@ export default function Login() {
     if (result.success) {
       const userObj = useAuthStore.getState().user
       const from = location.state?.from?.pathname || getHighestPriorityLandingPage(userObj)
-      navigate(from, { replace: true })
+      if (typeof from === 'string' && from.startsWith('http')) {
+        window.location.href = from
+      } else {
+        navigate(from, { replace: true })
+      }
     } else {
       setError(result.message || 'Thông tin đăng nhập không chính xác')
       setIsShaking(true)

@@ -11,9 +11,9 @@ export const ROLE_PRIORITY = {
 }
 
 export const ROLE_LANDING_PAGES = {
-  'SUPER_ADMIN': '/super-admin/dashboard',
-  'CONTENT_ADMIN': '/content-admin/posts',
-  'ADMIN': '/admin/dashboard',
+  'SUPER_ADMIN': 'http://localhost:5174/super-admin/dashboard',
+  'CONTENT_ADMIN': 'http://localhost:5174/content-admin/posts',
+  'ADMIN': 'http://localhost:5174/admin/dashboard',
   'DOCTOR': '/doctor/dashboard',
   'PATIENT': '/patient/dashboard'
 }
@@ -69,8 +69,16 @@ const useAuthStore = create(
         }
       },
 
-      logout: () => {
-        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
+      logout: async () => {
+        const refreshToken = get().refreshToken
+        if (refreshToken) {
+          try {
+            await axiosClient.post('/api/auth/logout', { refreshToken })
+          } catch (error) {
+            console.error('Logout API failed:', error)
+          }
+        }
+        get().clearCredentials()
       },
 
       setCredentials: (user, token, refreshToken) => {

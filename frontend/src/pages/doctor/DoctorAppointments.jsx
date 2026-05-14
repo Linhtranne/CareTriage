@@ -76,7 +76,8 @@ export default function DoctorAppointments() {
     try {
       // Backend handles "today" logic
       const res = await appointmentApi.getDoctorTodayAppointments();
-      setAppointments(res.data);
+      const appts = res.data?.data || (Array.isArray(res.data) ? res.data : []);
+      setAppointments(appts);
     } catch (err) {
       console.error('Failed to fetch today appointments', err);
       setError('Không thể tải danh sách lịch hẹn.');

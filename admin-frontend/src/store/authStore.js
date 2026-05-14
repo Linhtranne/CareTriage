@@ -76,7 +76,16 @@ const useAuthStore = create(
         }
       },
 
-      logout: () => {
+      logout: async () => {
+        const state = useAuthStore.getState()
+        const refreshToken = state.refreshToken
+        if (refreshToken) {
+          try {
+            await axiosClient.post('/api/auth/logout', { refreshToken })
+          } catch (error) {
+            console.error('Logout API failed:', error)
+          }
+        }
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
         localStorage.removeItem('auth-storage')
       }

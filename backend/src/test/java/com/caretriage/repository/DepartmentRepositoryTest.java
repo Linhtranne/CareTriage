@@ -27,7 +27,8 @@ import static org.assertj.core.api.Assertions.assertThat;
     "spring.jpa.show-sql=true",
     "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=MySQL",
     "spring.datasource.driver-class-name=org.h2.Driver",
-    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"
+    "spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect",
+    "spring.flyway.enabled=false"
 })
 public class DepartmentRepositoryTest {
 

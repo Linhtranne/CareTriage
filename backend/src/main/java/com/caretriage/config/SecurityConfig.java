@@ -3,8 +3,10 @@ package com.caretriage.config;
 import com.caretriage.security.CustomUserDetailsService;
 import com.caretriage.security.JwtAuthFilter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -20,17 +22,21 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
-    private final CustomUserDetailsService userDetailsService;
+    @Autowired
+    @Lazy
+    private JwtAuthFilter jwtAuthFilter;
+
+    @Autowired
+    @Lazy
+    private CustomUserDetailsService userDetailsService;
 
     private static final String[] PUBLIC_URLS = {
             "/api/health",
             "/api/auth/**",
             "/api/v1/departments",
-            "/api/v1/departments/**",
+            "/api/v1/departments/slug/**",
             "/api/v1/doctors",
             "/api/v1/doctors/**",
             "/ws-chat/**",

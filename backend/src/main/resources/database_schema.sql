@@ -11,6 +11,7 @@ DROP TABLE IF EXISTS clinical_notes;
 DROP TABLE IF EXISTS medical_records;
 DROP TABLE IF EXISTS doctor_schedules;
 DROP TABLE IF EXISTS appointments;
+DROP TABLE IF EXISTS chat_attachments;
 DROP TABLE IF EXISTS chat_messages;
 DROP TABLE IF EXISTS chat_sessions;
 DROP TABLE IF EXISTS triage_tickets;
@@ -129,9 +130,55 @@ CREATE TABLE IF NOT EXISTS ticket_categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 5. TRIAGE TICKETS
+-- 5. CHAT SESSIONS (must be before triage_tickets due to FK)
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    session_type VARCHAR(20) DEFAULT 'TRIAGE', -- TRIAGE, CONSULTATION, FOLLOW_UP
+    status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, COMPLETED, EXPIRED, CANCELLED
+    ai_summary TEXT,
+    suggested_department VARCHAR(100),
+    urgency_level VARCHAR(20),
+    title VARCHAR(200),
+    last_message_content TEXT,
+    last_message_time TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- 6. CHAT MESSAGES
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT NOT NULL,
+    sender_type VARCHAR(10) NOT NULL, -- USER, AI, SYSTEM
+    content TEXT NOT NULL,
+    metadata JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
+);
+
+-- 6.5 CHAT ATTACHMENTS
+CREATE TABLE IF NOT EXISTS chat_attachments (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    session_id BIGINT NOT NULL,
+    original_filename VARCHAR(255) NOT NULL,
+    mime_type VARCHAR(120),
+    file_size BIGINT,
+    file_content LONGBLOB,
+    extracted_text LONGTEXT,
+    extraction_status VARCHAR(20) NOT NULL DEFAULT 'PROCESSING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE,
+    INDEX idx_chat_attachment_session (session_id),
+    INDEX idx_chat_attachment_status (extraction_status)
+);
+
+
+-- 7. TRIAGE TICKETS
 CREATE TABLE IF NOT EXISTS triage_tickets (
-    id VARCHAR(50) PRIMARY KEY, -- Increased to 50 to avoid truncation in some environments
+    id binary(16) PRIMARY KEY, -- UUID stored as binary(16) to match Hibernate GenerationType.UUID
     ticket_number VARCHAR(50) UNIQUE NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
@@ -153,34 +200,6 @@ CREATE TABLE IF NOT EXISTS triage_tickets (
     FOREIGN KEY (chat_session_id) REFERENCES chat_sessions(id) ON DELETE SET NULL
 );
 
--- 6. CHAT SESSIONS
-CREATE TABLE IF NOT EXISTS chat_sessions (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    session_type VARCHAR(20) DEFAULT 'TRIAGE', -- TRIAGE, CONSULTATION, FOLLOW_UP
-    status VARCHAR(20) DEFAULT 'ACTIVE', -- ACTIVE, COMPLETED, EXPIRED, CANCELLED
-    ai_summary TEXT,
-    suggested_department VARCHAR(100),
-    urgency_level VARCHAR(20),
-    title VARCHAR(200),
-    last_message_content TEXT,
-    last_message_time TIMESTAMP NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-);
-
--- 7. CHAT MESSAGES
-CREATE TABLE IF NOT EXISTS chat_messages (
-    id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    session_id BIGINT NOT NULL,
-    sender_type VARCHAR(10) NOT NULL, -- USER, AI, SYSTEM
-    content TEXT NOT NULL,
-    metadata JSON,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
-);
-
 -- 8. APPOINTMENTS
 CREATE TABLE IF NOT EXISTS appointments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -194,7 +213,7 @@ CREATE TABLE IF NOT EXISTS appointments (
     reason TEXT,
     notes TEXT, -- Matches 'notes' in Appointment.java
     cancellation_reason TEXT,
-    triage_ticket_id VARCHAR(50), -- Linked to TriageTicket UUID
+    triage_ticket_id binary(16), -- UUID binary(16) matching Appointment.triageTicketId type
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (patient_id) REFERENCES users(id),
@@ -248,6 +267,8 @@ CREATE TABLE IF NOT EXISTS clinical_notes (
     extraction_status VARCHAR(20) DEFAULT 'PENDING', -- PENDING, PROCESSING, COMPLETED, FAILED
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    created_by VARCHAR(255),
+    updated_by VARCHAR(255),
     FOREIGN KEY (patient_id) REFERENCES users(id),
     FOREIGN KEY (doctor_id) REFERENCES users(id),
     FOREIGN KEY (appointment_id) REFERENCES appointments(id)
