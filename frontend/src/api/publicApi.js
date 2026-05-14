@@ -15,6 +15,10 @@ const publicApi = {
 
   getDepartmentById: (id) => {
     return axiosClient.get(`/api/v1/departments/${id}`)
+  },
+
+  getDoctorSlots: (id, date) => {
+    return axiosClient.get(`/api/v1/doctors/${id}/slots`, { params: { date } })
   }
 }
 

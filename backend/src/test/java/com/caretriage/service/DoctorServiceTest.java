@@ -1,5 +1,6 @@
 package com.caretriage.service;
 
+import com.caretriage.dto.response.DoctorPublicResponse;
 import com.caretriage.dto.response.DoctorResponse;
 import com.caretriage.dto.response.PagedResponse;
 import com.caretriage.entity.Department;
@@ -7,6 +8,7 @@ import com.caretriage.entity.DoctorProfile;
 import com.caretriage.entity.User;
 import com.caretriage.repository.DepartmentRepository;
 import com.caretriage.repository.DoctorProfileRepository;
+import com.caretriage.service.AppointmentService;
 import com.caretriage.service.impl.DoctorServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -35,6 +37,9 @@ public class DoctorServiceTest {
 
     @Mock
     private DepartmentRepository departmentRepository;
+
+    @Mock
+    private AppointmentService appointmentService;
 
     @InjectMocks
     private DoctorServiceImpl doctorService;
@@ -70,7 +75,7 @@ public class DoctorServiceTest {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
         when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
 
-        PagedResponse<DoctorResponse> response = doctorService.getPublicDoctors(null, null, 0, 10);
+        PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(null, null, 0, 10);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());
@@ -83,7 +88,7 @@ public class DoctorServiceTest {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
         when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
 
-        PagedResponse<DoctorResponse> response = doctorService.getPublicDoctors(1L, null, 0, 10);
+        PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(1L, null, 0, 10);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());
@@ -95,7 +100,7 @@ public class DoctorServiceTest {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
         when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
 
-        PagedResponse<DoctorResponse> response = doctorService.getPublicDoctors(null, "John", 0, 10);
+        PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(null, "John", 0, 10);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());
@@ -107,10 +112,32 @@ public class DoctorServiceTest {
         Page<DoctorProfile> page = new PageImpl<>(Collections.emptyList());
         when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
 
-        PagedResponse<DoctorResponse> response = doctorService.getPublicDoctors(999L, "NonExistent", 0, 10);
+        PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(999L, "NonExistent", 0, 10);
 
         assertNotNull(response);
         assertEquals(0, response.getContent().size());
         assertEquals(0, response.getTotalElements());
+    }
+
+    @Test
+    void getAvailableSlots_Success() {
+        java.time.LocalDate date = java.time.LocalDate.now().plusDays(1);
+        when(doctorProfileRepository.existsById(1L)).thenReturn(true);
+        when(appointmentService.getAvailableSlots(eq(1L), eq(date))).thenReturn(Collections.emptyList());
+
+        List<?> slots = doctorService.getAvailableSlots(1L, date);
+
+        assertNotNull(slots);
+        verify(appointmentService, times(1)).getAvailableSlots(eq(1L), eq(date));
+    }
+
+    @Test
+    void getAvailableSlots_DoctorNotFound_ThrowsException() {
+        java.time.LocalDate date = java.time.LocalDate.now().plusDays(1);
+        when(doctorProfileRepository.existsById(999L)).thenReturn(false);
+
+        assertThrows(com.caretriage.exception.ResourceNotFoundException.class, () -> {
+            doctorService.getAvailableSlots(999L, date);
+        });
     }
 }

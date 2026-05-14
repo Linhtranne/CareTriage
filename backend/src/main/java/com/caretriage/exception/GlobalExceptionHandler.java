@@ -16,9 +16,16 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    @ExceptionHandler(BusinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBusiness(BusinessException ex) {
+        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+    }
+
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException ex) {
-        return ResponseEntity.badRequest().body(ApiResponse.error(ex.getMessage()));
+        // Log the actual error for developers
+        // log.error("Runtime error: ", ex);
+        return ResponseEntity.badRequest().body(ApiResponse.error("Đã xảy ra lỗi nghiệp vụ. Vui lòng thử lại."));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

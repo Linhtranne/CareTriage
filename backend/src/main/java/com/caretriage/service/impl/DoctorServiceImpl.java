@@ -2,13 +2,16 @@ package com.caretriage.service.impl;
 
 import com.caretriage.dto.request.DoctorDepartmentRequest;
 import com.caretriage.dto.response.DepartmentResponse;
+import com.caretriage.dto.response.DoctorPublicResponse;
 import com.caretriage.dto.response.DoctorResponse;
 import com.caretriage.dto.response.PagedResponse;
+import com.caretriage.dto.response.TimeSlotResponse;
 import com.caretriage.entity.Department;
 import com.caretriage.entity.DoctorProfile;
 import com.caretriage.exception.ResourceNotFoundException;
 import com.caretriage.repository.DepartmentRepository;
 import com.caretriage.repository.DoctorProfileRepository;
+import com.caretriage.service.AppointmentService;
 import com.caretriage.service.DoctorService;
 import jakarta.persistence.criteria.Join;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +32,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorProfileRepository doctorProfileRepository;
     private final DepartmentRepository departmentRepository;
+    private final AppointmentService appointmentService;
 
     @Override
     @Transactional
@@ -60,7 +64,7 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional(readOnly = true)
-    public PagedResponse<DoctorResponse> getPublicDoctors(Long departmentId, String search, int page, int size) {
+    public PagedResponse<DoctorPublicResponse> getPublicDoctors(Long departmentId, String search, int page, int size) {
         Specification<DoctorProfile> spec = Specification.where(null);
 
         if (departmentId != null) {
@@ -78,11 +82,11 @@ public class DoctorServiceImpl implements DoctorService {
 
         Page<DoctorProfile> doctorPage = doctorProfileRepository.findAll(spec, PageRequest.of(page, size));
 
-        List<DoctorResponse> content = doctorPage.getContent().stream()
-                .map(this::mapToDoctorResponse)
+        List<DoctorPublicResponse> content = doctorPage.getContent().stream()
+                .map(this::mapToPublicResponse)
                 .collect(Collectors.toList());
 
-        return PagedResponse.<DoctorResponse>builder()
+        return PagedResponse.<DoctorPublicResponse>builder()
                 .content(content)
                 .page(doctorPage.getNumber())
                 .size(doctorPage.getSize())
@@ -94,10 +98,20 @@ public class DoctorServiceImpl implements DoctorService {
 
     @Override
     @Transactional(readOnly = true)
-    public DoctorResponse getDoctorById(Long id) {
+    public DoctorPublicResponse getDoctorById(Long id) {
         DoctorProfile doctor = doctorProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy bác sĩ với ID: " + id));
-        return mapToDoctorResponse(doctor);
+        return mapToPublicResponse(doctor);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<TimeSlotResponse> getAvailableSlots(Long doctorId, java.time.LocalDate date) {
+        // Verify doctor exists
+        if (!doctorProfileRepository.existsById(doctorId)) {
+            throw new ResourceNotFoundException("Không tìm thấy bác sĩ với ID: " + doctorId);
+        }
+        return appointmentService.getAvailableSlots(doctorId, date);
     }
 
     private DepartmentResponse mapToDepartmentResponse(Department dept) {
@@ -118,6 +132,21 @@ public class DoctorServiceImpl implements DoctorService {
                 .fullName(d.getUser().getFullName())
                 .email(d.getUser().getEmail())
                 .phone(d.getUser().getPhone())
+                .avatarUrl(d.getUser().getAvatarUrl())
+                .bio(d.getBio())
+                .specialization(d.getSpecialization())
+                .experienceYears(d.getExperienceYears())
+                .hospitalName(d.getHospitalName())
+                .departments(d.getDepartments().stream()
+                        .map(this::mapToDepartmentResponse)
+                        .collect(Collectors.toList()))
+                .build();
+    }
+
+    private DoctorPublicResponse mapToPublicResponse(DoctorProfile d) {
+        return DoctorPublicResponse.builder()
+                .id(d.getUser().getId())
+                .fullName(d.getUser().getFullName())
                 .avatarUrl(d.getUser().getAvatarUrl())
                 .bio(d.getBio())
                 .specialization(d.getSpecialization())

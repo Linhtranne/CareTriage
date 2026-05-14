@@ -25,23 +25,13 @@ export default function DoctorDetail() {
   const [loading, setLoading] = useState(true)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [activeTab, setActiveTab] = useState(0)
+  const [slots, setSlots] = useState([])
+  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [selectedSlot, setSelectedSlot] = useState(null)
+  const [errorSlots, setErrorSlots] = useState('')
 
   // Generate next 7 days for schedule
   const dates = Array.from({ length: 7 }, (_, i) => addDays(new Date(), i))
-
-  // Mock time slots
-  const mockSlots = [
-    { time: '08:00', status: 'available' },
-    { time: '08:30', status: 'booked' },
-    { time: '09:00', status: 'available' },
-    { time: '09:30', status: 'available' },
-    { time: '10:00', status: 'available' },
-    { time: '10:30', status: 'available' },
-    { time: '14:00', status: 'booked' },
-    { time: '14:30', status: 'available' },
-    { time: '15:00', status: 'available' },
-    { time: '15:30', status: 'available' },
-  ]
 
   useEffect(() => {
     const fetchDoctor = async () => {
@@ -49,6 +39,12 @@ export default function DoctorDetail() {
       try {
         const res = await publicApi.getDoctorById(id)
         setDoctor(res.data.data)
+        // SEO: Update page title and meta
+        document.title = `${res.data.data.fullName} - CareTriage`
+        const metaDesc = document.querySelector('meta[name="description"]')
+        if (metaDesc) {
+          metaDesc.setAttribute('content', `Thông tin chi tiết và đặt lịch khám với Bác sĩ ${res.data.data.fullName}. Chuyên khoa ${res.data.data.specialization}.`)
+        }
       } catch (error) {
         console.error('Error fetching doctor detail:', error)
       } finally {
@@ -57,6 +53,37 @@ export default function DoctorDetail() {
     }
     fetchDoctor()
   }, [id])
+
+  useEffect(() => {
+    const fetchSlots = async () => {
+      if (!id || !selectedDate) return
+      setLoadingSlots(true)
+      setErrorSlots('')
+      try {
+        const dateStr = format(selectedDate, 'yyyy-MM-dd')
+        const res = await publicApi.getDoctorSlots(id, dateStr)
+        setSlots(res.data.data || [])
+      } catch (error) {
+        console.error('Error fetching slots:', error)
+        setErrorSlots('Không thể tải lịch khám. Vui lòng thử lại.')
+      } finally {
+        setLoadingSlots(false)
+      }
+    }
+    fetchSlots()
+  }, [id, selectedDate])
+
+  const handleBooking = () => {
+    if (!selectedSlot) return
+    navigate('/patient/appointments/book-appointment', { 
+      state: { 
+        doctorId: doctor.id,
+        doctor: doctor,
+        date: selectedDate,
+        slot: selectedSlot
+      } 
+    })
+  }
 
   if (loading) {
     return (
@@ -84,20 +111,20 @@ export default function DoctorDetail() {
   }
 
   return (
-    <Box sx={{ bgcolor: 'background.default', minHeight: '100vh', pb: 10 }}>
-      {/* Background Hero Overlay */}
-      <Box sx={{ 
-        height: '40vh', 
-        width: '100%', 
-        position: 'absolute', 
-        top: 0, 
-        bgcolor: alpha(theme.palette.primary.main, 0.05),
-        backgroundImage: `radial-gradient(at 100% 0%, ${alpha(theme.palette.primary.main, 0.1)} 0, transparent 50%), 
-                          radial-gradient(at 0% 100%, ${alpha(theme.palette.secondary.main, 0.05)} 0, transparent 50%)`,
-        zIndex: 0
-      }} />
-
-      <Container maxWidth="lg" sx={{ position: 'relative', pt: 12, zIndex: 1 }}>
+    <MotionBox 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.5 }}
+      sx={{ 
+        py: { xs: 5, md: 10 }, 
+        bgcolor: '#f8fafc', 
+        minHeight: '100vh',
+        background: `radial-gradient(circle at 0% 0%, ${alpha(theme.palette.primary.main, 0.03)} 0%, transparent 50%), 
+                     radial-gradient(circle at 100% 100%, ${alpha(theme.palette.secondary.main, 0.03)} 0%, transparent 50%)`
+      }}
+    >
+      <Container maxWidth="lg">
         {/* Navigation */}
         <Button 
           startIcon={<ChevronLeft size={18} />}
@@ -193,12 +220,15 @@ export default function DoctorDetail() {
             </MotionBox>
 
             <Paper sx={{ borderRadius: '32px', overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,0.05)' }}>
-              <Tabs 
+                <Tabs 
                 value={activeTab} 
                 onChange={(_, v) => setActiveTab(v)}
                 variant="fullWidth"
                 sx={{ 
-                  bgcolor: alpha(theme.palette.background.default, 0.5),
+                  bgcolor: alpha(theme.palette.background.paper, 0.8),
+                  backdropFilter: 'blur(10px)',
+                  borderBottom: '1px solid',
+                  borderColor: alpha(theme.palette.divider, 0.1),
                   '& .MuiTabs-indicator': { height: 4, borderRadius: '4px 4px 0 0' }
                 }}
               >
@@ -210,7 +240,7 @@ export default function DoctorDetail() {
                 {activeTab === 0 && (
                   <Box>
                     <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>Về bác sĩ</Typography>
-                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.8 }}>
+                    <Typography variant="body1" sx={{ color: 'text.secondary', lineHeight: 1.7, letterSpacing: '0.01em' }}>
                       {doctor.bio || 'Thông tin giới thiệu về bác sĩ đang được cập nhật...'}
                     </Typography>
                     <Box sx={{ mt: 4, display: 'flex', gap: 2, alignItems: 'center' }}>
@@ -281,29 +311,49 @@ export default function DoctorDetail() {
               <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Clock size={16} /> Khung giờ trống
               </Typography>
-              <Grid container spacing={1.5} sx={{ mb: 4 }}>
-                {mockSlots.map((slot, idx) => (
-                  <Grid size={{ xs: 4 }} key={idx}>
-                    <Button
-                      fullWidth
-                      disabled={slot.status === 'booked'}
-                      variant="outlined"
-                      sx={{ 
-                        borderRadius: '12px', 
-                        py: 1.5, 
-                        fontWeight: 700,
-                        textTransform: 'none',
-                        borderColor: alpha(theme.palette.divider, 0.1),
-                        color: slot.status === 'booked' ? 'text.disabled' : 'text.primary',
-                        bgcolor: slot.status === 'booked' ? alpha(theme.palette.action.disabledBackground, 0.05) : 'transparent',
-                        '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.05), borderColor: 'primary.main' }
-                      }}
-                    >
-                      {slot.time}
-                    </Button>
-                  </Grid>
-                ))}
-              </Grid>
+              
+              {loadingSlots ? (
+                <Grid container spacing={1.5} sx={{ mb: 4 }}>
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Grid size={{ xs: 4 }} key={i}>
+                      <Skeleton variant="rectangular" height={45} sx={{ borderRadius: '12px' }} />
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : errorSlots ? (
+                <Typography variant="body2" color="error" sx={{ mb: 4, textAlign: 'center' }}>
+                  {errorSlots}
+                </Typography>
+              ) : slots.length > 0 ? (
+                <Grid container spacing={1.5} sx={{ mb: 4 }}>
+                  {slots.map((slot, idx) => (
+                    <Grid size={{ xs: 4 }} key={idx}>
+                      <Button
+                        fullWidth
+                        disabled={!slot.available}
+                        variant={selectedSlot?.startTime === slot.startTime ? "contained" : "outlined"}
+                        onClick={() => setSelectedSlot(slot)}
+                        sx={{ 
+                          borderRadius: '12px', 
+                          py: 1.5, 
+                          fontWeight: 700,
+                          textTransform: 'none',
+                          borderColor: selectedSlot?.startTime === slot.startTime ? 'primary.main' : alpha(theme.palette.divider, 0.1),
+                          color: !slot.available ? 'text.disabled' : (selectedSlot?.startTime === slot.startTime ? '#fff' : 'text.primary'),
+                          bgcolor: !slot.available ? alpha(theme.palette.action.disabledBackground, 0.05) : (selectedSlot?.startTime === slot.startTime ? 'primary.main' : 'transparent'),
+                          '&:hover': { bgcolor: selectedSlot?.startTime === slot.startTime ? 'primary.dark' : alpha(theme.palette.primary.main, 0.05), borderColor: 'primary.main' }
+                        }}
+                      >
+                        {slot.startTime.substring(0, 5)}
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+              ) : (
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 4, textAlign: 'center', py: 2, bgcolor: alpha(theme.palette.action.hover, 0.05), borderRadius: '12px' }}>
+                  Bác sĩ không có lịch vào ngày này.
+                </Typography>
+              )}
 
               <Box sx={{ 
                 p: 2.5, 
@@ -326,6 +376,8 @@ export default function DoctorDetail() {
                 fullWidth
                 variant="contained"
                 size="large"
+                disabled={!selectedSlot}
+                onClick={handleBooking}
                 endIcon={<ChevronRight size={20} />}
                 sx={{ 
                   borderRadius: '16px', 
@@ -342,6 +394,6 @@ export default function DoctorDetail() {
           </Grid>
         </Grid>
       </Container>
-    </Box>
+    </MotionBox>
   )
 }
