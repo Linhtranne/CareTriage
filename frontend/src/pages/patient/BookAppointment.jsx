@@ -118,19 +118,35 @@ export default function BookAppointment() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- effect triggers async server fetch for initial department options
     fetchDepartments();
 
-    // Check for pre-filled data from navigation state
-    if (location.state) {
-      const { doctor, date, slot } = location.state;
-      if (doctor) setSelectedDoctor(doctor);
-      if (date) setSelectedDate(new Date(date));
-      if (slot) {
-        setSelectedSlot(slot);
-        setActiveStep(2); // Jump to step 3 (Confirm & Reason) if everything is pre-selected
-      } else if (doctor && date) {
-        setActiveStep(1); // Jump to step 2 (Slot Selection) if doctor and date are pre-selected
+    // Check for pre-filled data from navigation state or query params
+    const checkPreFilled = async () => {
+      if (location.state) {
+        const { doctor, date, slot } = location.state;
+        if (doctor) setSelectedDoctor(doctor);
+        if (date) setSelectedDate(new Date(date));
+        if (slot) {
+          setSelectedSlot(slot);
+          setActiveStep(2);
+        } else if (doctor && date) {
+          setActiveStep(1);
+        }
+      } else {
+        const params = new URLSearchParams(location.search);
+        const doctorId = params.get('doctorId');
+        if (doctorId) {
+          try {
+            const res = await publicApi.getDoctorById(doctorId);
+            setSelectedDoctor(res.data);
+            setActiveStep(1);
+          } catch (err) {
+            console.error('Failed to fetch pre-selected doctor', err);
+          }
+        }
       }
-    }
-  }, [location.state]);
+    };
+
+    checkPreFilled();
+  }, [location.state, location.search]);
 
   useEffect(() => {
     if (selectedDept) {

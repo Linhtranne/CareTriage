@@ -7,6 +7,7 @@ import com.caretriage.entity.MedicalRecord;
 import com.caretriage.entity.User;
 import com.caretriage.event.AppointmentStatusChangedEvent;
 import com.caretriage.exception.ResourceNotFoundException;
+import com.caretriage.exception.BusinessException;
 import com.caretriage.repository.AppointmentRepository;
 import com.caretriage.repository.MedicalRecordRepository;
 import com.caretriage.repository.UserRepository;
@@ -20,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,6 +45,10 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
 
         Appointment appointment = appointmentRepository.findById(request.getAppointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn"));
+
+        if (medicalRecordRepository.findByAppointmentId(appointment.getId()).isPresent()) {
+            throw new BusinessException("Hồ sơ bệnh án cho lịch hẹn này đã tồn tại");
+        }
 
         // Security check: Only the assigned doctor or an admin can create the record
         if (!appointment.getDoctor().getId().equals(doctor.getId()) && !doctor.getRoles().stream().anyMatch(r -> r.getName().equals("ADMIN"))) {
@@ -137,12 +143,12 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
                 .doctorName(record.getDoctor().getFullName())
                 .doctorSpecialization(record.getDoctor().getDoctorProfile() != null ? record.getDoctor().getDoctorProfile().getSpecialization() : null)
                 .departmentName(record.getAppointment() != null && record.getAppointment().getDepartment() != null ? record.getAppointment().getDepartment().getName() : null)
-                .symptoms(record.getSymptoms())
-                .diagnosis(record.getDiagnosis())
-                .treatmentPlan(record.getTreatmentPlan())
-                .prescription(record.getPrescription())
-                .notes(record.getNotes())
-                .vitalSigns(record.getVitalSigns())
+                .symptoms(record.getSymptoms() != null ? HtmlUtils.htmlEscape(record.getSymptoms()) : null)
+                .diagnosis(record.getDiagnosis() != null ? HtmlUtils.htmlEscape(record.getDiagnosis()) : null)
+                .treatmentPlan(record.getTreatmentPlan() != null ? HtmlUtils.htmlEscape(record.getTreatmentPlan()) : null)
+                .prescription(record.getPrescription() != null ? HtmlUtils.htmlEscape(record.getPrescription()) : null)
+                .notes(record.getNotes() != null ? HtmlUtils.htmlEscape(record.getNotes()) : null)
+                .vitalSigns(record.getVitalSigns() != null ? HtmlUtils.htmlEscape(record.getVitalSigns()) : null)
                 .followUpDate(record.getFollowUpDate())
                 .createdAt(record.getCreatedAt())
                 .build();

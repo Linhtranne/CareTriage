@@ -1,16 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
   Box, Typography, Card, CardContent, Grid, TextField, 
-  MenuItem, Select, FormControl, InputLabel, IconButton,
-  Chip, Avatar, Divider,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  MenuItem, Select, FormControl, InputLabel,
+  Chip, Avatar,
+  Button,
   useTheme, useMediaQuery
 } from '@mui/material';
 import {
   Search, Filter, Calendar,
-  Stethoscope, Pill, ClipboardList,
-  Download, Printer, User,
-  Info
+  Stethoscope, User
 } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { vi, enUS } from 'date-fns/locale';
@@ -39,8 +37,6 @@ const MedicalHistory = () => {
   const [records, setRecords] = useState([]);
   const [filterType, setFilterType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const dateLocale = i18n.language === 'vi' ? vi : enUS;
   const navigate = useNavigate();
@@ -84,12 +80,7 @@ const MedicalHistory = () => {
   }, [records, searchQuery, filterType]);
 
   const handleOpenDetail = (record) => {
-    setSelectedRecord(record);
-    setIsDetailOpen(true);
-  };
-
-  const handleCloseDetail = () => {
-    setIsDetailOpen(false);
+    navigate(`/patient/records/${record.id}`);
   };
 
   const handleCardKeyDown = (event, record) => {
@@ -348,121 +339,6 @@ const MedicalHistory = () => {
         </Box>
       )}
 
-      {/* Detail Modal */}
-      <Dialog
-        open={isDetailOpen}
-        onClose={handleCloseDetail}
-        fullWidth
-        maxWidth="md"
-        aria-labelledby="medical-history-detail-title"
-        PaperProps={{
-          sx: { borderRadius: '20px', p: 1 }
-        }}
-      >
-        {selectedRecord && (
-          <>
-            <DialogTitle id="medical-history-detail-title" sx={{ pb: 0 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{t('records.detail_title')}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('records.record_id')}: {selectedRecord.id != null ? selectedRecord.id.toString().padStart(6, '0') : '-'}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton aria-label={t('records.print')} onClick={() => window.print()}><Printer size={20} /></IconButton>
-                  <IconButton aria-label={t('records.download_pdf')} onClick={() => window.print()}><Download size={20} /></IconButton>
-                </Box>
-              </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Box sx={{ mt: 2 }}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
-                    <Card variant="outlined" sx={{ bgcolor: 'rgba(8, 187, 163, 0.03)', border: '1px dashed rgba(8, 187, 163, 0.3)' }}>
-                      <CardContent>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Info size={16} /> {t('records.general_info')}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.exam_date')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {formatDateValue(selectedRecord.createdAt, 'dd/MM/yyyy HH:mm')}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.doctor')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedRecord.doctorName || '-'}</Typography>
-                            <Typography variant="caption" color="primary.main">{selectedRecord.doctorSpecialization || '-'}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.department')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedRecord.departmentName || '-'}</Typography>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-
-                  <Grid item xs={12} md={8}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ClipboardList size={20} color={CATEGORY_COLORS.EXAM} /> {t('records.diagnosis_symptoms')}
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
-                          {selectedRecord.diagnosis || '-'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
-                          {selectedRecord.symptoms || t('records.no_symptoms')}
-                        </Typography>
-                      </Box>
-
-                      <Divider />
-
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Pill size={20} color={CATEGORY_COLORS.MEDICATION} /> {t('records.prescription_treatment')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-line', p: 2, border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                          {selectedRecord.prescription || t('records.no_prescription')}
-                        </Typography>
-                        {selectedRecord.treatmentPlan && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{t('records.treatment_plan')}</Typography>
-                            <Typography variant="body2" sx={{ mt: 0.5 }}>{selectedRecord.treatmentPlan}</Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      {selectedRecord.notes && (
-                        <Box sx={{ p: 2, bgcolor: 'rgba(245, 158, 11, 0.05)', borderRadius: 2, borderLeft: '4px solid #f59e0b' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>{t('records.doctor_notes')}</Typography>
-                          <Typography variant="body2">{selectedRecord.notes}</Typography>
-                        </Box>
-                      )}
-
-                      {selectedRecord.followUpDate && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
-                          <Calendar size={16} />
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {t('records.follow_up')}: {formatDateValue(selectedRecord.followUpDate, 'dd/MM/yyyy')}
-                          </Typography>
-                        </Box>
-                      )}
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-              <Button onClick={handleCloseDetail} variant="outlined">{t('records.close')}</Button>
-              <Button variant="contained" startIcon={<Download size={18} />} onClick={() => window.print()}>{t('records.download_pdf')}</Button>
-            </DialogActions>
-          </>
-        )}
-      </Dialog>
     </Box>
     </PatientPageShell>
   );

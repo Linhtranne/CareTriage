@@ -334,6 +334,7 @@ const resources = {
         status: {
           PENDING: 'Pending',
           CONFIRMED: 'Confirmed',
+          CHECKED_IN: 'Checked In',
           IN_PROGRESS: 'In Progress',
           COMPLETED: 'Completed',
           CANCELLED: 'Cancelled',
@@ -911,6 +912,7 @@ const resources = {
         status: {
           PENDING: 'Chờ xác nhận',
           CONFIRMED: 'Đã xác nhận',
+          CHECKED_IN: 'Đã đến',
           IN_PROGRESS: 'Đang khám',
           COMPLETED: 'Hoàn thành',
           CANCELLED: 'Đã hủy',

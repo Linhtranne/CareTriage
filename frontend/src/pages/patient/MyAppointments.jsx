@@ -54,6 +54,7 @@ export default function MyAppointments() {
   const STATUS_MAP = {
     PENDING: { label: t('appointments.status.PENDING'), color: 'warning', icon: <Clock size={14} />, bg: '#fff7ed', text: '#9a3412' },
     CONFIRMED: { label: t('appointments.status.CONFIRMED'), color: 'info', icon: <CheckCircle2 size={14} />, bg: '#eff6ff', text: '#1e40af' },
+    CHECKED_IN: { label: t('appointments.status.CHECKED_IN'), color: 'success', icon: <CalendarCheck size={14} />, bg: '#f0fdf4', text: '#15803d' },
     IN_PROGRESS: { label: t('appointments.status.IN_PROGRESS'), color: 'primary', icon: <RefreshCw size={14} />, bg: '#f0fdf4', text: '#15803d' },
     COMPLETED: { label: t('appointments.status.COMPLETED'), color: 'success', icon: <CheckCircle2 size={14} />, bg: '#f0fdf4', text: '#15803d' },
     CANCELLED: { label: t('appointments.status.CANCELLED'), color: 'error', icon: <XCircle size={14} />, bg: '#fef2f2', text: '#991b1b' },
@@ -100,7 +101,7 @@ export default function MyAppointments() {
     try {
       // Mapping tab indices to backend status filters
       let status = '';
-      if (tabValue === 1) status = 'PENDING,CONFIRMED'; // Upcoming
+      if (tabValue === 1) status = 'PENDING,CONFIRMED,CHECKED_IN'; // Upcoming
       else if (tabValue === 2) status = 'COMPLETED';
       else if (tabValue === 3) status = 'CANCELLED';
 

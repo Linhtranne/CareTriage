@@ -295,16 +295,28 @@ export default function DoctorAppointments() {
                           </>
                         )}
                         {appt.status === 'IN_PROGRESS' && (
-                          <Button 
-                            variant="contained" 
-                            size="small" 
-                            color="success"
-                            startIcon={<FileText size={14} />}
-                            onClick={() => navigate(`/doctor/medical-records/create/${appt.id}?patientName=${encodeURIComponent(appt.patientName)}`)}
-                            sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 700 }}
-                          >
-                            Lập hồ sơ
-                          </Button>
+                          <>
+                            <Button 
+                              variant="outlined" 
+                              size="small" 
+                              color="primary"
+                              startIcon={<FileText size={14} />}
+                              onClick={() => navigate(`/doctor/medical-records/create/${appt.id}?patientName=${encodeURIComponent(appt.patientName)}`)}
+                              sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 600 }}
+                            >
+                              Lập hồ sơ
+                            </Button>
+                            <Button 
+                              variant="contained" 
+                              size="small" 
+                              color="success"
+                              startIcon={<CheckCircle2 size={14} />}
+                              onClick={() => handleOpenStatusDialog(appt, 'COMPLETED')}
+                              sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 700 }}
+                            >
+                              Hoàn thành
+                            </Button>
+                          </>
                         )}
                         {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
                           <IconButton 
@@ -341,6 +353,8 @@ export default function DoctorAppointments() {
           {targetStatus === 'IN_PROGRESS' && 'Bắt đầu ca khám'}
           {targetStatus === 'COMPLETED' && 'Kết thúc ca khám'}
           {targetStatus === 'CANCELLED' && 'Hủy lịch hẹn'}
+          {targetStatus === 'CONFIRMED' && 'Xác nhận lịch hẹn'}
+          {targetStatus === 'NO_SHOW' && 'Đánh dấu vắng mặt'}
         </DialogTitle>
         <DialogContent>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}

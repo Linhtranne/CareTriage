@@ -26,7 +26,7 @@ public interface AppointmentService {
 
     List<TimeSlotResponse> getAvailableSlots(Long doctorId, LocalDate date);
 
-    AppointmentResponse getAppointmentById(Long appointmentId);
+    AppointmentResponse getAppointmentById(Long appointmentId, String userEmail);
 
     AppointmentResponse createAppointmentFromTicket(Long doctorId, CreateAppointmentFromTicketRequest request);
 }
