@@ -55,7 +55,7 @@ public class ChatAttachment {
 
     @Lob
     @Basic(fetch = FetchType.LAZY)
-    @Column(name = "file_content")
+    @Column(name = "file_content", columnDefinition = "LONGBLOB")
     private byte[] fileContent;
 
     @Column(name = "extracted_text", columnDefinition = "LONGTEXT")

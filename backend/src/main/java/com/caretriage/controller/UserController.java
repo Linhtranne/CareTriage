@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final com.caretriage.service.AvatarStorageService avatarStorageService;
 
     @GetMapping("/profile")
     @Operation(summary = "Get current user profile")
@@ -35,5 +36,34 @@ public class UserController {
         String email = authentication.getName();
         UserProfileResponse updatedProfile = userService.updateProfile(email, request);
         return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", updatedProfile));
+    }
+
+    @PostMapping("/profile/avatar")
+    @Operation(summary = "Upload profile avatar")
+    public ResponseEntity<ApiResponse<String>> uploadAvatar(
+            Authentication authentication,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Vui lòng chọn file để upload"));
+        }
+
+        // Basic validation
+        String contentType = file.getContentType();
+        if (contentType == null || !contentType.startsWith("image/")) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Chỉ chấp nhận định dạng ảnh (JPG, PNG, GIF)"));
+        }
+
+        if (file.getSize() > 5 * 1024 * 1024) { // 5MB
+            return ResponseEntity.badRequest().body(ApiResponse.error("Dung lượng ảnh tối đa là 5MB"));
+        }
+
+        String email = authentication.getName();
+        // We need userId to organize files in Firebase
+        UserProfileResponse profile = userService.getCurrentUserProfile(email);
+        
+        String avatarUrl = avatarStorageService.uploadAvatar(profile.getId(), file);
+        
+        return ResponseEntity.ok(ApiResponse.success("Upload avatar thành công", avatarUrl));
     }
 }

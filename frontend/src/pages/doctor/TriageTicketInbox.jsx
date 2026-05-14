@@ -23,11 +23,11 @@ export default function TriageTicketInbox() {
   const [chatHistory, setChatHistory] = useState([])
   const [detailOpen, setDetailOpen] = useState(false)
   const [departments, setDepartments] = useState([])
-  
+
   // Filter States
   const [searchTerm, setSearchTerm] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('ALL')
-  
+
   // Appointment Form States
   const [appointmentDate, setAppointmentDate] = useState('')
   const [appointmentTime, setAppointmentTime] = useState('')
@@ -65,8 +65,8 @@ export default function TriageTicketInbox() {
 
   const filteredTickets = useMemo(() => {
     return tickets.filter(t => {
-      const matchesSearch = (t.requesterName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                             t.ticketNumber?.toLowerCase().includes(searchTerm.toLowerCase()))
+      const matchesSearch = (t.requesterName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.ticketNumber?.toLowerCase().includes(searchTerm.toLowerCase()))
       const matchesPriority = priorityFilter === 'ALL' || t.priority === priorityFilter
       return matchesSearch && matchesPriority
     })
@@ -124,13 +124,13 @@ export default function TriageTicketInbox() {
 
   const getPriorityInfo = (priority) => {
     switch (priority) {
-      case 'URGENT': case 'CRITICAL': 
+      case 'URGENT': case 'CRITICAL':
         return { label: 'Khẩn cấp', color: 'error', icon: <AlertTriangle size={14} /> }
-      case 'HIGH': 
+      case 'HIGH':
         return { label: 'Cao', color: 'warning', icon: <AlertTriangle size={14} /> }
-      case 'MEDIUM': 
+      case 'MEDIUM':
         return { label: 'Trung bình', color: 'info', icon: <Clock size={14} /> }
-      default: 
+      default:
         return { label: 'Thường', color: 'default', icon: <CheckCircle2 size={14} /> }
     }
   }
@@ -155,9 +155,9 @@ export default function TriageTicketInbox() {
       </Stack>
 
       {/* Filter Bar */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
+      <Paper
+        elevation={0}
+        sx={{
           p: 2, mb: 3, borderRadius: 4, bgcolor: 'background.paper',
           border: '1px solid', borderColor: 'divider',
           display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center'
@@ -204,9 +204,9 @@ export default function TriageTicketInbox() {
       </Paper>
 
       {/* Tickets Table */}
-      <Paper 
-        elevation={0} 
-        sx={{ 
+      <Paper
+        elevation={0}
+        sx={{
           borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider',
           boxShadow: '0 4px 24px rgba(0,0,0,0.04)'
         }}
@@ -245,12 +245,12 @@ export default function TriageTicketInbox() {
                       </Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip 
-                        size="small" 
-                        label={pInfo.label} 
-                        color={pInfo.color} 
+                      <Chip
+                        size="small"
+                        label={pInfo.label}
+                        color={pInfo.color}
                         icon={pInfo.icon}
-                        sx={{ fontWeight: 700, borderRadius: 1.5, px: 0.5 }} 
+                        sx={{ fontWeight: 700, borderRadius: 1.5, px: 0.5 }}
                       />
                     </TableCell>
                     <TableCell>
@@ -259,8 +259,8 @@ export default function TriageTicketInbox() {
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
-                      <Button 
-                        variant="contained" 
+                      <Button
+                        variant="contained"
                         disableElevation
                         size="small"
                         endIcon={<ChevronRight size={16} />}
@@ -288,10 +288,10 @@ export default function TriageTicketInbox() {
       </Paper>
 
       {/* Detail Dialog */}
-      <Dialog 
-        open={detailOpen} 
-        onClose={() => setDetailOpen(false)} 
-        fullWidth 
+      <Dialog
+        open={detailOpen}
+        onClose={() => setDetailOpen(false)}
+        fullWidth
         maxWidth="lg"
         TransitionComponent={Zoom}
         PaperProps={{ sx: { borderRadius: 5, overflow: 'hidden' } }}
@@ -307,157 +307,186 @@ export default function TriageTicketInbox() {
             </Box>
           </Stack>
           {selectedTicket && (
-            <Chip 
-              label={getPriorityInfo(selectedTicket.priority).label} 
+            <Chip
+              label={getPriorityInfo(selectedTicket.priority).label}
               color={getPriorityInfo(selectedTicket.priority).color}
               sx={{ fontWeight: 800, borderRadius: 2 }}
             />
           )}
         </DialogTitle>
-        <DialogContent sx={{ px: 4, pb: 4 }}>
-          <Grid container spacing={4}>
+        <DialogContent sx={{ p: 0, overflow: 'hidden' }}>
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, minHeight: 600 }}>
             {/* Left Column: Info & Summary */}
-            <Grid item xs={12} lg={4}>
-              <Stack spacing={3}>
-                <Box sx={{ p: 3, bgcolor: 'grey.50', borderRadius: 4 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <User size={16} /> Thông tin bệnh nhân
-                  </Typography>
-                  <Stack spacing={1.5}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Họ và tên</Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedTicket?.requesterName}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">Triệu chứng khai báo</Typography>
-                      <Typography variant="body2" sx={{ fontStyle: 'italic' }}>"{selectedTicket?.description}"</Typography>
-                    </Box>
-                  </Stack>
-                </Box>
+            <Box sx={{ 
+              width: { xs: '100%', lg: '33.33%' }, 
+              p: 3, 
+              borderRight: '1px solid', 
+              borderColor: 'divider',
+              display: 'flex', 
+              flexDirection: 'column', 
+              gap: 3,
+              bgcolor: 'rgba(248, 250, 252, 0.5)'
+            }}>
+              <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: 4, border: '1px solid', borderColor: 'rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <User size={16} /> Thông tin bệnh nhân
+                </Typography>
+                <Stack spacing={1.5}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Họ và tên</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedTicket?.requesterName}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Triệu chứng khai báo</Typography>
+                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>"{selectedTicket?.description}"</Typography>
+                  </Box>
+                </Stack>
+              </Box>
 
-                <Box sx={{ p: 3, bgcolor: '#e0f2fe', borderRadius: 4, border: '1px solid', borderColor: '#bae6fd' }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <MessageSquare size={16} /> Kết luận AI
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: '#0c4a6e', lineHeight: 1.6 }}>
-                    {selectedTicket?.aiSummary || "Đang phân tích dữ liệu..."}
-                  </Typography>
-                </Box>
+              <Box sx={{ p: 2, bgcolor: '#e0f2fe', borderRadius: 4, border: '1px solid', borderColor: '#bae6fd' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MessageSquare size={16} /> Kết luận AI
+                </Typography>
+                <Typography variant="body2" sx={{ color: '#0c4a6e', lineHeight: 1.6 }}>
+                  {selectedTicket?.aiSummary || "Đang phân tích dữ liệu..."}
+                </Typography>
+              </Box>
 
-                <Box sx={{ p: 3, border: '1px solid', borderColor: 'divider', borderRadius: 4 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Calendar size={16} /> Chuyển đổi thành lịch hẹn
-                  </Typography>
-                  {createError && <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>{createError}</Alert>}
-                  {createSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 2 }}>{createSuccess}</Alert>}
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Ngày khám"
-                      type="date"
-                      size="small"
-                      InputLabelProps={{ shrink: true }}
-                      value={appointmentDate}
-                      onChange={(e) => setAppointmentDate(e.target.value)}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Giờ khám"
-                      type="time"
-                      size="small"
-                      InputLabelProps={{ shrink: true }}
-                      value={appointmentTime}
-                      onChange={(e) => setAppointmentTime(e.target.value)}
-                      fullWidth
-                    />
-                    <TextField
-                      select
-                      label="Chuyên khoa khám"
-                      size="small"
-                      value={departmentId}
-                      onChange={(e) => setDepartmentId(e.target.value)}
-                      fullWidth
-                    >
-                      {departments.map((d) => (
-                        <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-                      ))}
-                    </TextField>
-                    <Button 
-                      variant="contained" 
-                      fullWidth 
-                      onClick={handleCreateAppointment} 
-                      disabled={createLoading}
-                      startIcon={<ArrowRight size={18} />}
-                      sx={{ py: 1, borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
-                    >
-                      {createLoading ? 'Đang xử lý...' : 'Xác nhận tạo lịch hẹn'}
-                    </Button>
-                  </Stack>
-                </Box>
-              </Stack>
-            </Grid>
+              <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 4, bgcolor: '#fff' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Calendar size={16} /> Chuyển đổi thành lịch hẹn
+                </Typography>
+                {createError && <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>{createError}</Alert>}
+                {createSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 3 }}>{createSuccess}</Alert>}
+                <Stack spacing={2}>
+                  <TextField
+                    label="Ngày khám"
+                    type={appointmentDate ? "date" : "text"}
+                    onFocus={(e) => (e.target.type = 'date')}
+                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
+                    size="small"
+                    value={appointmentDate}
+                    onChange={(e) => setAppointmentDate(e.target.value)}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    label="Giờ khám"
+                    type={appointmentTime ? "time" : "text"}
+                    onFocus={(e) => (e.target.type = 'time')}
+                    onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
+                    size="small"
+                    value={appointmentTime}
+                    onChange={(e) => setAppointmentTime(e.target.value)}
+                    fullWidth
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    select
+                    label="Chuyên khoa khám"
+                    size="small"
+                    value={departmentId}
+                    onChange={(e) => setDepartmentId(e.target.value)}
+                    fullWidth
+                  >
+                    {departments.map((d) => (
+                      <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                    ))}
+                  </TextField>
+                  <Button 
+                    variant="contained" 
+                    fullWidth 
+                    onClick={handleCreateAppointment} 
+                    disabled={createLoading}
+                    startIcon={<ArrowRight size={18} />}
+                    sx={{ py: 1.2, borderRadius: 3, fontWeight: 700, textTransform: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                  >
+                    {createLoading ? 'Đang xử lý...' : 'Xác nhận tạo lịch hẹn'}
+                  </Button>
+                </Stack>
+              </Box>
+            </Box>
 
             {/* Right Column: Chat History */}
-            <Grid item xs={12} lg={8}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MessageSquare size={16} /> Chi tiết hội thoại tư vấn
-                </Typography>
-                <Paper 
-                  elevation={0} 
-                  sx={{ 
-                    flexGrow: 1, p: 3, bgcolor: '#f8fafc', borderRadius: 5, 
-                    border: '1px solid', borderColor: 'divider',
-                    maxHeight: 600, overflowY: 'auto',
-                    display: 'flex', flexDirection: 'column', gap: 2
-                  }}
-                >
-                  {chatHistory.length === 0 ? (
-                    <Box sx={{ m: 'auto', textAlign: 'center', opacity: 0.4 }}>
-                      <MessageSquare size={48} />
-                      <Typography sx={{ mt: 1 }}>Chưa có dữ liệu hội thoại</Typography>
-                    </Box>
-                  ) : chatHistory.map((m) => {
-                    const isUser = m.senderType === 'USER'
-                    return (
-                      <Box 
-                        key={m.id} 
-                        sx={{ 
-                          alignSelf: isUser ? 'flex-end' : 'flex-start',
-                          maxWidth: '85%'
-                        }}
-                      >
-                        <Stack direction="row" spacing={1} alignItems="flex-end" justifyContent={isUser ? 'flex-end' : 'flex-start'}>
-                          {!isUser && (
-                            <Avatar sx={{ width: 24, height: 24, bgcolor: 'secondary.main', fontSize: 10 }}>AI</Avatar>
-                          )}
-                          <Box 
-                            sx={{ 
-                              p: 1.5, borderRadius: isUser ? '16px 16px 4px 16px' : '16px 16px 16px 4px',
-                              bgcolor: isUser ? 'primary.main' : 'white',
-                              color: isUser ? 'white' : 'text.primary',
-                              boxShadow: isUser ? '0 4px 12px rgba(25, 118, 210, 0.2)' : '0 2px 8px rgba(0,0,0,0.05)',
-                            }}
-                          >
-                            <Typography variant="body2">{m.content}</Typography>
-                          </Box>
-                        </Stack>
-                        <Typography 
-                          variant="caption" 
+            <Box sx={{ 
+              width: { xs: '100%', lg: '66.66%' }, 
+              p: 3, 
+              display: 'flex', 
+              flexDirection: 'column',
+              bgcolor: '#fff'
+            }}>
+              <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
+                <MessageSquare size={16} /> Chi tiết hội thoại tư vấn
+              </Typography>
+              <Box sx={{ 
+                flexGrow: 1, 
+                p: 3, 
+                bgcolor: '#f8fafc', 
+                borderRadius: 8, 
+                border: '1px solid', 
+                borderColor: 'divider',
+                maxHeight: 600, 
+                overflowY: 'auto',
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: 2,
+                position: 'relative'
+              }}>
+                {chatHistory.length === 0 ? (
+                  <Box sx={{ 
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    opacity: 0.4 
+                  }}>
+                    <MessageSquare size={64} strokeWidth={1} />
+                    <Typography sx={{ mt: 2, fontWeight: 800 }}>Chưa có dữ liệu hội thoại</Typography>
+                    <Typography variant="caption">Hệ thống đang đồng bộ tin nhắn từ AI Triage...</Typography>
+                  </Box>
+                ) : chatHistory.map((m) => {
+                  const isUser = m.senderType === 'USER'
+                  return (
+                    <Box 
+                      key={m.id} 
+                      sx={{ 
+                        alignSelf: isUser ? 'flex-end' : 'flex-start',
+                        maxWidth: '85%'
+                      }}
+                    >
+                      <Stack direction={isUser ? 'row-reverse' : 'row'} spacing={1} alignItems="flex-end">
+                        {!isUser && (
+                          <Avatar sx={{ width: 24, height: 24, bgcolor: '#10b981', fontSize: 10 }}>AI</Avatar>
+                        )}
+                        <Box 
                           sx={{ 
-                            display: 'block', mt: 0.5, px: 4,
-                            textAlign: isUser ? 'right' : 'left',
-                            color: 'text.disabled', fontSize: 10
+                            p: 2, 
+                            borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                            bgcolor: isUser ? 'primary.main' : '#fff',
+                            color: isUser ? '#fff' : 'text.primary',
+                            boxShadow: isUser ? '0 4px 12px rgba(25, 118, 210, 0.2)' : '0 2px 8px rgba(0,0,0,0.05)',
+                            border: isUser ? 'none' : '1px solid',
+                            borderColor: 'divider'
                           }}
                         >
-                          {m.createdAt ? format(new Date(m.createdAt), 'HH:mm', { locale: vi }) : ''}
-                        </Typography>
-                      </Box>
-                    )
-                  })}
-                </Paper>
+                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{m.content}</Typography>
+                        </Box>
+                      </Stack>
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          display: 'block', mt: 0.5, px: 1,
+                          textAlign: isUser ? 'right' : 'left',
+                          color: 'text.disabled', fontSize: 10
+                        }}
+                      >
+                        {m.createdAt ? format(new Date(m.createdAt), 'HH:mm', { locale: vi }) : ''}
+                      </Typography>
+                    </Box>
+                  )
+                })}
               </Box>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </DialogContent>
       </Dialog>
     </Container>

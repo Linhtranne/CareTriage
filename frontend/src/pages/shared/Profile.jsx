@@ -373,12 +373,35 @@ const Profile = () => {
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const dataUrl = e.target.result;
-      updateAvatar(dataUrl);
-    };
-    reader.readAsDataURL(file);
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError(t('profile.file_too_large', 'Dung lượng ảnh tối đa là 5MB'));
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      // 1. Upload to Firebase via Backend
+      const uploadRes = await axiosClient.post('/api/users/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+      
+      if (uploadRes.data.success) {
+        const newAvatarUrl = uploadRes.data.data;
+        // 2. Persist to Profile
+        await updateAvatar(newAvatarUrl);
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || t('profile.upload_error', 'Lỗi khi upload ảnh'));
+    } finally {
+      setSaving(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   const updateAvatar = async (newUrl) => {

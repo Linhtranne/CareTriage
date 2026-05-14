@@ -47,6 +47,16 @@ export const adminApi = {
   deleteDepartment: (id) => {
     return axiosClient.delete(`/api/v1/departments/${id}`)
   },
+
+  uploadDepartmentImage: (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    return axiosClient.post('/api/v1/departments/upload-image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    })
+  },
 }
 
 export default adminApi

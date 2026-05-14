@@ -82,4 +82,13 @@ public class DepartmentController {
         departmentService.deleteDepartment(id);
         return ResponseEntity.ok(ApiResponse.success("Department deleted successfully", null));
     }
+
+    @PostMapping("/upload-image")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Upload department image (Admin only)")
+    public ResponseEntity<ApiResponse<String>> uploadImage(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+        String imageUrl = departmentService.uploadImage(file);
+        return ResponseEntity.ok(ApiResponse.success("Upload ảnh thành công", imageUrl));
+    }
 }

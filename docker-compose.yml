@@ -26,8 +26,8 @@ services:
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: caretriage
-      DB_USERNAME: root
-      DB_PASSWORD: root
+      DB_USERNAME: linhtranne
+      DB_PASSWORD: 123456
       JWT_SECRET: ${JWT_SECRET:-caretriage-docker-secret-key-min-256-bits-long-for-hmac-sha256}
       AI_SERVICE_URL: http://ai-service:8000
     depends_on:

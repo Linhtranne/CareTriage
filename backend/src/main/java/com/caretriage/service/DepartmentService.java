@@ -17,4 +17,6 @@ public interface DepartmentService {
     DepartmentResponse updateDepartment(Long id, DepartmentRequest request);
     
     void deleteDepartment(Long id);
+
+    String uploadImage(org.springframework.web.multipart.MultipartFile file);
 }

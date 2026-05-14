@@ -1,18 +1,30 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
-    driverClassName: org.h2.Driver
-    username: sa
-    password: password
+    url: jdbc:mysql://localhost:3307/caretriage?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Ho_Chi_Minh
+    username: linhtranne
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   jpa:
-    database-platform: org.hibernate.dialect.H2Dialect
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.H2Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
-  sql:
-    init:
-      mode: never
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    clean-disabled: true
+
+app:
+  jwt:
+    secret: test-secret-key-that-is-at-least-256-bits-long-for-hs256-testing-only
+    expiration-ms: 3600000
+    refresh-expiration-ms: 86400000
+
+  firebase:
+    config-path: ""
+    bucket-name: "test-bucket"
