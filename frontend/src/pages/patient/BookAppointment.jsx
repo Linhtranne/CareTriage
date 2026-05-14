@@ -32,7 +32,7 @@ import {
 } from 'lucide-react';
 import { format, addDays, isSameDay } from 'date-fns';
 import { vi, enUS } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import publicApi from '../../api/publicApi';
 import appointmentApi from '../../api/appointmentApi';
@@ -42,6 +42,7 @@ import PatientPageShell from '../../components/patient/PatientPageShell';
 export default function BookAppointment() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const steps = [
     t('booking.step1_label'), 
@@ -116,7 +117,20 @@ export default function BookAppointment() {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- effect triggers async server fetch for initial department options
     fetchDepartments();
-  }, []);
+
+    // Check for pre-filled data from navigation state
+    if (location.state) {
+      const { doctor, date, slot } = location.state;
+      if (doctor) setSelectedDoctor(doctor);
+      if (date) setSelectedDate(new Date(date));
+      if (slot) {
+        setSelectedSlot(slot);
+        setActiveStep(2); // Jump to step 3 (Confirm & Reason) if everything is pre-selected
+      } else if (doctor && date) {
+        setActiveStep(1); // Jump to step 2 (Slot Selection) if doctor and date are pre-selected
+      }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (selectedDept) {

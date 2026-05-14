@@ -13,6 +13,7 @@ import com.caretriage.entity.DoctorSchedule;
 import com.caretriage.entity.User;
 import com.caretriage.entity.TriageTicket;
 import com.caretriage.event.AppointmentStatusChangedEvent;
+import com.caretriage.exception.BusinessException;
 import com.caretriage.exception.ResourceNotFoundException;
 import com.caretriage.repository.AppointmentRepository;
 import com.caretriage.repository.DepartmentRepository;
@@ -29,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -39,14 +41,15 @@ import java.util.stream.Collectors;
 @Slf4j
 public class AppointmentServiceImpl implements AppointmentService {
 
+    private static final int SLOT_DURATION_MINUTES = 30;
+    private static final ZoneId SYSTEM_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;
     private final DepartmentRepository departmentRepository;
     private final DoctorScheduleRepository doctorScheduleRepository;
     private final TriageTicketRepository triageTicketRepository;
     private final ApplicationEventPublisher eventPublisher;
-
-    private static final int SLOT_DURATION_MINUTES = 30;
 
     @Override
     @Transactional
@@ -61,20 +64,21 @@ public class AppointmentServiceImpl implements AppointmentService {
         boolean isDoctor = doctor.getRoles().stream()
                 .anyMatch(r -> r.getName().equals("DOCTOR"));
         if (!isDoctor) {
-            throw new RuntimeException("Người dùng được chọn không phải bác sĩ");
+            throw new BusinessException("Người dùng được chọn không phải bác sĩ");
         }
 
         // Business Rule: Only allow booking within 30 days from now
-        LocalDate maxDate = LocalDate.now().plusDays(30);
+        LocalDate now = LocalDate.now(SYSTEM_ZONE);
+        LocalDate maxDate = now.plusDays(30);
         if (request.getAppointmentDate().isAfter(maxDate)) {
-            throw new RuntimeException("Chỉ cho phép đặt lịch trong vòng 30 ngày kể từ hôm nay");
+            throw new BusinessException("Chỉ cho phép đặt lịch trong vòng 30 ngày kể từ hôm nay");
         }
 
         // Business Rule: Minimum 60-minute lead time for same-day appointments
-        if (request.getAppointmentDate().equals(LocalDate.now())) {
-            LocalTime minTime = LocalTime.now().plusMinutes(60);
+        if (request.getAppointmentDate().equals(now)) {
+            LocalTime minTime = LocalTime.now(SYSTEM_ZONE).plusMinutes(60);
             if (request.getAppointmentTime().isBefore(minTime)) {
-                throw new RuntimeException("Vui lòng đặt lịch trước giờ hẹn ít nhất 60 phút");
+                throw new BusinessException("Vui lòng đặt lịch trước giờ hẹn ít nhất 60 phút");
             }
         }
 
@@ -84,7 +88,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .filter(a -> a.getStatus() != AppointmentStatus.CANCELLED)
                 .count();
         if (activeDailyCount >= 2) {
-            throw new RuntimeException("Mỗi bệnh nhân chỉ được đặt tối đa 02 cuộc hẹn trong cùng một ngày");
+            throw new BusinessException("Mỗi bệnh nhân chỉ được đặt tối đa 02 cuộc hẹn trong cùng một ngày");
         }
 
         // Check doctor schedule for the requested day
@@ -93,7 +97,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .findByDoctorIdAndDayOfWeekAndIsActiveTrue(request.getDoctorId(), dayOfWeek);
 
         if (schedules.isEmpty()) {
-            throw new RuntimeException("Bác sĩ không có lịch làm việc vào " + dayOfWeek);
+            throw new BusinessException("Bác sĩ không có lịch làm việc vào " + dayOfWeek);
         }
 
         // Verify the requested time falls within a schedule
@@ -102,7 +106,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         && !request.getAppointmentTime().isAfter(s.getEndTime().minusMinutes(SLOT_DURATION_MINUTES)));
 
         if (!isWithinSchedule) {
-            throw new RuntimeException("Giờ khám không nằm trong lịch làm việc của bác sĩ");
+            throw new BusinessException("Giờ khám không nằm trong lịch làm việc của bác sĩ");
         }
 
         // Check for time slot conflicts (T-029)
@@ -130,7 +134,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                         && a.getAppointmentTime().equals(request.getAppointmentTime()));
 
         if (patientConflict) {
-            throw new RuntimeException("Bạn đã có lịch khám vào thời gian này");
+            throw new BusinessException("Bạn đã có lịch khám vào thời gian này");
         }
 
         Department department = null;
@@ -290,9 +294,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     @Override
     public List<TimeSlotResponse> getAvailableSlots(Long doctorId, LocalDate date) {
         // Business Rule: Only allow checking slots within 30 days
-        LocalDate maxDate = LocalDate.now().plusDays(30);
-        if (date.isBefore(LocalDate.now()) || date.isAfter(maxDate)) {
-            return new ArrayList<>();
+        LocalDate now = LocalDate.now(SYSTEM_ZONE);
+        LocalDate maxDate = now.plusDays(30);
+        if (date.isBefore(now)) {
+            throw new BusinessException("Không thể xem lịch khám trong quá khứ");
+        }
+        if (date.isAfter(maxDate)) {
+            throw new BusinessException("Chỉ có thể xem lịch khám trong vòng 30 ngày tới");
         }
 
         // Get doctor's schedule for the requested day
@@ -324,12 +332,12 @@ public class AppointmentServiceImpl implements AppointmentService {
 
                 // Business Rule: Minimum 60-minute lead time for same-day appointments
                 boolean isUnavailable = false;
-                if (date.equals(LocalDate.now())) {
-                    LocalTime minTime = LocalTime.now().plusMinutes(60);
+                if (date.equals(now)) {
+                    LocalTime minTime = LocalTime.now(SYSTEM_ZONE).plusMinutes(60);
                     if (slotStart.isBefore(minTime)) {
                         isUnavailable = true;
                     }
-                } else if (date.isBefore(LocalDate.now())) {
+                } else if (date.isBefore(now)) {
                     isUnavailable = true;
                 }
 
