@@ -400,6 +400,8 @@ const resources = {
         sender_patient: 'Patient',
         sender_staff: 'Clinical staff',
         sender_ai: 'System',
+        possible_conditions: 'Possible conditions',
+        safe_explanation: 'AI Assessment',
         status_labels: {
           TRIAGED: 'Triaged',
           IN_TRIAGE: 'In triage',
@@ -978,6 +980,8 @@ const resources = {
         sender_patient: 'Bệnh nhân',
         sender_staff: 'Nhân sự y tế',
         sender_ai: 'Hệ thống',
+        possible_conditions: 'Khả năng lâm sàng',
+        safe_explanation: 'Đánh giá từ AI',
         status_labels: {
           TRIAGED: 'Đã phân loại',
           IN_TRIAGE: 'Đang phân loại',

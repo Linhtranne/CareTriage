@@ -36,6 +36,10 @@ const appointmentApi = {
     return axiosClient.get('/api/v1/appointments/doctor/today')
   },
 
+  getDoctorAppointments: (params) => {
+    return axiosClient.get('/api/v1/appointments/doctor', { params })
+  },
+
   updateStatus: (id, data) => {
     return axiosClient.put(`/api/v1/appointments/${id}/status`, data)
   }

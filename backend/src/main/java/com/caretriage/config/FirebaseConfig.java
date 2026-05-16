@@ -30,6 +30,12 @@ public class FirebaseConfig {
                 return;
             }
 
+            java.io.File configFile = new java.io.File(configPath);
+            if (!configFile.exists()) {
+                log.warn("Firebase config file not found at: {}. Avatar upload will not work.", configPath);
+                return;
+            }
+
             InputStream serviceAccount = new FileInputStream(configPath);
             FirebaseOptions options = FirebaseOptions.builder()
                     .setCredentials(GoogleCredentials.fromStream(serviceAccount))

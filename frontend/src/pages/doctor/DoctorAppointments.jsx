@@ -1,9 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import {
-  Container,
   Typography,
   Box,
-  Paper,
   Table,
   TableBody,
   TableCell,
@@ -25,7 +23,8 @@ import {
   CircularProgress,
   Alert,
   Tooltip,
-  Stack
+  Stack,
+  alpha
 } from '@mui/material';
 import {
   Search,
@@ -37,27 +36,30 @@ import {
   User,
   FileText,
   Phone,
-  AlertCircle
+  AlertCircle,
+  CalendarDays,
+  Calendar
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
 import appointmentApi from '../../api/appointmentApi';
+import PatientPageShell from '../../components/patient/PatientPageShell';
 
 const STATUS_MAP = {
-  PENDING: { label: 'Chờ xác nhận', color: 'warning', icon: <Clock size={14} /> },
-  CONFIRMED: { label: 'Chờ khám', color: 'info', icon: <Clock size={14} /> },
-  IN_PROGRESS: { label: 'Đang khám', color: 'primary', icon: <RefreshCw size={14} className="animate-spin" /> },
-  COMPLETED: { label: 'Hoàn thành', color: 'success', icon: <CheckCircle2 size={14} /> },
-  CANCELLED: { label: 'Đã hủy', color: 'error', icon: <XCircle size={14} /> },
-  NO_SHOW: { label: 'Vắng mặt', color: 'default', icon: <AlertCircle size={14} /> }
+  PENDING: { label: 'Chờ xác nhận', color: 'warning', icon: <Clock size={14} />, bg: 'rgba(245, 158, 11, 0.1)', textColor: '#d97706' },
+  CONFIRMED: { label: 'Chờ khám', color: 'info', icon: <Clock size={14} />, bg: 'rgba(59, 130, 246, 0.1)', textColor: '#2563eb' },
+  IN_PROGRESS: { label: 'Đang khám', color: 'primary', icon: <RefreshCw size={14} className="animate-spin" />, bg: 'rgba(16, 185, 129, 0.1)', textColor: '#059669' },
+  COMPLETED: { label: 'Hoàn thành', color: 'success', icon: <CheckCircle2 size={14} />, bg: 'rgba(16, 185, 129, 0.1)', textColor: '#059669' },
+  CANCELLED: { label: 'Đã hủy', color: 'error', icon: <XCircle size={14} />, bg: 'rgba(239, 68, 68, 0.1)', textColor: '#dc2626' },
+  NO_SHOW: { label: 'Vắng mặt', color: 'default', icon: <AlertCircle size={14} />, bg: 'rgba(148, 163, 184, 0.1)', textColor: '#475569' }
 };
 
 export default function DoctorAppointments() {
   const navigate = useNavigate();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [tabValue, setTabValue] = useState(0); // 0: Tất cả, 1: Chờ khám, 2: Đang khám, 3: Hoàn thành
+  const [tabValue, setTabValue] = useState(0); // 0: Hôm nay, 1: Yêu cầu mới, 2: Đang khám, 3: Hoàn thành, 4: Tất cả
   const [searchQuery, setSearchQuery] = useState('');
   
   // Status Update Dialog
@@ -71,37 +73,47 @@ export default function DoctorAppointments() {
   // Notifications
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
 
-  const fetchTodayAppointments = useCallback(async () => {
+  const fetchAppointments = useCallback(async () => {
     setLoading(true);
+    setError('');
     try {
-      // Backend handles "today" logic
-      const res = await appointmentApi.getDoctorTodayAppointments();
+      let res;
+      if (tabValue === 0) {
+        // Today's appointments
+        res = await appointmentApi.getDoctorTodayAppointments();
+      } else if (tabValue === 1) {
+        // All Pending (All dates)
+        res = await appointmentApi.getDoctorAppointments({ status: 'PENDING' });
+      } else {
+        // All appointments (for other tabs we'll filter client-side or we could fetch specific status)
+        res = await appointmentApi.getDoctorAppointments();
+      }
+      
       const appts = res.data?.data || (Array.isArray(res.data) ? res.data : []);
       setAppointments(appts);
     } catch (err) {
-      console.error('Failed to fetch today appointments', err);
+      console.error('Failed to fetch appointments', err);
       setError('Không thể tải danh sách lịch hẹn.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [tabValue]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch and periodic refresh are required for server data synchronization
-    fetchTodayAppointments();
-
-    // Auto-refresh every 5 minutes (T-033 Step 2)
-    const interval = setInterval(fetchTodayAppointments, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, [fetchTodayAppointments]);
+    fetchAppointments();
+  }, [fetchAppointments]);
 
   const filteredAppointments = useMemo(() => {
     let result = appointments;
 
-    // Filter by Tab (T-033 Step 3)
-    if (tabValue === 1) result = result.filter(a => a.status === 'CONFIRMED' || a.status === 'PENDING');
-    else if (tabValue === 2) result = result.filter(a => a.status === 'IN_PROGRESS');
+    // Filter by Tab logic (T-033)
+    if (tabValue === 2) result = result.filter(a => a.status === 'IN_PROGRESS');
     else if (tabValue === 3) result = result.filter(a => a.status === 'COMPLETED');
+    // Tab 0 and 1 are already handled by API fetch but we can refine here if needed
+    if (tabValue === 0) result = result.filter(a => {
+        const today = format(new Date(), 'yyyy-MM-dd');
+        return a.appointmentDate === today;
+    });
 
     // Filter by Search (AC-4)
     if (searchQuery) {
@@ -134,7 +146,7 @@ export default function DoctorAppointments() {
       });
       setDialogOpen(false);
       setSnackbar({ open: true, message: 'Cập nhật trạng thái thành công!', severity: 'success' });
-      fetchTodayAppointments();
+      fetchAppointments();
     } catch (err) {
       setError(err.response?.data?.message || 'Có lỗi xảy ra khi cập nhật trạng thái.');
     } finally {
@@ -147,45 +159,63 @@ export default function DoctorAppointments() {
     return (
       <Chip 
         label={config.label} 
-        color={config.color} 
         size="small" 
         icon={config.icon}
-        sx={{ fontWeight: 600, borderRadius: 1.5 }}
+        sx={{ 
+          fontWeight: 600, 
+          borderRadius: 2,
+          bgcolor: config.bg,
+          color: config.textColor,
+          border: 'none',
+          '& .MuiChip-icon': { color: config.textColor }
+        }}
       />
     );
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 900, color: '#1e293b' }}>Lịch khám hôm nay</Typography>
-          <Typography variant="body1" color="text.secondary">
-            {format(new Date(), "'Ngày' dd 'tháng' MM, yyyy", { locale: vi })}
-          </Typography>
-        </Box>
+    <PatientPageShell
+      title="Quản lý lịch hẹn"
+      subtitle={format(new Date(), "'Ngày' dd 'tháng' MM, yyyy", { locale: vi })}
+      maxWidth={false}
+      transparent={true}
+      badge="Khu vực bác sĩ"
+      actions={
         <Button 
           variant="outlined" 
-          startIcon={<RefreshCw size={18} />} 
-          onClick={fetchTodayAppointments}
+          startIcon={<RefreshCw size={18} className={loading ? "animate-spin" : ""} />} 
+          onClick={fetchAppointments}
           disabled={loading}
-          sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+          sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 600, px: 2.5 }}
         >
           Làm mới
         </Button>
-      </Box>
-
-      <Paper sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,0.03)' }}>
-        <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', justifyContent: 'space-between' }}>
-          <Tabs value={tabValue} onChange={(e, v) => setTabValue(v)} sx={{ 
-            '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', minWidth: 100 },
-            '& .Mui-selected': { color: '#10b981 !important' },
-            '& .MuiTabs-indicator': { bgcolor: '#10b981' }
-          }}>
-            <Tab label="Tất cả" />
-            <Tab label="Chờ khám" />
-            <Tab label="Đang khám" />
-            <Tab label="Hoàn thành" />
+      }
+    >
+      <Box sx={{ mt: -1 }}>
+        <Box sx={{ mb: 4, display: 'flex', flexWrap: 'wrap', gap: 3, alignItems: 'center', justifyContent: 'space-between' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={(e, v) => setTabValue(v)} 
+            sx={{ 
+              minHeight: 48,
+              '& .MuiTab-root': { 
+                fontWeight: 600, 
+                textTransform: 'none', 
+                fontSize: '0.95rem',
+                minWidth: 120,
+                color: '#64748b',
+                transition: 'all 0.2s'
+              },
+              '& .Mui-selected': { color: '#10b981 !important' },
+              '& .MuiTabs-indicator': { height: 3, borderRadius: '3px 3px 0 0', bgcolor: '#10b981' }
+            }}
+          >
+            <Tab icon={<CalendarDays size={18} />} iconPosition="start" label="Hôm nay" />
+            <Tab icon={<AlertCircle size={18} />} iconPosition="start" label="Yêu cầu mới" />
+            <Tab icon={<RefreshCw size={18} />} iconPosition="start" label="Đang khám" />
+            <Tab icon={<CheckCircle2 size={18} />} iconPosition="start" label="Hoàn thành" />
+            <Tab icon={<Calendar size={18} />} iconPosition="start" label="Tất cả" />
           </Tabs>
 
           <TextField
@@ -196,78 +226,114 @@ export default function DoctorAppointments() {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <Search size={18} color="#64748b" />
+                  <Search size={18} color="#94a3b8" />
                 </InputAdornment>
               ),
-              sx: { borderRadius: 2, width: 300 }
+              sx: { 
+                borderRadius: 3, 
+                width: 320,
+                bgcolor: 'white',
+                '& fieldset': { borderColor: '#e2e8f0' },
+                '&:hover fieldset': { borderColor: '#10b981 !important' }
+              }
             }}
           />
         </Box>
 
-        <TableContainer>
-          <Table sx={{ minWidth: 800 }}>
-            <TableHead sx={{ bgcolor: '#f8fafc' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Giờ hẹn</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Bệnh nhân</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Lý do khám</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Trạng thái</TableCell>
-                <TableCell sx={{ fontWeight: 700 }} align="right">Hành động</TableCell>
+        <TableContainer sx={{ overflow: 'visible' }}>
+          <Table sx={{ minWidth: 1000, borderCollapse: 'separate', borderSpacing: '0 12px', mt: -1.5 }}>
+            <TableHead>
+              <TableRow sx={{ '& th': { border: 'none', color: '#64748b', fontWeight: 600, textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em', px: 3 } }}>
+                <TableCell>Thời gian</TableCell>
+                <TableCell>Thông tin bệnh nhân</TableCell>
+                <TableCell>Lý do & Ghi chú</TableCell>
+                <TableCell align="center">Trạng thái</TableCell>
+                <TableCell align="right">Thao tác</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
-                    <CircularProgress size={40} sx={{ color: '#10b981' }} />
+                  <TableCell colSpan={5} align="center" sx={{ py: 12 }}>
+                    <CircularProgress size={42} thickness={5} sx={{ color: '#10b981' }} />
+                    <Typography variant="body2" sx={{ mt: 2, color: '#94a3b8', fontWeight: 600 }}>Đang tải danh sách...</Typography>
                   </TableCell>
                 </TableRow>
               ) : filteredAppointments.length > 0 ? (
                 filteredAppointments.map((appt) => (
-                  <TableRow key={appt.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                  <TableRow 
+                    key={appt.id} 
+                    sx={{ 
+                      '& td': { 
+                        bgcolor: 'white', 
+                        borderTop: '1px solid #f1f5f9',
+                        borderBottom: '1px solid #f1f5f9',
+                        px: 3,
+                        py: 2,
+                        transition: 'all 0.2s'
+                      },
+                      '& td:first-of-type': { borderLeft: '1px solid #f1f5f9', borderRadius: '16px 0 0 16px' },
+                      '& td:last-of-type': { borderRight: '1px solid #f1f5f9', borderRadius: '0 16px 16px 0' },
+                      '&:hover td': { bgcolor: 'rgba(16, 185, 129, 0.02)', borderColor: '#10b981' }
+                    }}
+                  >
                     <TableCell>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0f172a' }}>
-                        {appt.appointmentTime.substring(0, 5)}
-                      </Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {appt.endTime.substring(0, 5)} kết thúc
-                      </Typography>
+                      <Box>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#0f172a', lineHeight: 1.2 }}>
+                          {appt.appointmentTime ? appt.appointmentTime.substring(0, 5) : '--:--'}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#64748b', fontWeight: 400 }}>
+                          {format(new Date(appt.appointmentDate), 'dd/MM/yyyy')}
+                        </Typography>
+                      </Box>
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar src={appt.patientAvatar} sx={{ width: 40, height: 40, bgcolor: '#f1f5f9', color: '#64748b' }}>
-                          <User size={20} />
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar 
+                          src={appt.patientAvatar} 
+                          sx={{ 
+                            width: 48, height: 48, 
+                            bgcolor: '#f1f5f9', 
+                            color: '#10b981',
+                            border: '2px solid white',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <User size={24} />
                         </Avatar>
                         <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{appt.patientName}</Typography>
-                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1e293b' }}>{appt.patientName}</Typography>
+                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#64748b', fontWeight: 600 }}>
                             <Phone size={12} /> {appt.patientPhone}
                           </Typography>
                         </Box>
                       </Box>
                     </TableCell>
-                    <TableCell sx={{ maxWidth: 300 }}>
-                      <Typography variant="body2" noWrap sx={{ color: '#475569' }}>
+                    <TableCell sx={{ maxWidth: 320 }}>
+                      <Typography variant="body2" sx={{ color: '#334155', fontWeight: 600, mb: 0.5, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                         {appt.reason}
                       </Typography>
                       {appt.notes && (
-                        <Typography variant="caption" sx={{ fontStyle: 'italic', color: '#10b981', display: 'block', mt: 0.5 }}>
-                          Ghi chú: {appt.notes}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#10b981' }}>
+                          <FileText size={12} />
+                          <Typography variant="caption" sx={{ fontWeight: 600, fontStyle: 'italic' }}>
+                            Ghi chú: {appt.notes}
+                          </Typography>
+                        </Box>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell align="center">
                       {renderStatusChip(appt.status)}
                     </TableCell>
                     <TableCell align="right">
-                      <Stack direction="row" spacing={1} justifyContent="flex-end">
+                      <Stack direction="row" spacing={1.5} justifyContent="flex-end">
                         {appt.status === 'PENDING' && (
                           <Button 
                             variant="contained" 
                             size="small" 
-                            startIcon={<CheckCircle2 size={14} />}
+                            startIcon={<CheckCircle2 size={16} />}
                             onClick={() => handleOpenStatusDialog(appt, 'CONFIRMED')}
-                            sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 1.5, textTransform: 'none' }}
+                            sx={{ bgcolor: '#3b82f6', '&:hover': { bgcolor: '#2563eb' }, borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2 }}
                           >
                             Xác nhận
                           </Button>
@@ -277,19 +343,19 @@ export default function DoctorAppointments() {
                             <Button 
                               variant="contained" 
                               size="small" 
-                              startIcon={<Play size={14} />}
+                              startIcon={<Play size={16} />}
                               onClick={() => handleOpenStatusDialog(appt, 'IN_PROGRESS')}
-                              sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' }, borderRadius: 1.5, textTransform: 'none' }}
+                              sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' }, borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2 }}
                             >
                               Bắt đầu
                             </Button>
                             <Tooltip title="Vắng mặt">
                               <IconButton 
                                 size="small" 
-                                color="default" 
+                                sx={{ bgcolor: '#f1f5f9', '&:hover': { bgcolor: '#e2e8f0' } }}
                                 onClick={() => handleOpenStatusDialog(appt, 'NO_SHOW')}
                               >
-                                <AlertCircle size={18} />
+                                <AlertCircle size={18} color="#64748b" />
                               </IconButton>
                             </Tooltip>
                           </>
@@ -299,20 +365,18 @@ export default function DoctorAppointments() {
                             <Button 
                               variant="outlined" 
                               size="small" 
-                              color="primary"
-                              startIcon={<FileText size={14} />}
+                              startIcon={<FileText size={16} />}
                               onClick={() => navigate(`/doctor/medical-records/create/${appt.id}?patientName=${encodeURIComponent(appt.patientName)}`)}
-                              sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 600 }}
+                              sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2, borderColor: '#10b981', color: '#10b981', '&:hover': { bgcolor: 'rgba(16, 185, 129, 0.05)', borderColor: '#059669' } }}
                             >
                               Lập hồ sơ
                             </Button>
                             <Button 
                               variant="contained" 
                               size="small" 
-                              color="success"
-                              startIcon={<CheckCircle2 size={14} />}
+                              startIcon={<CheckCircle2 size={16} />}
                               onClick={() => handleOpenStatusDialog(appt, 'COMPLETED')}
-                              sx={{ borderRadius: 1.5, textTransform: 'none', fontWeight: 700 }}
+                              sx={{ bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' }, borderRadius: 2.5, textTransform: 'none', fontWeight: 600, px: 2 }}
                             >
                               Hoàn thành
                             </Button>
@@ -321,7 +385,7 @@ export default function DoctorAppointments() {
                         {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
                           <IconButton 
                             size="small" 
-                            color="error" 
+                            sx={{ color: '#ef4444', bgcolor: 'rgba(239, 68, 68, 0.05)', '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.1)' } }}
                             onClick={() => handleOpenStatusDialog(appt, 'CANCELLED')}
                           >
                             <XCircle size={18} />
@@ -333,11 +397,11 @@ export default function DoctorAppointments() {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} align="center" sx={{ py: 10 }}>
+                  <TableCell colSpan={5} align="center" sx={{ py: 15 }}>
                     <Box sx={{ color: '#94a3b8' }}>
-                      <FileText size={48} strokeWidth={1} style={{ marginBottom: 8 }} />
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>Không có lịch hẹn nào</Typography>
-                      <Typography variant="body2">Bạn không có lịch hẹn nào thỏa mãn điều kiện lọc.</Typography>
+                      <CalendarDays size={64} strokeWidth={1} style={{ marginBottom: 16, opacity: 0.5 }} />
+                      <Typography variant="h6" sx={{ fontWeight: 600, color: '#475569' }}>Trống lịch hẹn</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>Không có lịch hẹn nào thỏa mãn điều kiện lọc của bạn.</Typography>
                     </Box>
                   </TableCell>
                 </TableRow>
@@ -345,11 +409,17 @@ export default function DoctorAppointments() {
             </TableBody>
           </Table>
         </TableContainer>
-      </Paper>
+      </Box>
 
       {/* Status Update Dialog */}
-      <Dialog open={dialogOpen} onClose={() => !actionLoading && setDialogOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 800 }}>
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => !actionLoading && setDialogOpen(false)} 
+        fullWidth 
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 5, p: 1 } }}
+      >
+        <DialogTitle sx={{ fontWeight: 600, fontSize: '1.25rem', pb: 1 }}>
           {targetStatus === 'IN_PROGRESS' && 'Bắt đầu ca khám'}
           {targetStatus === 'COMPLETED' && 'Kết thúc ca khám'}
           {targetStatus === 'CANCELLED' && 'Hủy lịch hẹn'}
@@ -357,9 +427,9 @@ export default function DoctorAppointments() {
           {targetStatus === 'NO_SHOW' && 'Đánh dấu vắng mặt'}
         </DialogTitle>
         <DialogContent>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          <Typography variant="body2" sx={{ mb: 2, color: 'text.secondary' }}>
-            Bạn đang cập nhật trạng thái cho bệnh nhân <strong>{selectedAppt?.patientName}</strong>.
+          {error && <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>{error}</Alert>}
+          <Typography variant="body2" sx={{ mb: 2, color: '#64748b', fontWeight: 500 }}>
+            Hệ thống sẽ cập nhật trạng thái cho bệnh nhân <strong>{selectedAppt?.patientName}</strong>.
           </Typography>
           <TextField
             fullWidth
@@ -368,20 +438,23 @@ export default function DoctorAppointments() {
             rows={4}
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder={targetStatus === 'CANCELLED' ? "Vui lòng nhập lý do hủy lịch..." : "Nhập triệu chứng, chẩn đoán sơ bộ..."}
-            sx={{ mt: 1, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
+            placeholder={targetStatus === 'CANCELLED' ? "Vui lòng nhập lý do để bệnh nhân nắm rõ..." : "Nhập ghi chú hoặc dặn dò sơ bộ..."}
+            sx={{ mt: 1, '& .MuiOutlinedInput-root': { borderRadius: 4, bgcolor: '#f8fafc' } }}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          <Button onClick={() => setDialogOpen(false)} disabled={actionLoading} sx={{ fontWeight: 700, color: '#64748b' }}>Hủy bỏ</Button>
+        <DialogActions sx={{ px: 3, pb: 3, pt: 1 }}>
+          <Button onClick={() => setDialogOpen(false)} disabled={actionLoading} sx={{ fontWeight: 600, color: '#64748b', textTransform: 'none' }}>Đóng</Button>
           <Button 
             variant="contained" 
             onClick={handleUpdateStatus} 
             disabled={actionLoading}
             sx={{ 
-              borderRadius: 2, 
-              fontWeight: 700, 
+              borderRadius: 3, 
+              fontWeight: 600, 
+              px: 4,
+              textTransform: 'none',
               bgcolor: targetStatus === 'CANCELLED' ? '#ef4444' : '#10b981',
+              boxShadow: `0 4px 12px ${alpha(targetStatus === 'CANCELLED' ? '#ef4444' : '#10b981', 0.2)}`,
               '&:hover': { bgcolor: targetStatus === 'CANCELLED' ? '#dc2626' : '#059669' }
             }}
           >
@@ -390,15 +463,19 @@ export default function DoctorAppointments() {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={snackbar.open} onClose={() => setSnackbar({ ...snackbar, open: false })}>
-        <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, bgcolor: snackbar.severity === 'success' ? '#f0fdf4' : '#fef2f2', color: snackbar.severity === 'success' ? '#15803d' : '#991b1b' }}>
-          {snackbar.severity === 'success' ? <CheckCircle2 size={20} /> : <AlertCircle size={20} />}
-          <Typography variant="body2" sx={{ fontWeight: 600 }}>{snackbar.message}</Typography>
+      <Dialog 
+        open={snackbar.open} 
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        PaperProps={{ sx: { borderRadius: 4, overflow: 'hidden' } }}
+      >
+        <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', gap: 2, bgcolor: snackbar.severity === 'success' ? '#f0fdf4' : '#fef2f2', color: snackbar.severity === 'success' ? '#15803d' : '#991b1b' }}>
+          {snackbar.severity === 'success' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+          <Typography variant="body1" sx={{ fontWeight: 600 }}>{snackbar.message}</Typography>
           <IconButton size="small" onClick={() => setSnackbar({ ...snackbar, open: false })} color="inherit">
-            <XCircle size={16} />
+            <XCircle size={18} />
           </IconButton>
         </Box>
       </Dialog>
-    </Container>
+    </PatientPageShell>
   );
 }

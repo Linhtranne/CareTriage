@@ -13,13 +13,16 @@ import {
   Paper,
   Stack,
   Typography,
-  Alert
+  Alert,
+  alpha
 } from '@mui/material'
-import { CalendarDays, ChevronRight } from 'lucide-react'
+import { CalendarDays, ChevronRight, Info } from 'lucide-react'
 import { format, isValid } from 'date-fns'
 import { vi, enUS } from 'date-fns/locale'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import triageTicketApi from '../../api/triageTicketApi'
 import PatientPageShell from '../../components/patient/PatientPageShell'
 
@@ -28,23 +31,23 @@ const normalizeCode = (value) => String(value || '').trim().toUpperCase().replac
 const getStatusTone = (status) => {
   const code = normalizeCode(status)
 
-  if (code === 'TRIAGED') return { color: 'success', bg: '#f0fdf4', text: '#166534' }
-  if (code === 'IN_TRIAGE') return { color: 'info', bg: '#eff6ff', text: '#1d4ed8' }
-  if (code === 'REJECTED') return { color: 'error', bg: '#fef2f2', text: '#b91c1c' }
-  if (code === 'CLOSED') return { color: 'default', bg: '#f8fafc', text: '#475569' }
+  if (code === 'TRIAGED') return { bgcolor: alpha('#10b981', 0.1), color: '#10b981' }
+  if (code === 'IN_TRIAGE') return { bgcolor: alpha('#2563eb', 0.1), color: '#2563eb' }
+  if (code === 'REJECTED') return { bgcolor: alpha('#ef4444', 0.1), color: '#ef4444' }
+  if (code === 'CLOSED') return { bgcolor: 'oklch(95% 0.01 250)', color: 'oklch(50% 0.02 250)' }
 
-  return { color: 'warning', bg: '#fffbeb', text: '#b45309' }
+  return { bgcolor: alpha('#f59e0b', 0.1), color: '#f59e0b' }
 }
 
 const getPriorityTone = (priority) => {
   const code = normalizeCode(priority)
 
-  if (['CRITICAL', 'EMERGENCY', 'URGENT'].includes(code)) return { color: 'error', bg: '#fef2f2', text: '#b91c1c' }
-  if (code === 'HIGH') return { color: 'warning', bg: '#fff7ed', text: '#c2410c' }
-  if (['MEDIUM', 'MODERATE'].includes(code)) return { color: 'info', bg: '#eff6ff', text: '#1d4ed8' }
-  if (['LOW', 'ROUTINE', 'NORMAL'].includes(code)) return { color: 'default', bg: '#f8fafc', text: '#475569' }
+  if (['CRITICAL', 'EMERGENCY', 'URGENT'].includes(code)) return { bgcolor: alpha('#ef4444', 0.1), color: '#ef4444' }
+  if (code === 'HIGH') return { bgcolor: alpha('#f59e0b', 0.1), color: '#f59e0b' }
+  if (['MEDIUM', 'MODERATE'].includes(code)) return { bgcolor: alpha('#2563eb', 0.1), color: '#2563eb' }
+  if (['LOW', 'ROUTINE', 'NORMAL'].includes(code)) return { bgcolor: 'oklch(95% 0.01 250)', color: 'oklch(50% 0.02 250)' }
 
-  return { color: 'success', bg: '#f0fdf4', text: '#166534' }
+  return { bgcolor: alpha('#10b981', 0.1), color: '#10b981' }
 }
 
 const resolveSenderLabel = (senderType, t) => {
@@ -87,7 +90,6 @@ export default function TriageTickets() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- effect loads initial triage ticket list from server
     loadTickets()
   }, [])
 
@@ -105,7 +107,15 @@ export default function TriageTickets() {
       ])
 
       const detailData = detailRes.data?.data
-      setSelectedTicket(detailData ? { ...ticket, ...detailData } : ticket)
+      let parsedMetadata = null
+      if (detailData?.metadata) {
+        try {
+          parsedMetadata = JSON.parse(detailData.metadata)
+        } catch (e) {
+          console.error("Failed to parse metadata", e)
+        }
+      }
+      setSelectedTicket(detailData ? { ...ticket, ...detailData, parsedMetadata } : ticket)
       setChatHistory(Array.isArray(chatRes.data?.data) ? chatRes.data.data : [])
     } catch (error) {
       console.error('Failed to load triage ticket detail', error)
@@ -122,18 +132,15 @@ export default function TriageTickets() {
     const label = t(`triage.status_labels.${code}`, status || '-')
 
     return (
-      <Chip
-        size="small"
-        label={label}
-        color={tone.color}
+      <Box
         sx={{
-          fontWeight: 800,
-          borderRadius: 999,
-          bgcolor: tone.bg,
-          color: tone.text,
-          '& .MuiChip-label': { px: 1.25 }
+          px: 1.5, py: 0.5, borderRadius: '6px', 
+          bgcolor: tone.bgcolor, color: tone.color,
+          fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em'
         }}
-      />
+      >
+        {label}
+      </Box>
     )
   }
 
@@ -143,18 +150,15 @@ export default function TriageTickets() {
     const label = t(`triage.priority_labels.${code}`, priority || '-')
 
     return (
-      <Chip
-        size="small"
-        label={`${t('triage_tickets.priority')}: ${label}`}
-        color={tone.color}
+      <Box
         sx={{
-          fontWeight: 700,
-          bgcolor: tone.bg,
-          color: tone.text,
-          borderRadius: 999,
-          '& .MuiChip-label': { px: 1.25 }
+          px: 1.5, py: 0.5, borderRadius: '6px', 
+          bgcolor: tone.bgcolor, color: tone.color,
+          fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.02em'
         }}
-      />
+      >
+        {label}
+      </Box>
     )
   }
 
@@ -162,7 +166,7 @@ export default function TriageTickets() {
     if (!value) return '-'
     const date = new Date(value)
     if (!isValid(date)) return '-'
-    return format(date, 'dd/MM/yyyy HH:mm', { locale: dateLocale })
+    return format(date, 'dd MMMM, yyyy HH:mm', { locale: dateLocale })
   }
 
   const handleCardKeyDown = (event, ticket) => {
@@ -181,379 +185,297 @@ export default function TriageTickets() {
     setDetailLoading(false)
   }
 
-  const handleRetryDetail = () => {
-    if (selectedTicket?.id) handleOpenDetail(selectedTicket)
-  }
-
   return (
     <PatientPageShell
       title={t('triage_tickets.title')}
       subtitle={t('triage_tickets.subtitle')}
-      maxWidth="xl"
+      maxWidth={false}
+      transparent={true}
       actions={
         <Button
           variant="contained"
-          startIcon={<CalendarDays size={18} />}
+          startIcon={<CalendarDays size={20} />}
           onClick={() => navigate('/patient/appointments/book-appointment')}
           sx={{
-            borderRadius: 3,
+            borderRadius: 4,
             bgcolor: '#10b981',
             '&:hover': { bgcolor: '#059669' },
             fontWeight: 700,
-            px: 3,
-            py: 1.2,
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-            width: 'auto',
-            minWidth: 0,
-            alignSelf: 'flex-end',
+            px: 4,
+            py: 1.5,
+            boxShadow: '0 10px 30px rgba(16, 185, 129, 0.2)',
+            textTransform: 'none',
           }}
         >
           {t('appointments.book_now')}
         </Button>
       }
     >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      <Box sx={{ width: '100%' }}>
         {!loading && listError ? (
           <Alert
             severity="error"
             variant="outlined"
             action={
-              <Button onClick={loadTickets} size="small" sx={{ fontWeight: 700, textTransform: 'none' }}>
+              <Button onClick={loadTickets} size="small" sx={{ fontWeight: 950, textTransform: 'none' }}>
                 {t('triage_tickets.retry')}
               </Button>
             }
-            sx={{ borderRadius: 3 }}
+            sx={{ borderRadius: 4, mb: 4 }}
           >
             {listError}
           </Alert>
         ) : null}
+
         {loading ? (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: 4,
-              borderRadius: 4,
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: 220
-            }}
-          >
-            <CircularProgress />
-          </Paper>
+          <Box sx={{ py: 20, display: 'flex', justifyContent: 'center' }}>
+            <CircularProgress size={60} thickness={2} sx={{ color: 'oklch(65% 0.15 160)' }} />
+          </Box>
         ) : tickets.length > 0 ? (
-          <Grid container spacing={2.5}>
+          <Grid container spacing={4}>
             {tickets.map((ticket) => (
-              <Grid item xs={12} md={6} key={ticket.id}>
-                <Paper
-                  variant="outlined"
-                  role="button"
-                  tabIndex={0}
-                  aria-haspopup="dialog"
+              <Grid item xs={12} md={6} xl={4} key={ticket.id}>
+                <Box
                   onClick={() => handleOpenDetail(ticket)}
                   onKeyDown={(event) => handleCardKeyDown(event, ticket)}
                   sx={{
-                    p: { xs: 2, sm: 2.5 },
-                    borderRadius: 4,
+                    p: 4,
+                    borderRadius: 6,
+                    border: '1px solid oklch(95% 0.01 250)',
+                    bgcolor: 'white',
                     cursor: 'pointer',
-                    borderColor: 'rgba(8, 187, 163, 0.12)',
-                    transition: 'all 0.2s ease',
+                    transition: 'all 0.3s',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.02)',
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 12px 28px rgba(8, 187, 163, 0.08)',
-                      borderColor: '#08bba3'
-                    },
-                    '&:focus-visible': {
-                      outline: 'none',
-                      borderColor: '#08bba3',
-                      boxShadow: '0 0 0 4px rgba(8, 187, 163, 0.16)'
+                      transform: 'translateY(-6px)',
+                      boxShadow: '0 15px 40px rgba(0,0,0,0.05)',
+                      borderColor: '#10b981'
                     }
                   }}
                 >
-                  <Stack spacing={2}>
+                  <Stack spacing={3}>
                     <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="flex-start">
-                      <Box sx={{ minWidth: 0 }}>
-                        <Typography
-                          variant="overline"
-                          sx={{
-                            display: 'block',
-                            fontWeight: 800,
-                            letterSpacing: '0.08em',
-                            color: 'text.secondary'
-                          }}
-                        >
-                          {t('triage_tickets.ticket_no')} {ticket.ticketNumber}
+                      <Box>
+                        <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          #{ticket.ticketNumber}
                         </Typography>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 900,
-                            lineHeight: 1.2,
-                            mt: 0.5,
-                            pr: 1
-                          }}
-                        >
+                        <Typography variant="h5" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mt: 0.5, letterSpacing: '-0.02em' }}>
                           {ticket.title || t('triage_tickets.detail_title')}
                         </Typography>
                       </Box>
                       {statusChip(ticket.status)}
                     </Stack>
 
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: 'text.secondary',
-                        lineHeight: 1.65,
-                        display: '-webkit-box',
-                        WebkitLineClamp: 3,
-                        WebkitBoxOrient: 'vertical',
-                        overflow: 'hidden'
-                      }}
-                    >
+                    <Typography variant="body1" sx={{ color: 'oklch(50% 0.02 250)', lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                       {ticket.description || '-'}
                     </Typography>
 
-                    <Stack direction="row" flexWrap="wrap" gap={1}>
+                    <Stack direction="row" spacing={1.5}>
                       {priorityChip(ticket.priority)}
                       {ticket.categoryName && (
-                        <Chip
-                          size="small"
-                          label={ticket.categoryName}
-                          variant="outlined"
-                          sx={{ fontWeight: 700, borderRadius: 999 }}
-                        />
-                      )}
-                      {ticket.severity && (
-                        <Chip
-                          size="small"
-                          label={`${t('triage_tickets.severity')}: ${ticket.severity}`}
-                          variant="outlined"
-                          sx={{ fontWeight: 700, borderRadius: 999 }}
-                        />
+                        <Box sx={{ px: 1.5, py: 0.5, borderRadius: '6px', bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(92% 0.02 250)', fontSize: '0.75rem', fontWeight: 700, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase' }}>
+                          {ticket.categoryName}
+                        </Box>
                       )}
                     </Stack>
 
-                    <Divider />
+                    <Divider sx={{ borderColor: 'oklch(94% 0.02 250)' }} />
 
-                    <Stack
-                      direction={{ xs: 'column', sm: 'row' }}
-                      spacing={1}
-                      justifyContent="space-between"
-                      alignItems={{ xs: 'flex-start', sm: 'center' }}
-                    >
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 0.75,
-                          color: 'text.secondary',
-                          fontWeight: 700
-                        }}
-                      >
-                        <CalendarDays size={14} />
-                        {formatDateTime(ticket.createdAt)}
-                      </Typography>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'oklch(60% 0.02 250)' }}>
+                        <CalendarDays size={16} />
+                        <Typography variant="caption" sx={{ fontWeight: 800 }}>
+                          {formatDateTime(ticket.createdAt)}
+                        </Typography>
+                      </Stack>
                       <Button
                         variant="text"
                         size="small"
-                        endIcon={<ChevronRight size={16} />}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handleOpenDetail(ticket)
-                        }}
-                        sx={{
-                          p: 0,
-                          minWidth: 0,
-                          alignSelf: { xs: 'flex-start', sm: 'center' },
+                        endIcon={<ChevronRight size={16} className="chevron-icon" />}
+                        sx={{ 
+                          fontWeight: 700, 
+                          color: '#10b981', 
                           textTransform: 'none',
-                          fontWeight: 800,
-                          color: '#0f766e'
+                          px: 0,
+                          '&:hover': {
+                            bgcolor: 'transparent',
+                            '& .chevron-icon': { transform: 'translateX(4px)' }
+                          }
                         }}
                       >
                         {t('triage_tickets.open_detail')}
                       </Button>
                     </Stack>
                   </Stack>
-                </Paper>
+                </Box>
               </Grid>
             ))}
           </Grid>
         ) : (
-          <Paper
-            variant="outlined"
-            sx={{
-              p: { xs: 3, md: 4 },
-              borderRadius: 4,
-              borderColor: 'rgba(8, 187, 163, 0.12)',
-              bgcolor: 'rgba(255, 255, 255, 0.85)'
-            }}
-          >
-            <Stack spacing={2} alignItems="flex-start">
-              <Typography variant="h6" sx={{ fontWeight: 900 }}>
-                {t('triage_tickets.no_tickets')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                {t('triage_tickets.empty_desc')}
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/patient/appointments/book-appointment')}
-                sx={{
-                  borderRadius: 3,
-                  bgcolor: '#10b981',
-                  '&:hover': { bgcolor: '#059669' },
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1.2,
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.25)'
-                }}
-              >
-                {t('appointments.book_now')}
-              </Button>
-            </Stack>
-          </Paper>
+          <Box sx={{ textAlign: 'center', py: 16 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 2, letterSpacing: '-0.02em' }}>
+              {t('triage_tickets.no_tickets')}
+            </Typography>
+            <Typography variant="body1" sx={{ color: 'oklch(50% 0.02 250)', mb: 4, fontWeight: 500 }}>
+              {t('triage_tickets.empty_desc')}
+            </Typography>
+            <Button
+              variant="contained"
+              onClick={() => navigate('/patient/appointments/book-appointment')}
+              sx={{ 
+                borderRadius: 4, px: 6, py: 1.8, 
+                bgcolor: '#10b981', fontWeight: 700,
+                boxShadow: '0 10px 30px rgba(16, 185, 129, 0.2)'
+              }}
+            >
+              {t('appointments.book_now')}
+            </Button>
+          </Box>
         )}
       </Box>
 
-      <Dialog open={detailOpen} onClose={() => setDetailOpen(false)} fullWidth maxWidth="md" aria-labelledby="triage-detail-title" PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle id="triage-detail-title" sx={{ pb: 1.5 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }}>
+      <Dialog 
+        open={detailOpen} 
+        onClose={handleCloseDetail} 
+        fullWidth 
+        maxWidth="lg"
+        PaperProps={{ 
+          sx: { 
+            borderRadius: 8, 
+            bgcolor: 'white', 
+            backgroundImage: 'none',
+            maxHeight: '90vh'
+          } 
+        }}
+      >
+        <DialogTitle sx={{ p: 4, borderBottom: '1px solid oklch(95% 0.01 250)' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 900, lineHeight: 1.2 }}>
+              <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                 {t('triage_tickets.detail_title')}
               </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                {selectedTicket?.ticketNumber ? `${t('triage_tickets.ticket_no')} ${selectedTicket.ticketNumber}` : ''}
+              <Typography variant="h3" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mt: 1, letterSpacing: '-0.03em' }}>
+                {selectedTicket?.ticketNumber ? `Ticket #${selectedTicket.ticketNumber}` : ''}
               </Typography>
             </Box>
             {selectedTicket && statusChip(selectedTicket.status)}
           </Stack>
         </DialogTitle>
-        <DialogContent dividers>
+
+        <DialogContent sx={{ p: 4 }}>
           {detailLoading ? (
-            <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-              <CircularProgress />
-              <Typography variant="body2" color="text.secondary">
+            <Box sx={{ py: 16, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+              <CircularProgress size={40} thickness={4} sx={{ color: 'oklch(65% 0.15 160)' }} />
+              <Typography variant="body1" sx={{ fontWeight: 800, color: 'oklch(40% 0.02 250)' }}>
                 {t('triage_tickets.detail_loading')}
               </Typography>
             </Box>
           ) : detailError ? (
-            <Alert
-              severity="error"
-              variant="outlined"
-              action={
-                <Button onClick={handleRetryDetail} size="small" sx={{ fontWeight: 700, textTransform: 'none' }}>
-                  {t('triage_tickets.retry')}
-                </Button>
-              }
-              sx={{ borderRadius: 3 }}
-            >
-              {detailError}
-            </Alert>
+            <Alert severity="error" variant="outlined" sx={{ borderRadius: 4 }}>{detailError}</Alert>
           ) : selectedTicket && (
-            <Grid container spacing={2.5}>
-              <Grid item xs={12} md={4}>
-                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#f8fafc', borderColor: 'rgba(8, 187, 163, 0.12)' }}>
-                  <Stack spacing={1.5}>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.status')}
+            <Grid container spacing={6}>
+              <Grid item xs={12} lg={4}>
+                <Stack spacing={4}>
+                  <Box sx={{ p: 4, borderRadius: 5, bgcolor: 'oklch(99% 0.01 250)', border: '1px solid oklch(96% 0.01 250)' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+                      <Info size={18} /> Chi tiết phân loại
+                    </Typography>
+                    <Stack spacing={3}>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 600 }}>Ưu tiên / Mức độ</Typography>
+                        <Stack direction="row" spacing={1.5} sx={{ mt: 1 }}>
+                          {priorityChip(selectedTicket.priority)}
+                          <Box sx={{ px: 1.5, py: 0.5, borderRadius: '6px', bgcolor: 'oklch(94% 0.02 250)', fontSize: '0.75rem', fontWeight: 700 }}>{selectedTicket.severity || '-'}</Box>
+                        </Stack>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 600 }}>Danh mục phân loại</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5, fontSize: '1rem' }}>{selectedTicket.categoryName || '-'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 600 }}>Nhân viên phụ trách</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5, fontSize: '1rem' }}>{selectedTicket.triageOfficerName || '-'}</Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="caption" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 600 }}>Ngày khởi tạo</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, mt: 0.5, fontSize: '1rem' }}>{formatDateTime(selectedTicket.createdAt)}</Typography>
+                      </Box>
+                    </Stack>
+                  </Box>
+
+                  {selectedTicket.parsedMetadata && (
+                    <Box sx={{ p: 4, borderRadius: 6, border: '2px dashed oklch(92% 0.02 250)' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 900, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em', mb: 2, display: 'block' }}>
+                        AI Analysis
                       </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {t(`triage.status_labels.${normalizeCode(selectedTicket.status)}`, selectedTicket.status || '-')}
-                      </Typography>
+                      {selectedTicket.parsedMetadata.possible_conditions?.map((c, i) => (
+                        <Box key={i} sx={{ px: 2, py: 1, borderRadius: 2, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)', fontWeight: 950, fontSize: '0.8rem', mb: 1 }}>
+                          {c}
+                        </Box>
+                      ))}
                     </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.priority')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {t(`triage.priority_labels.${normalizeCode(selectedTicket.priority)}`, selectedTicket.priority || '-')}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.severity')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {selectedTicket.severity || '-'}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.category')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {selectedTicket.categoryName || '-'}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.triage_officer')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {selectedTicket.triageOfficerName || '-'}
-                      </Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                        {t('triage_tickets.created_at')}
-                      </Typography>
-                      <Typography variant="body2" sx={{ fontWeight: 800, mt: 0.25 }}>
-                        {formatDateTime(selectedTicket.createdAt)}
-                      </Typography>
-                    </Box>
-                  </Stack>
-                </Paper>
+                  )}
+                </Stack>
               </Grid>
 
-              <Grid item xs={12} md={8}>
-                <Stack spacing={2.5}>
-                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#ffffff' }}>
-                    <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
-                      {t('triage_tickets.summary')}
-                    </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 900, mt: 0.5 }}>
+              <Grid item xs={12} lg={8}>
+                <Stack spacing={6}>
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 2, letterSpacing: '-0.02em' }}>
                       {selectedTicket.title || '-'}
                     </Typography>
-                    <Typography variant="body2" sx={{ mt: 1.5, lineHeight: 1.75, color: 'text.secondary' }}>
+                    <Typography variant="body1" sx={{ color: 'oklch(40% 0.02 250)', lineHeight: 1.8, fontWeight: 500 }}>
                       {selectedTicket.description || '-'}
                     </Typography>
-                  </Paper>
+                  </Box>
 
-                  <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3, bgcolor: '#ffffff' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 2 }}>
-                      {t('triage_tickets.chat_history')}
+                  <Divider sx={{ borderColor: 'oklch(94% 0.02 250)' }} />
+
+                  <Box>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 4, letterSpacing: '-0.02em' }}>
+                      Lịch sử tương tác
                     </Typography>
-                    <Stack spacing={1.5}>
+                    <Stack spacing={3}>
                       {chatHistory.length === 0 ? (
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography variant="body1" sx={{ color: 'oklch(60% 0.02 250)', fontStyle: 'italic' }}>
                           {t('triage_tickets.no_chat_history')}
                         </Typography>
                       ) : (
                         chatHistory.map((message) => {
                           const fromPatient = ['USER', 'PATIENT'].includes(normalizeCode(message.senderType))
-
                           return (
                             <Box
                               key={message.id}
                               sx={{
                                 alignSelf: fromPatient ? 'flex-end' : 'flex-start',
-                                maxWidth: { xs: '100%', sm: '88%' },
-                                p: 1.5,
-                                borderRadius: 3,
-                                bgcolor: fromPatient ? '#ecfdf5' : '#f8fafc',
-                                border: '1px solid rgba(8, 187, 163, 0.08)'
+                                maxWidth: '85%',
+                                p: 3,
+                                borderRadius: fromPatient ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                                bgcolor: fromPatient ? '#10b981' : 'oklch(96% 0.01 250)',
+                                color: fromPatient ? 'white' : 'oklch(20% 0.05 250)',
+                                border: '1px solid oklch(92% 0.02 250)',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.02)'
                               }}
                             >
-                              <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary' }}>
+                              <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.9 }}>
                                 {resolveSenderLabel(message.senderType, t)}
                               </Typography>
-                              <Typography variant="body2" sx={{ mt: 0.5, whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
-                                {message.content || '-'}
-                              </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                              <Box sx={{ 
+                                  mt: 1, 
+                                  '& p': { m: 0, mb: 1.5, lineHeight: 1.7 },
+                                  '& p:last-child': { mb: 0 },
+                                  '& ul, & ol': { mt: 1, mb: 1.5, pl: 2.5 },
+                                  '& li': { mb: 0.8 },
+                                  '& strong': { fontWeight: 800 },
+                                  '& h3': { fontSize: '1.1rem', fontWeight: 900, mb: 1.5, mt: 1, color: fromPatient ? 'white' : 'oklch(20% 0.05 250)' },
+                                  fontSize: '0.95rem',
+                                  fontWeight: 500
+                                }}>
+                                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                    {message.content}
+                                  </ReactMarkdown>
+                                </Box>
+                              <Typography variant="caption" sx={{ display: 'block', mt: 1.5, opacity: 0.7, fontWeight: 600 }}>
                                 {formatDateTime(message.createdAt)}
                               </Typography>
                             </Box>
@@ -561,25 +483,28 @@ export default function TriageTickets() {
                         })
                       )}
                     </Stack>
-                  </Paper>
+                  </Box>
                 </Stack>
               </Grid>
             </Grid>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2.5 }}>
+
+        <DialogActions sx={{ p: 4, borderTop: '1px solid oklch(94% 0.02 250)' }}>
           <Button
             onClick={handleCloseDetail}
             variant="contained"
             sx={{
-              borderRadius: 3,
-              bgcolor: '#10b981',
-              '&:hover': { bgcolor: '#059669' },
+              borderRadius: 4,
+              bgcolor: 'oklch(20% 0.05 250)',
+              '&:hover': { bgcolor: 'black' },
               fontWeight: 700,
-              px: 3
+              textTransform: 'none',
+              px: 6,
+              py: 1.5
             }}
           >
-            {t('triage_tickets.close')}
+            Đóng
           </Button>
         </DialogActions>
       </Dialog>

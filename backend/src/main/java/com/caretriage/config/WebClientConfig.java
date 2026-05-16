@@ -20,6 +20,9 @@ public class WebClientConfig {
     @Value("${app.ai-service.url:http://localhost:8000}")
     private String aiServiceUrl;
 
+    @Value("${app.ai-service.internal-api-key}")
+    private String internalApiKey;
+
     @Bean
     public WebClient aiServiceWebClient(WebClient.Builder builder) {
         HttpClient httpClient = HttpClient.create()
@@ -33,6 +36,7 @@ public class WebClientConfig {
                 .baseUrl(aiServiceUrl)
                 .clientConnector(new ReactorClientHttpConnector(httpClient))
                 .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
+                .defaultHeader("X-Internal-Api-Key", internalApiKey)
                 .build();
     }
 }

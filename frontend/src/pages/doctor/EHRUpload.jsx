@@ -1,6 +1,6 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Container,
   Typography,
   Box,
   Paper,
@@ -14,7 +14,10 @@ import {
   Tab,
   MenuItem,
   Chip,
-  IconButton
+  IconButton,
+  alpha,
+  useTheme,
+  Divider
 } from '@mui/material';
 import {
   Brain,
@@ -86,17 +89,20 @@ export default function EHRUpload() {
     const validTypes = [
       'application/pdf',
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/msword',
+      'image/jpeg',
+      'image/png',
+      'image/webp'
     ];
-    
+
     if (!validTypes.includes(selectedFile.type)) {
-      setFileError('Chỉ hỗ trợ file PDF hoặc Word (.docx)');
+      setFileError('Chỉ hỗ trợ PDF, Word (.docx) hoặc Hình ảnh (JPG, PNG)');
       setFile(null);
       return;
     }
 
-    if (selectedFile.size > 10 * 1024 * 1024) {
-      setFileError('Dung lượng file không được vượt quá 10MB');
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      setFileError('Dung lượng file không được vượt quá 20MB');
       setFile(null);
       return;
     }
@@ -135,6 +141,8 @@ export default function EHRUpload() {
       const resultDto = response.data?.data || response.data;
       const noteId = resultDto?.clinicalNoteId;
       if (!noteId) throw new Error('Không thể xác định ID ghi chú từ phản hồi server.');
+
+      // Success toast or direct navigation
       navigate(`/doctor/ehr/result/${noteId}`);
     } catch (err) {
       setServerError(err.response?.data?.message || 'Có lỗi xảy ra trong quá trình xử lý AI.');
@@ -143,44 +151,154 @@ export default function EHRUpload() {
     }
   };
 
+  // Pre-styled Input components for high-end feel
+  const inputSx = {
+    '& .MuiFilledInput-root': {
+      borderRadius: 5,
+      bgcolor: 'oklch(100% 0 0 / 0.15)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid oklch(100% 0 0 / 0.1)',
+      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+      '&:hover': {
+        bgcolor: 'oklch(100% 0 0 / 0.25)',
+        borderColor: 'oklch(65% 0.15 160 / 0.5)',
+      },
+      '&.Mui-focused': {
+        bgcolor: 'oklch(100% 0 0 / 0.4)',
+        borderColor: 'oklch(65% 0.15 160)',
+        boxShadow: 'none',
+      },
+      '&:before, &:after': { display: 'none' },
+    },
+    '& .MuiInputLabel-root': {
+      color: 'oklch(50% 0.02 160)',
+      fontWeight: 600,
+      ml: 1,
+      '&.Mui-focused': { color: 'oklch(65% 0.15 160)' }
+    }
+  };
+
   return (
-    <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="lg">
-        <Box sx={{ mb: 4 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box sx={{ bgcolor: 'rgba(8,187,163,0.1)', p: 1, borderRadius: 3 }}>
-              <Brain size={32} color="#08bba3" />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a' }}>
-              Nhập ghi chú lâm sàng
-            </Typography>
-          </Stack>
+    <Box
+      component={motion.div}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      sx={{
+        bgcolor: 'oklch(98% 0.01 160)',
+        minHeight: '100vh',
+        py: 6,
+        px: { xs: 2, md: 4, lg: 6 }
+      }}
+    >
+      <Box sx={{ mb: 6, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <Box>
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: 700,
+              letterSpacing: '-0.04em',
+              color: 'oklch(20% 0.05 160)',
+              mb: 1
+            }}
+          >
+            Clinical Intake
+          </Typography>
+          <Typography variant="h6" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 500 }}>
+            Hệ thống phân tích hồ sơ bệnh án thông minh
+          </Typography>
         </Box>
+      </Box>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Grid container spacing={3}>
-            {/* Left Column - Input Zone */}
-            <Grid item xs={12} md={8}>
-              <Paper sx={{ p: 0, borderRadius: 4, overflow: 'hidden', border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: '#fff' }}>
-                  <Tabs value={tabValue} onChange={handleTabChange} sx={{ px: 2 }}>
-                    <Tab 
-                      label="Nhập văn bản" 
-                      icon={<FileText size={18} />} 
-                      iconPosition="start" 
-                      sx={{ fontWeight: 700, minHeight: 64 }} 
-                    />
-                    <Tab 
-                      label="Tải file lên" 
-                      icon={<Upload size={18} />} 
-                      iconPosition="start" 
-                      sx={{ fontWeight: 700, minHeight: 64 }} 
-                    />
-                  </Tabs>
+      <form onSubmit={handleSubmit(onSubmit)}>
+        <Stack spacing={4}>
+          <Paper
+            elevation={0}
+            sx={{
+              borderRadius: 10,
+              overflow: 'hidden',
+              border: '1px solid oklch(100% 0 0 / 0.2)',
+              bgcolor: 'oklch(100% 0 0 / 0.15)',
+              backdropFilter: 'blur(50px)',
+              boxShadow: 'none',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <Box sx={{ borderBottom: 1, borderColor: 'oklch(100% 0 0 / 0.1)', bgcolor: 'transparent', display: 'flex', justifyContent: 'space-between', alignItems: 'center', pr: 3 }}>
+              <Tabs
+                value={tabValue}
+                onChange={handleTabChange}
+                sx={{
+                  px: 3,
+                  '& .MuiTabs-indicator': {
+                    height: 2,
+                    bgcolor: 'oklch(55% 0.18 160)',
+                    bottom: 0,
+                  },
+                  '& .MuiTab-root': {
+                    zIndex: 1,
+                    minHeight: 80,
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    '&.Mui-selected': { color: 'oklch(55% 0.18 160)' },
+                    '&:hover': { color: 'oklch(55% 0.18 160 / 0.7)' }
+                  }
+                }}
+              >
+                <Tab disableRipple label="Văn bản lâm sàng" icon={<FileText size={20} />} iconPosition="start" sx={{ fontWeight: 600, fontSize: '1rem', textTransform: 'none' }} />
+                <Tab disableRipple label="Tải tập tin (PDF/DOCX)" icon={<Upload size={20} />} iconPosition="start" sx={{ fontWeight: 600, fontSize: '1rem', textTransform: 'none' }} />
+              </Tabs>
+
+              <Stack direction="row" spacing={3} alignItems="center">
+                <Box sx={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 1.5,
+                  bgcolor: 'transparent',
+                  px: 2,
+                  py: 1,
+                  borderRadius: 3,
+                  animation: loading ? 'none' : 'pulse 3s infinite ease-in-out',
+                  '@keyframes pulse': {
+                    '0%': { boxShadow: '0 0 0 0 oklch(65% 0.15 160 / 0.2)' },
+                    '70%': { boxShadow: '0 0 0 10px oklch(65% 0.15 160 / 0)' },
+                    '100%': { boxShadow: '0 0 0 0 oklch(65% 0.15 160 / 0)' }
+                  }
+                }}>
+                  <Brain size={20} color={loading ? 'oklch(50% 0.15 80)' : 'oklch(55% 0.18 160)'} />
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 700, display: 'block', color: loading ? 'oklch(40% 0.15 80)' : 'oklch(45% 0.18 160)', letterSpacing: '0.05em' }}>
+                      {loading ? 'AI PROCESSING' : 'ENGINE ACTIVE'}
+                    </Typography>
+                  </Box>
                 </Box>
+                <Button
+                  variant="contained"
+                  type="submit"
+                  disabled={loading}
+                  startIcon={loading ? null : <Brain size={22} />}
+                  sx={{
+                    borderRadius: 4,
+                    px: 5,
+                    py: 1.5,
+                    fontWeight: 600,
+                    fontSize: '1rem',
+                    bgcolor: 'transparent',
+                    color: 'oklch(60% 0.18 160)',
+                    border: 'none',
+                    boxShadow: 'none',
+                     '&:hover': { transform: 'scale(1.05)', color: 'oklch(55% 0.18 160)' },
+                    transition: 'all 0.3s'
+                  }}
+                >
+                  {loading ? <CircularProgress size={24} color="inherit" /> : 'Bắt đầu trích xuất'}
+                </Button>
+              </Stack>
+            </Box>
 
-                <Box sx={{ p: 3 }}>
-                  {tabValue === 0 ? (
+            <Box sx={{ p: 0 }}>
+              <AnimatePresence mode="wait">
+                {tabValue === 0 ? (
+                  <Box key="text-mode" component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
                     <Controller
                       name="text"
                       control={control}
@@ -189,223 +307,241 @@ export default function EHRUpload() {
                           {...field}
                           fullWidth
                           multiline
-                          rows={10}
-                          placeholder="Nhập ghi chú lâm sàng tại đây...
-Ví dụ: Bệnh nhân đau đầu vùng chẩm, đã dùng Paracetamol 500mg nhưng không đỡ. Có triệu chứng buồn nôn, không sốt."
+                          rows={20}
+                          placeholder="Bắt đầu nhập liệu ghi chú lâm sàng..."
                           error={!!errors.text}
                           helperText={errors.text?.message}
-                          sx={{ 
-                            '& .MuiOutlinedInput-root': { 
-                              borderRadius: 3,
-                              bgcolor: '#fff'
-                            } 
+                          sx={{
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: 0,
+                              bgcolor: 'transparent',
+                              fontSize: '1.25rem',
+                              lineHeight: 1.8,
+                              padding: 6,
+                              border: 'none',
+                              '& fieldset': { border: 'none' },
+                            }
                           }}
                         />
                       )}
                     />
-                  ) : (
-                    <Box>
+                  </Box>
+                ) : (
+                  <Box key="file-mode" component={motion.div} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} sx={{ p: 3 }}>
+                    <Box sx={{ display: 'flex', gap: 3, alignItems: 'stretch', width: '100%' }}>
+                      {/* Left: Sidebar (20%) */}
                       <Box
                         onClick={() => fileInputRef.current.click()}
                         onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                        onDrop={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          const droppedFile = e.dataTransfer.files[0];
-                          if (droppedFile) {
-                            onFileChange({ target: { files: [droppedFile] } });
-                          }
-                        }}
+                        onDrop={(e) => { e.preventDefault(); e.stopPropagation(); const droppedFile = e.dataTransfer.files[0]; if (droppedFile) onFileChange({ target: { files: [droppedFile] } }); }}
                         sx={{
-                          border: '2px dashed #e2e8f0',
-                          borderRadius: 4,
-                          p: 6,
-                          textAlign: 'center',
+                          flex: '0 0 20%',
+                          minWidth: 260,
+                          border: '2px dashed oklch(85% 0.05 160)',
+                          borderRadius: 6,
                           cursor: 'pointer',
-                          bgcolor: file ? 'rgba(16, 185, 129, 0.04)' : '#fff',
-                          transition: 'all 0.2s',
-                          '&:hover': {
-                            borderColor: '#08bba3',
-                            bgcolor: 'rgba(8, 187, 163, 0.04)'
+                          bgcolor: file ? 'oklch(100% 0 0 / 0.15)' : 'oklch(100% 0 0 / 0.05)',
+                          transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                          height: 700,
+                          p: 3,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          '&:hover': { 
+                            borderColor: 'oklch(65% 0.15 160)', 
+                            bgcolor: 'oklch(100% 0 0 / 0.2)',
+                            transform: 'scale(1.01)'
                           }
                         }}
                       >
-                        <input
-                          type="file"
-                          hidden
-                          ref={fileInputRef}
-                          onChange={onFileChange}
-                          accept=".pdf,.doc,.docx"
-                        />
-                        {file ? (
-                          <Stack spacing={2} alignItems="center">
-                            <Box sx={{ bgcolor: 'rgba(16, 185, 129, 0.1)', p: 2, borderRadius: '50%' }}>
-                              <CheckCircle2 size={40} color="#10b981" />
-                            </Box>
-                            <Box>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>{file.name}</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {(file.size / 1024 / 1024).toFixed(2)} MB • Sẵn sàng để phân tích
-                              </Typography>
-                            </Box>
-                            <Button 
-                              size="small" 
-                              color="error" 
-                              startIcon={<X size={16} />} 
-                              onClick={(e) => { e.stopPropagation(); setFile(null); }}
-                            >
-                              Gỡ bỏ file
-                            </Button>
+                        <input type="file" hidden ref={fileInputRef} onChange={onFileChange} accept=".pdf,.doc,.docx,image/*" />
+                        <Box sx={{
+                          width: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 3,
+                          textAlign: 'center'
+                        }}>
+                          {file ? (
+                            <>
+                              <CheckCircle2 size={48} color="oklch(50% 0.15 160)" />
+                              <Box sx={{ width: '100%' }}>
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    fontWeight: 600,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap',
+                                    width: '100%',
+                                    display: 'block',
+                                    color: 'oklch(20% 0.05 160)'
+                                  }}
+                                  title={file.name}
+                                >
+                                  {file.name}
+                                </Typography>
+                                <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600, mt: 0.5, display: 'block' }}>
+                                  {(file.size / 1024 / 1024).toFixed(2)} MB
+                                </Typography>
+                              </Box>
+                              <Button
+                                variant="outlined"
+                                color="error"
+                                size="small"
+                                startIcon={<X size={14} />}
+                                onClick={(e) => { e.stopPropagation(); setFile(null); }}
+                                sx={{
+                                  fontWeight: 600,
+                                  borderRadius: 2,
+                                  textTransform: 'none',
+                                  fontSize: '0.75rem',
+                                  borderWidth: 2,
+                                  '&:hover': { borderWidth: 2 }
+                                }}
+                              >
+                                Xóa/Chọn lại
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Upload size={56} color="oklch(65% 0.15 160)" />
+                              <Typography variant="subtitle1" sx={{ fontWeight: 600, color: 'oklch(20% 0.05 160)' }}>Tải hồ sơ lên</Typography>
+                              <Button variant="contained" size="small" sx={{ borderRadius: 2, px: 3, fontWeight: 600, bgcolor: 'oklch(65% 0.15 160)', textTransform: 'none' }}>Duyệt file</Button>
+                            </>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* Right: Preview (80%) */}
+                      <Box
+                        sx={{
+                          flex: '1 1 80%',
+                          height: 700,
+                          borderRadius: 6,
+                          overflow: 'hidden',
+                          border: '1px solid oklch(92% 0.02 160)',
+                          bgcolor: file ? 'white' : 'oklch(100% 0 0 / 0.05)',
+                          position: 'relative',
+                          boxShadow: 'none',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        {!file ? (
+                          <Stack alignItems="center" spacing={2} sx={{ opacity: 0.5 }}>
+                            <FileText size={64} color="oklch(60% 0.02 160)" strokeWidth={1.5} />
+                            <Typography variant="h6" sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)' }}>
+                              Tài liệu sẽ được hiển thị xem trước ở đây
+                            </Typography>
                           </Stack>
                         ) : (
-                          <Stack spacing={2} alignItems="center">
-                            <Box sx={{ bgcolor: 'rgba(8, 187, 163, 0.1)', p: 2, borderRadius: '50%' }}>
-                              <Upload size={40} color="#08bba3" />
-                            </Box>
-                            <Box>
-                              <Typography variant="h6" sx={{ fontWeight: 700 }}>Kéo thả file vào đây</Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                Hỗ trợ PDF, DOCX (Tối đa 10MB)
-                              </Typography>
-                            </Box>
-                            <Button variant="outlined" sx={{ borderRadius: 2, fontWeight: 700 }}>
-                              Chọn file từ máy tính
-                            </Button>
-                          </Stack>
+                          <>
+                            {file.type === 'application/pdf' ? (
+                              <iframe
+                                src={`${URL.createObjectURL(file)}#view=FitH`}
+                                width="100%"
+                                height="100%"
+                                style={{ border: 'none', display: 'block' }}
+                                title="Document Preview"
+                              />
+                            ) : file.type.startsWith('image/') ? (
+                              <Box
+                                component="img"
+                                src={URL.createObjectURL(file)}
+                                sx={{
+                                  width: '100%',
+                                  height: '100%',
+                                  objectFit: 'contain'
+                                }}
+                                alt="Preview"
+                              />
+                            ) : (
+                              <Stack
+                                sx={{ height: '100%', p: 4 }}
+                                alignItems="center"
+                                justifyContent="center"
+                                spacing={3}
+                                textAlign="center"
+                              >
+                                <FileText size={80} color="oklch(80% 0.02 160)" />
+                                <Box>
+                                  <Typography variant="h5" sx={{ fontWeight: 600, color: 'oklch(20% 0.05 160)', mb: 1 }}>
+                                    Xem trước không hỗ trợ cho tệp Word
+                                  </Typography>
+                                  <Typography variant="body1" sx={{ fontWeight: 600, color: 'oklch(50% 0.02 160)' }}>
+                                    AI vẫn có thể trích xuất chính xác nội dung từ tệp .docx này
+                                  </Typography>
+                                </Box>
+                                <Typography variant="caption" sx={{ color: 'oklch(60% 0.02 160)', maxWidth: '80%' }}>
+                                  Do giới hạn kỹ thuật của trình duyệt đối với định dạng Microsoft Word. Vui lòng sử dụng PDF nếu bạn muốn xem trước trực tiếp.
+                                </Typography>
+                              </Stack>
+                            )}
+                          </>
                         )}
                       </Box>
-                      {fileError && (
-                        <Alert severity="error" sx={{ mt: 2, borderRadius: 2 }}>{fileError}</Alert>
-                      )}
                     </Box>
-                  )}
+                  </Box>
+                )}
+              </AnimatePresence>
 
-                  <Grid container spacing={2} sx={{ mt: 3 }}>
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="patientId"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            fullWidth
-                            label="Mã bệnh nhân (Patient ID)"
-                            type="number"
-                            error={!!errors.patientId}
-                            helperText={errors.patientId?.message}
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item xs={12} sm={6}>
-                      <Controller
-                        name="noteType"
-                        control={control}
-                        render={({ field }) => (
-                          <TextField
-                            {...field}
-                            select
-                            fullWidth
-                            label="Loại ghi chú"
-                            error={!!errors.noteType}
-                            helperText={errors.noteType?.message}
-                            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
-                          >
-                            {NOTE_TYPES.map((option) => (
-                              <MenuItem key={option.value} value={option.value}>
-                                {option.label}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                        )}
-                      />
-                    </Grid>
+              <Box sx={{ borderTop: 1, borderColor: 'oklch(100% 0 0 / 0.1)', bgcolor: 'transparent', p: 4 }}>
+                <Grid container spacing={4} alignItems="stretch">
+                  <Grid item xs={12} md={3.5}>
+                    <Controller
+                      name="patientId"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField {...field} fullWidth variant="filled" label="Mã định danh bệnh nhân (PID)" type="number" error={!!errors.patientId} helperText={errors.patientId?.message} sx={{ ...inputSx, '& .MuiFilledInput-root': { ...inputSx['& .MuiFilledInput-root'], height: 80 } }} />
+                      )}
+                    />
                   </Grid>
-                </Box>
-              </Paper>
-            </Grid>
+                  <Grid item xs={12} md={3.5}>
+                    <Controller
+                      name="noteType"
+                      control={control}
+                      render={({ field }) => (
+                        <TextField {...field} select fullWidth variant="filled" label="Phân loại ghi chú" error={!!errors.noteType} helperText={errors.noteType?.message} sx={{ ...inputSx, '& .MuiFilledInput-root': { ...inputSx['& .MuiFilledInput-root'], height: 80 } }}>
+                          {NOTE_TYPES.map((option) => (<MenuItem key={option.value} value={option.value} sx={{ fontWeight: 600, py: 2, fontSize: '1rem' }}>{option.label}</MenuItem>))}
+                        </TextField>
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={5}>
+                    <Box sx={{
+                      bgcolor: 'oklch(65% 0.15 160 / 0.08)',
+                      p: 2.5,
+                      borderRadius: 5,
+                      border: '1px solid oklch(100% 0 0 / 0.1)',
+                      height: 80,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 2
+                    }}>
+                      <Info size={28} color="oklch(65% 0.15 160)" />
+                      <Typography variant="body2" sx={{ fontWeight: 600, color: 'oklch(30% 0.05 160)', lineHeight: 1.4, fontSize: '0.85rem' }}>
+                        Áp dụng AI Engine chuyên biệt cho <strong>{NOTE_TYPES.find(t => t.value === watch('noteType'))?.label}</strong> để tối ưu độ chính xác.
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+          </Paper>
 
-            {/* Right Column - Sidebar */}
-            <Grid item xs={12} md={4}>
-              <Stack spacing={3}>
-                <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Info size={20} color="#08bba3" />
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Thông tin ghi chú</Typography>
-                  </Box>
-                  <Typography variant="body2" color="text.secondary">
-                    {NOTE_TYPES.find(t => t.value === watch('noteType'))?.label}: Phân tích sâu các thực thể y khoa như thuốc, triệu chứng và bệnh lý từ văn bản của bác sĩ.
-                  </Typography>
-                </Paper>
+          {serverError && (
+            <Alert severity="error" variant="filled" sx={{ borderRadius: 4, p: 2 }}>{serverError}</Alert>
+          )}
 
-                <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Brain size={20} color="#08bba3" />
-                    <Typography variant="h6" sx={{ fontWeight: 800 }}>Trạng thái AI</Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    {loading ? (
-                      <Chip 
-                        icon={<CircularProgress size={16} color="inherit" />} 
-                        label="Đang xử lý..." 
-                        color="warning" 
-                        sx={{ fontWeight: 700, borderRadius: 2 }} 
-                      />
-                    ) : (
-                      <Chip 
-                        icon={<CheckCircle2 size={16} />} 
-                        label="Sẵn sàng" 
-                        color="success" 
-                        sx={{ fontWeight: 700, borderRadius: 2 }} 
-                      />
-                    )}
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>
-                    Sử dụng mô hình Med-NLP để trích xuất dữ liệu có cấu trúc.
-                  </Typography>
-                </Paper>
-
-                <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                  {serverError && (
-                    <Alert 
-                      severity="error" 
-                      icon={<AlertCircle size={20} />}
-                      sx={{ mb: 2, borderRadius: 2 }}
-                    >
-                      {serverError}
-                    </Alert>
-                  )}
-                  <Button
-                    fullWidth
-                    variant="contained"
-                    type="submit"
-                    disabled={loading}
-                    startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <Brain size={20} />}
-                    sx={{ 
-                      borderRadius: 3, 
-                      py: 1.5, 
-                      fontWeight: 800, 
-                      bgcolor: '#10b981', 
-                      '&:hover': { 
-                        bgcolor: '#059669',
-                        boxShadow: '0 4px 12px rgba(8, 187, 163, 0.3)'
-                      },
-                      transition: 'all 0.2s',
-                      boxShadow: '0 4px 10px rgba(16, 185, 129, 0.2)'
-                    }}
-                  >
-                    {loading ? 'Đang trích xuất...' : 'Phân tích với AI'}
-                  </Button>
-                  <Typography variant="caption" align="center" display="block" sx={{ mt: 2, color: 'text.secondary' }}>
-                    Dữ liệu sẽ được bảo mật theo tiêu chuẩn HIPAA.
-                  </Typography>
-                </Paper>
-              </Stack>
-            </Grid>
-          </Grid>
-        </form>
-      </Container>
+          <Typography variant="caption" align="center" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>
+            Tuân thủ bảo mật HIPAA & GDPR
+          </Typography>
+        </Stack>
+      </form>
     </Box>
   );
 }

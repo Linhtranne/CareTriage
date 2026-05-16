@@ -106,7 +106,7 @@ export default function MyAppointments() {
       else if (tabValue === 3) status = 'CANCELLED';
 
       const res = await appointmentApi.getMyAppointments(status);
-      setAppointments(res.data);
+      setAppointments(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch appointments', err);
     } finally {
@@ -184,290 +184,341 @@ export default function MyAppointments() {
     <PatientPageShell
       title={t('appointments.title')}
       subtitle={t('appointments.subtitle')}
-      maxWidth="lg"
+      maxWidth={false}
+      transparent={true}
       actions={
         <Button
           variant="contained"
-          startIcon={<CalendarCheck size={18} />}
+          startIcon={<CalendarCheck size={20} />}
           onClick={() => navigate('/patient/appointments/book-appointment')}
           sx={{
-            borderRadius: 3,
-            bgcolor: '#10b981',
-            '&:hover': { bgcolor: '#059669' },
-            fontWeight: 700,
-            px: 3,
-            py: 1.2,
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
+            borderRadius: 4,
+            bgcolor: 'oklch(65% 0.15 160)',
+            '&:hover': { bgcolor: 'oklch(60% 0.15 160)' },
+            fontWeight: 950,
+            px: 4,
+            py: 1.5,
+            boxShadow: '0 10px 30px oklch(65% 0.15 160 / 0.3)',
             width: 'auto',
-            minWidth: 0,
-            alignSelf: 'flex-end',
+            textTransform: 'none',
+            fontSize: '1rem'
           }}
         >
           {t('appointments.book_new')}
         </Button>
       }
     >
-      {/* Tabs Section */}
-      <Paper sx={{ borderRadius: 5, overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.04)', border: '1px solid #f1f5f9' }}>
+      {/* Filter Section */}
+      <Box sx={{ mb: 6 }}>
         <Tabs 
           value={tabValue} 
           onChange={(e, v) => setTabValue(v)}
           variant="scrollable"
           scrollButtons="auto"
           sx={{ 
-            bgcolor: 'white',
-            borderBottom: 1, 
-            borderColor: 'divider',
-            px: 2,
-            '& .MuiTab-root': { fontWeight: 700, textTransform: 'none', py: 2.5, minWidth: 120, fontSize: '0.95rem' },
-            '& .Mui-selected': { color: '#10b981 !important' },
-            '& .MuiTabs-indicator': { bgcolor: '#10b981', height: 4, borderRadius: '4px 4px 0 0' }
+            '& .MuiTabs-indicator': { display: 'none' },
+            '& .MuiTabs-flexContainer': { gap: 1.5 }
           }}
         >
-          <Tab label={t('appointments.tab_all')} />
-          <Tab label={t('appointments.tab_upcoming')} />
-          <Tab label={t('appointments.tab_completed')} />
-          <Tab label={t('appointments.tab_cancelled')} />
+          {[
+            t('appointments.tab_all'),
+            t('appointments.tab_upcoming'),
+            t('appointments.tab_completed'),
+            t('appointments.tab_cancelled')
+          ].map((label, idx) => (
+            <Tab 
+              key={idx}
+              label={label} 
+              sx={{ 
+                fontWeight: 900, 
+                textTransform: 'none', 
+                fontSize: '1rem',
+                borderRadius: 4,
+                px: 4,
+                py: 2,
+                minHeight: 0,
+                color: 'oklch(50% 0.02 250)',
+                border: '2px solid transparent',
+                transition: 'all 0.3s',
+                '&.Mui-selected': { 
+                  color: 'oklch(20% 0.05 250)', 
+                  bgcolor: 'oklch(96% 0.01 250)',
+                  borderColor: 'oklch(90% 0.02 250)'
+                }
+              }} 
+            />
+          ))}
         </Tabs>
+      </Box>
 
-        {/* Content Section */}
-        <Box sx={{ p: { xs: 2, md: 4 }, bgcolor: '#f8fafc', minHeight: 450 }}>
-          {loading ? (
-            <LoadingScreen message={t('appointments.loading')} />
-          ) : appointments.length > 0 ? (
-            <Grid container spacing={3}>
-              {appointments.map((appt) => (
-                <Grid item xs={12} md={6} key={appt.id}>
-                  <Card
-                    role="button"
-                    tabIndex={0}
-                    aria-haspopup="dialog"
-                    onClick={(e) => handleOpenDetail(appt, e.currentTarget)}
-                    onKeyDown={(event) => handleCardKeyDown(event, appt)}
-                    sx={{
-                      borderRadius: 5,
-                      border: '1px solid #e2e8f0',
-                      boxShadow: 'none',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      position: 'relative',
-                      overflow: 'visible',
-                      '&:hover': {
-                        transform: 'translateY(-6px)',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.06)',
-                        borderColor: '#10b981'
-                      },
-                      '&:focus-visible': {
-                        outline: 'none',
-                        borderColor: '#10b981',
-                        boxShadow: '0 0 0 4px rgba(16, 185, 129, 0.18)'
-                      }
-                    }}
-                  >
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
-                        <Box sx={{ display: 'flex', gap: 2 }}>
-                          <Avatar 
-                            src={appt.doctorAvatar} 
-                            sx={{ width: 60, height: 60, borderRadius: 3, bgcolor: '#f0fdf4', color: '#10b981', fontWeight: 800, fontSize: '1.5rem', border: '2px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
-                          >
-                            {appt.doctorName?.charAt(0) || '?'}
-                          </Avatar>
-                          <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 800, color: '#1e293b', lineHeight: 1.2 }}>{t('appointments.attending_doctor')}: {appt.doctorName}</Typography>
-                            <Typography variant="body2" sx={{ color: '#64748b', mt: 0.5 }}>{appt.doctorSpecialization}</Typography>
-                            <Box sx={{ mt: 1 }}>{renderStatusChip(appt.status)}</Box>
-                          </Box>
-                        </Box>
-                        <Tooltip title={t('appointments.open_detail')}>
-                          <IconButton
-                            size="small"
-                            aria-label={t('appointments.open_detail')}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenDetail(appt, e.currentTarget);
-                            }}
-                            sx={{ bgcolor: '#f1f5f9' }}
-                          >
-                            <ChevronRight size={18} />
-                          </IconButton>
-                        </Tooltip>
+      {/* Content Section */}
+      <Box sx={{ minHeight: 500 }}>
+        {loading ? (
+          <LoadingScreen message={t('appointments.loading')} />
+        ) : appointments.length > 0 ? (
+          <Grid container spacing={4}>
+            {appointments.map((appt) => (
+              <Grid item xs={12} lg={6} key={appt.id}>
+                <Box
+                  onClick={(e) => handleOpenDetail(appt, e.currentTarget)}
+                  sx={{
+                    p: 4,
+                    borderRadius: 8,
+                    border: '1px solid oklch(92% 0.02 250)',
+                    bgcolor: 'transparent',
+                    cursor: 'pointer',
+                    transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                    position: 'relative',
+                    '&:hover': {
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 30px 60px oklch(20% 0.05 250 / 0.06)',
+                      borderColor: 'oklch(65% 0.15 160)',
+                      '& .appt-chevron': { transform: 'translateX(6px)', color: 'oklch(65% 0.15 160)' }
+                    }
+                  }}
+                >
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 4 }}>
+                    <Stack direction="row" spacing={3}>
+                      <Avatar 
+                        src={appt.doctorAvatar} 
+                        sx={{ 
+                          width: 80, height: 80, borderRadius: 5,
+                          border: '3px solid white',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
+                        }}
+                      >
+                        {appt.doctorName?.charAt(0) || '?'}
+                      </Avatar>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em', mb: 0.5 }}>
+                          {appt.doctorName}
+                        </Typography>
+                        <Typography variant="body1" sx={{ color: 'oklch(55% 0.02 250)', fontWeight: 700, mb: 1.5 }}>
+                          {appt.doctorSpecialization}
+                        </Typography>
+                        <Box>{renderStatusChip(appt.status)}</Box>
                       </Box>
+                    </Stack>
+                    <ChevronRight className="appt-chevron" size={24} color="oklch(70% 0.02 250)" style={{ transition: 'all 0.3s' }} />
+                  </Stack>
 
-                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, bgcolor: 'white', border: '1px solid #f1f5f9', mb: 2 }}>
-                        <Grid container spacing={2}>
-                          <Grid item xs={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <CalendarDays size={14} color="#10b981" />
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
-                                {formatDateValue(appt.appointmentDate, 'dd/MM/yyyy')}
-                              </Typography>
-                            </Box>
-                          </Grid>
-                          <Grid item xs={6}>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <Clock size={14} color="#10b981" />
-                              <Typography variant="caption" sx={{ fontWeight: 700, color: '#334155' }}>
-                                {formatTimeValue(appt.appointmentTime)}
-                              </Typography>
-                            </Box>
-                          </Grid>
-                        </Grid>
-                      </Paper>
+                  <Box sx={{ 
+                    p: 3, 
+                    borderRadius: 5, 
+                    bgcolor: 'oklch(98% 0.01 250)', 
+                    border: '1px solid oklch(94% 0.02 250)',
+                    mb: 3
+                  }}>
+                    <Grid container spacing={3}>
+                      <Grid item xs={6}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <CalendarDays size={20} color="oklch(65% 0.15 160)" />
+                          <Typography variant="h6" sx={{ fontWeight: 850, color: 'oklch(20% 0.05 250)', fontSize: '1rem' }}>
+                            {formatDateValue(appt.appointmentDate, 'dd/MM/yyyy')}
+                          </Typography>
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Stack direction="row" spacing={1.5} alignItems="center">
+                          <Clock size={20} color="oklch(65% 0.15 160)" />
+                          <Typography variant="h6" sx={{ fontWeight: 850, color: 'oklch(20% 0.05 250)', fontSize: '1rem' }}>
+                            {formatTimeValue(appt.appointmentTime)}
+                          </Typography>
+                        </Stack>
+                      </Grid>
+                    </Grid>
+                  </Box>
 
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
-                          <Button
-                            fullWidth
-                            variant="outlined"
-                            color="error"
-                            size="small"
-                            onClick={(e) => handleOpenCancel(e, appt, e.currentTarget)}
-                            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, py: 1 }}
-                          >
-                            {t('appointments.cancel_btn')}
-                          </Button>
-                        )}
-                        {(appt.status === 'COMPLETED' || appt.status === 'CANCELLED') && (
-                          <Button 
-                            fullWidth 
-                            variant="outlined" 
-                            size="small"
-                            onClick={(e) => { e.stopPropagation(); handleRebook(appt); }}
-                            startIcon={<RefreshCw size={14} />}
-                            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, color: '#10b981', borderColor: '#10b981', py: 1 }}
-                          >
-                            {t('appointments.rebook_btn')}
-                          </Button>
-                        )}
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-          ) : (
-            <Box sx={{ textAlign: 'center', py: 12 }}>
-              <Box sx={{ p: 4, borderRadius: '50%', bgcolor: 'white', display: 'inline-flex', mb: 3, boxShadow: '0 10px 30px rgba(0,0,0,0.03)' }}>
-                <CalendarCheck size={64} color="#cbd5e1" />
-              </Box>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: '#334155', mb: 1 }}>{t('appointments.no_appointments')}</Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
-                {t('appointments.empty_desc')}
-              </Typography>
-              <Button 
-                variant="contained" 
-                onClick={() => navigate('/patient/appointments/book-appointment')}
-                sx={{ borderRadius: 3, bgcolor: '#10b981', px: 4, py: 1.5, fontWeight: 700 }}
-              >
-                {t('appointments.book_now')}
-              </Button>
+                  <Stack direction="row" spacing={2}>
+                    {(appt.status === 'PENDING' || appt.status === 'CONFIRMED') && (
+                      <Button
+                        fullWidth
+                        variant="outlined"
+                        onClick={(e) => handleOpenCancel(e, appt, e.currentTarget)}
+                        sx={{ 
+                          borderRadius: 4, 
+                          py: 1.5, 
+                          fontWeight: 950,
+                          color: 'oklch(60% 0.15 20)',
+                          borderColor: 'oklch(92% 0.02 20)',
+                          transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                          '&:hover': { 
+                            borderColor: 'oklch(60% 0.15 20)', 
+                            bgcolor: 'oklch(98% 0.01 20)',
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        {t('appointments.cancel_btn')}
+                      </Button>
+                    )}
+                    {(appt.status === 'COMPLETED' || appt.status === 'CANCELLED') && (
+                      <Button 
+                        fullWidth 
+                        variant="contained" 
+                        onClick={(e) => { e.stopPropagation(); handleRebook(appt); }}
+                        startIcon={<RefreshCw size={18} />}
+                        sx={{ 
+                          borderRadius: 4, 
+                          py: 1.5, 
+                          fontWeight: 950,
+                          bgcolor: 'oklch(20% 0.05 250)',
+                          '&:hover': { bgcolor: 'oklch(15% 0.05 250)' }
+                        }}
+                      >
+                        {t('appointments.rebook_btn')}
+                      </Button>
+                    )}
+                  </Stack>
+                </Box>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Box sx={{ textAlign: 'center', py: 16 }}>
+            <Box sx={{ 
+              width: 140, height: 140, borderRadius: '50%', 
+              bgcolor: 'oklch(96% 0.01 250)', color: 'oklch(80% 0.02 250)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              mx: 'auto', mb: 4
+            }}>
+              <CalendarCheck size={80} strokeWidth={1} />
             </Box>
-          )}
-        </Box>
-      </Paper>
+            <Typography variant="h3" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 2, letterSpacing: '-0.04em' }}>
+              {t('appointments.no_appointments')}
+            </Typography>
+            <Typography variant="h6" sx={{ color: 'oklch(50% 0.02 250)', mb: 6, maxWidth: 500, mx: 'auto', fontWeight: 500 }}>
+              {t('appointments.empty_desc')}
+            </Typography>
+            <Button 
+              variant="contained" 
+              onClick={() => navigate('/patient/appointments/book-appointment')}
+              sx={{ 
+                borderRadius: 4, px: 8, py: 2, 
+                bgcolor: 'oklch(65% 0.15 160)', fontWeight: 950, fontSize: '1.1rem',
+                boxShadow: '0 20px 40px oklch(65% 0.15 160 / 0.2)'
+              }}
+            >
+              {t('appointments.book_now')}
+            </Button>
+          </Box>
+        )}
+      </Box>
 
-      {/* Appointment Detail Dialog (T-031 AC-4) */}
+      {/* Appointment Detail Dialog */}
       <Dialog
         open={detailDialogOpen}
         onClose={handleCloseDetail}
         fullWidth
         maxWidth="sm"
-        aria-labelledby="appointment-detail-title"
-        PaperProps={{ sx: { borderRadius: 6, p: 1 } }}
+        PaperProps={{ sx: { borderRadius: 8, p: 2, bgcolor: 'white' } }}
       >
-        <DialogTitle
-          id="appointment-detail-title"
-          sx={{ fontWeight: 900, fontSize: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          {t('appointments.detail_title')}
+        <DialogTitle sx={{ p: 4, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.04em' }}>
+            {t('appointments.detail_title')}
+          </Typography>
           {selectedAppt && renderStatusChip(selectedAppt.status)}
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ py: 2 }}>
-            <Box sx={{ display: 'flex', gap: 3, mb: 4 }}>
-              <Avatar src={selectedAppt?.doctorAvatar} sx={{ width: 80, height: 80, borderRadius: 4 }} />
+        <DialogContent sx={{ px: 4, pb: 2 }}>
+          <Box sx={{ mb: 6 }}>
+            <Stack direction="row" spacing={3} alignItems="center">
+              <Avatar src={selectedAppt?.doctorAvatar} sx={{ width: 100, height: 100, borderRadius: 5 }} />
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>{t('appointments.attending_doctor')}: {selectedAppt?.doctorName}</Typography>
-                <Typography variant="body1" color="text.secondary">{selectedAppt?.doctorSpecialization}</Typography>
-                <Typography variant="subtitle2" sx={{ color: '#10b981', fontWeight: 700, mt: 0.5 }}>{t('appointments.department')}: {selectedAppt?.departmentName}</Typography>
+                <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 0.5 }}>
+                  {selectedAppt?.doctorName}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 700, color: 'oklch(65% 0.15 160)', mb: 0.5 }}>
+                  {selectedAppt?.doctorSpecialization}
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'oklch(55% 0.02 250)', fontWeight: 700 }}>
+                  {selectedAppt?.departmentName}
+                </Typography>
               </Box>
-            </Box>
+            </Stack>
+          </Box>
 
-            <Divider sx={{ mb: 3 }} />
-
-            <Grid container spacing={3}>
-              <Grid item xs={12} sm={6}>
-                <Stack spacing={2}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#f0fdf4', color: '#10b981' }}><CalendarDays size={20} /></Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">{t('appointments.exam_date')}</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                        {selectedAppt && formatDateValue(selectedAppt.appointmentDate, 'eeee, dd/MM/yyyy')}
-                      </Typography>
-                    </Box>
+          <Grid container spacing={4} sx={{ mb: 6 }}>
+            <Grid item xs={12} sm={6}>
+              <Stack spacing={3}>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{ p: 2, borderRadius: 4, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)' }}>
+                    <CalendarDays size={28} />
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#f0fdf4', color: '#10b981' }}><Clock size={20} /></Box>
-                    <Box>
-                      <Typography variant="caption" color="text.secondary">{t('appointments.exam_time')}</Typography>
-                      <Typography variant="body1" sx={{ fontWeight: 700 }}>
-                        {formatTimeValue(selectedAppt?.appointmentTime)} - {formatTimeValue(selectedAppt?.endTime)}
-                      </Typography>
-                    </Box>
+                  <Box>
+                    <Typography variant="caption" sx={{ fontWeight: 900, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      {t('appointments.exam_date')}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      {selectedAppt && formatDateValue(selectedAppt.appointmentDate, 'eeee, dd/MM/yyyy')}
+                    </Typography>
                   </Box>
                 </Stack>
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
-                  <Box sx={{ p: 1, borderRadius: 2, bgcolor: '#eff6ff', color: '#3b82f6' }}><MapPin size={20} /></Box>
+                <Stack direction="row" spacing={2} alignItems="center">
+                  <Box sx={{ p: 2, borderRadius: 4, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)' }}>
+                    <Clock size={28} />
+                  </Box>
                   <Box>
-                    <Typography variant="caption" color="text.secondary">{t('appointments.location')}</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{t('appointments.clinic_name')}</Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>{t('appointments.clinic_address')}</Typography>
-                    <Button 
-                      size="small" 
-                      variant="text" 
-                      startIcon={<Navigation size={12} />}
-                      sx={{ color: '#3b82f6', textTransform: 'none', mt: 0.5, p: 0, minWidth: 0, fontWeight: 700 }}
-                    >
-                      {t('appointments.get_directions')}
-                    </Button>
+                    <Typography variant="caption" sx={{ fontWeight: 900, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                      {t('appointments.exam_time')}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800 }}>
+                      {formatTimeValue(selectedAppt?.appointmentTime)} - {formatTimeValue(selectedAppt?.endTime)}
+                    </Typography>
                   </Box>
-                </Box>
-              </Grid>
+                </Stack>
+              </Stack>
             </Grid>
-
-            <Box sx={{ mt: 4, p: 3, borderRadius: 4, bgcolor: '#f8fafc', border: '1px solid #f1f5f9' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                <FileText size={18} color="#64748b" />
-                <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{t('appointments.reason')}</Typography>
-              </Box>
-              <Typography variant="body2" sx={{ color: '#334155', lineHeight: 1.6 }}>
-                {selectedAppt?.reason}
-              </Typography>
-
-              {selectedAppt?.notes && (
-                <>
-                  <Divider sx={{ my: 2 }} />
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                    <Info size={18} color="#10b981" />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>{t('appointments.doctor_notes')}</Typography>
-                  </Box>
-                  <Typography variant="body2" sx={{ color: '#334155', fontStyle: 'italic' }}>
-                    {selectedAppt.notes}
+            <Grid item xs={12} sm={6}>
+              <Stack direction="row" spacing={2} alignItems="flex-start">
+                <Box sx={{ p: 2, borderRadius: 4, bgcolor: 'oklch(96% 0.01 250)', color: 'oklch(20% 0.05 250)' }}>
+                  <MapPin size={28} />
+                </Box>
+                <Box>
+                  <Typography variant="caption" sx={{ fontWeight: 900, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                    {t('appointments.location')}
                   </Typography>
-                </>
-              )}
-            </Box>
+                  <Typography variant="h6" sx={{ fontWeight: 800 }}>{t('appointments.clinic_name')}</Typography>
+                  <Typography variant="body2" sx={{ color: 'oklch(55% 0.02 250)', fontWeight: 500 }}>{t('appointments.clinic_address')}</Typography>
+                  <Button 
+                    variant="text" 
+                    startIcon={<Navigation size={16} />}
+                    sx={{ p: 0, mt: 1, fontWeight: 950, color: 'oklch(65% 0.15 160)', fontSize: '0.9rem' }}
+                  >
+                    {t('appointments.get_directions')}
+                  </Button>
+                </Box>
+              </Stack>
+            </Grid>
+          </Grid>
+
+          <Box sx={{ p: 4, borderRadius: 6, bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(92% 0.02 250)' }}>
+            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+              <FileText size={20} color="oklch(50% 0.02 250)" />
+              <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>{t('appointments.reason')}</Typography>
+            </Stack>
+            <Typography variant="body1" sx={{ color: 'oklch(40% 0.02 250)', lineHeight: 1.7, fontWeight: 500 }}>
+              {selectedAppt?.reason}
+            </Typography>
+
+            {selectedAppt?.notes && (
+              <>
+                <Divider sx={{ my: 3, borderColor: 'oklch(92% 0.02 250)' }} />
+                <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 2 }}>
+                  <Info size={20} color="oklch(65% 0.15 160)" />
+                  <Typography variant="h6" sx={{ fontWeight: 900, letterSpacing: '-0.02em' }}>{t('appointments.doctor_notes')}</Typography>
+                </Stack>
+                <Typography variant="body1" sx={{ color: 'oklch(30% 0.02 250)', fontStyle: 'italic', fontWeight: 500 }}>
+                  {selectedAppt.notes}
+                </Typography>
+              </>
+            )}
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 3, gap: 2 }}>
+        <DialogActions sx={{ p: 4, gap: 3 }}>
           <Button 
             fullWidth 
             onClick={handleCloseDetail}
-            sx={{ borderRadius: 3, fontWeight: 700, color: '#64748b', bgcolor: '#f1f5f9' }}
+            sx={{ borderRadius: 4, py: 2, fontWeight: 950, color: 'oklch(50% 0.02 250)', fontSize: '1rem' }}
           >
             {t('appointments.close')}
           </Button>
@@ -475,9 +526,13 @@ export default function MyAppointments() {
             <Button 
               fullWidth 
               variant="contained" 
-              color="error"
               onClick={(e) => { handleCloseDetail(false); handleOpenCancel(e, selectedAppt, detailTriggerRef.current); }}
-              sx={{ borderRadius: 3, fontWeight: 700, boxShadow: 'none' }}
+              sx={{ 
+                borderRadius: 4, py: 2, 
+                bgcolor: 'oklch(60% 0.15 20)', color: 'white',
+                fontWeight: 950, fontSize: '1rem',
+                boxShadow: '0 10px 30px oklch(60% 0.15 20 / 0.2)'
+              }}
             >
               {t('appointments.cancel_now')}
             </Button>
@@ -489,19 +544,25 @@ export default function MyAppointments() {
       <Dialog
         open={cancelDialogOpen}
         onClose={handleCloseCancel}
-        aria-labelledby="appointment-cancel-title"
-        PaperProps={{ sx: { borderRadius: 6, p: 1, maxWidth: 450 } }}
+        PaperProps={{ sx: { borderRadius: 8, p: 3, maxWidth: 500 } }}
       >
-        <DialogTitle id="appointment-cancel-title" sx={{ fontWeight: 900, textAlign: 'center', pt: 4 }}>{t('appointments.cancel_confirm_title')}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
-            <Box sx={{ p: 2, borderRadius: '50%', bgcolor: '#fef2f2', display: 'inline-flex', mb: 2 }}>
-              <AlertCircle size={40} color="#ef4444" />
-            </Box>
-            <Typography variant="body1" sx={{ fontWeight: 500 }}>
-              {t('appointments.cancel_warning', { name: selectedAppt?.doctorName })}
-            </Typography>
+        <DialogTitle sx={{ pt: 4, textAlign: 'center' }}>
+          <Box sx={{ 
+            width: 80, height: 80, borderRadius: '50%', 
+            bgcolor: 'oklch(96% 0.01 20)', color: 'oklch(60% 0.15 20)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            mx: 'auto', mb: 3
+          }}>
+            <AlertCircle size={48} strokeWidth={2.5} />
           </Box>
+          <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.04em' }}>
+            {t('appointments.cancel_confirm_title')}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="h6" sx={{ textAlign: 'center', color: 'oklch(50% 0.02 250)', mb: 6, fontWeight: 500 }}>
+            {t('appointments.cancel_warning', { name: selectedAppt?.doctorName })}
+          </Typography>
           <TextField
             fullWidth
             label={t('appointments.cancel_reason_label')}
@@ -510,26 +571,30 @@ export default function MyAppointments() {
             rows={3}
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 4 } }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 6, bgcolor: 'oklch(98% 0.01 250)', p: 3, fontSize: '1.1rem' } }}
           />
         </DialogContent>
-        <DialogActions sx={{ px: 4, pb: 4, gap: 2 }}>
+        <DialogActions sx={{ p: 4, gap: 3 }}>
           <Button 
             fullWidth 
             onClick={handleCloseCancel}
-            sx={{ borderRadius: 3, fontWeight: 700, color: '#64748b' }}
+            sx={{ borderRadius: 4, py: 2, fontWeight: 950, color: 'oklch(50% 0.02 250)', fontSize: '1rem' }}
           >
             {t('appointments.go_back')}
           </Button>
           <Button 
             fullWidth 
             variant="contained" 
-            color="error"
             onClick={handleCancelAppointment}
             disabled={actionLoading}
-            sx={{ borderRadius: 3, fontWeight: 700, boxShadow: '0 4px 14px rgba(239, 68, 68, 0.4)' }}
+            sx={{ 
+              borderRadius: 4, py: 2, 
+              bgcolor: 'oklch(60% 0.15 20)', color: 'white',
+              fontWeight: 950, fontSize: '1rem',
+              boxShadow: '0 10px 30px oklch(60% 0.15 20 / 0.3)'
+            }}
           >
-            {actionLoading ? <CircularProgress size={20} color="inherit" /> : t('appointments.confirm_cancel')}
+            {actionLoading ? <CircularProgress size={24} color="inherit" /> : t('appointments.confirm_cancel')}
           </Button>
         </DialogActions>
       </Dialog>

@@ -10,6 +10,10 @@ spring:
     password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+  sql:
+    init:
+      mode: never # Ngăn chặn chạy data.sql gây lỗi trùng lặp dữ liệu
+
   jpa:
     hibernate:
       ddl-auto: validate
@@ -48,6 +52,7 @@ app:
   # AI Service
   ai-service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
+    internal-api-key: ${AI_SERVICE_INTERNAL_KEY:Z9jzNTEwSMh4hQBsHLi0RBsW5fl995ZNOYEMHMckE4E=}
 
   # Firebase Storage
   firebase:

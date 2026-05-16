@@ -58,7 +58,9 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private void getOrCreateUser(String email, String username, String fullName, String plainPassword, Set<Role> roles) {
-        User user = userRepository.findByEmail(email).orElse(null);
+        User user = userRepository.findByEmail(email)
+                .orElseGet(() -> userRepository.findByUsername(username).orElse(null));
+        
         if (user == null) {
             user = User.builder()
                     .email(email)

@@ -15,6 +15,9 @@ import appointmentApi from '../../api/appointmentApi'
 import publicApi from '../../api/publicApi'
 import { format } from 'date-fns'
 import { vi } from 'date-fns/locale'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import PatientPageShell from '../../components/patient/PatientPageShell'
 
 export default function TriageTicketInbox() {
   const [loading, setLoading] = useState(true)
@@ -125,31 +128,38 @@ export default function TriageTicketInbox() {
   const getPriorityInfo = (priority) => {
     switch (priority) {
       case 'URGENT': case 'CRITICAL':
-        return { label: 'Khẩn cấp', color: 'error', icon: <AlertTriangle size={14} /> }
+        return { label: 'Khẩn cấp', color: 'error', bg: 'oklch(96% 0.05 10 / 0.5)', textColor: 'oklch(50% 0.15 10)', icon: <AlertTriangle size={14} /> }
       case 'HIGH':
-        return { label: 'Cao', color: 'warning', icon: <AlertTriangle size={14} /> }
+        return { label: 'Cao', color: 'warning', bg: 'oklch(96% 0.05 40 / 0.5)', textColor: 'oklch(55% 0.18 40)', icon: <AlertTriangle size={14} /> }
       case 'MEDIUM':
-        return { label: 'Trung bình', color: 'info', icon: <Clock size={14} /> }
+        return { label: 'Trung bình', color: 'info', bg: 'oklch(96% 0.05 220 / 0.5)', textColor: 'oklch(55% 0.15 220)', icon: <Clock size={14} /> }
       default:
-        return { label: 'Thường', color: 'default', icon: <CheckCircle2 size={14} /> }
+        return { label: 'Thường', color: 'default', bg: 'oklch(96% 0.02 160 / 0.5)', textColor: 'oklch(50% 0.02 160)', icon: <CheckCircle2 size={14} /> }
     }
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 5 } }}>
-      {/* Header Section */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
-        <Box>
-          <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', letterSpacing: '-0.02em' }}>
-            Ticket Inbox
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Quản lý và phân loại phiếu tư vấn từ AI Triage
-          </Typography>
-        </Box>
+    <PatientPageShell
+      title="Ticket Inbox"
+      description="Quản lý và phân loại phiếu tư vấn từ AI Triage"
+      maxWidth="xl"
+      transparent={true}
+    >
+      {/* Action Bar */}
+      <Stack direction="row" spacing={2} sx={{ mb: 4, mt: -2 }} justifyContent="flex-end">
         <Tooltip title="Làm mới danh sách">
-          <IconButton onClick={loadTickets} sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
-            <RefreshCw size={20} />
+          <IconButton 
+            onClick={loadTickets} 
+            sx={{ 
+              bgcolor: 'oklch(100% 0 0 / 0.5)', 
+              backdropFilter: 'blur(8px)',
+              border: '1px solid oklch(92% 0.02 160)',
+              boxShadow: '0 4px 12px oklch(20% 0.05 160 / 0.03)',
+              '&:hover': { bgcolor: 'oklch(100% 0 0 / 0.8)', transform: 'rotate(180deg)' },
+              transition: 'all 0.5s cubic-bezier(0.16, 1, 0.3, 1)'
+            }}
+          >
+            <RefreshCw size={20} color="oklch(50% 0.15 160)" />
           </IconButton>
         </Tooltip>
       </Stack>
@@ -158,8 +168,11 @@ export default function TriageTicketInbox() {
       <Paper
         elevation={0}
         sx={{
-          p: 2, mb: 3, borderRadius: 4, bgcolor: 'background.paper',
-          border: '1px solid', borderColor: 'divider',
+          p: 2.5, mb: 4, borderRadius: 6, 
+          bgcolor: 'oklch(100% 0 0 / 0.15)',
+          backdropFilter: 'blur(30px)',
+          border: '1px solid oklch(100% 0 0 / 0.2)',
+          boxShadow: 'none',
           display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center'
         }}
       >
@@ -168,11 +181,21 @@ export default function TriageTicketInbox() {
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          sx={{ flexGrow: 1, minWidth: 280 }}
+          sx={{ 
+            flexGrow: 1, 
+            minWidth: 280,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 4,
+              bgcolor: 'oklch(100% 0 0 / 0.1)',
+              '& fieldset': { borderColor: 'oklch(92% 0.02 160 / 0.3)' },
+              '&:hover fieldset': { borderColor: 'oklch(65% 0.15 160 / 0.5)' },
+              '&.Mui-focused fieldset': { borderColor: 'oklch(65% 0.15 160)' }
+            }
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Search size={18} />
+                <Search size={18} color="oklch(50% 0.02 160)" />
               </InputAdornment>
             ),
           }}
@@ -183,11 +206,19 @@ export default function TriageTicketInbox() {
           label="Mức độ ưu tiên"
           value={priorityFilter}
           onChange={(e) => setPriorityFilter(e.target.value)}
-          sx={{ minWidth: 160 }}
+          sx={{ 
+            minWidth: 160,
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 4,
+              bgcolor: 'oklch(100% 0 0 / 0.1)',
+              '& fieldset': { borderColor: 'oklch(92% 0.02 160 / 0.3)' },
+              '&:hover fieldset': { borderColor: 'oklch(65% 0.15 160 / 0.5)' }
+            }
+          }}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <Filter size={18} />
+                <Filter size={18} color="oklch(50% 0.02 160)" />
               </InputAdornment>
             ),
           }}
@@ -204,22 +235,23 @@ export default function TriageTicketInbox() {
       </Paper>
 
       {/* Tickets Table */}
-      <Paper
-        elevation={0}
+      <Box
         sx={{
-          borderRadius: 4, overflow: 'hidden', border: '1px solid', borderColor: 'divider',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.04)'
+          '& .MuiTable-root': {
+            borderCollapse: 'separate',
+            borderSpacing: '0 12px',
+          }
         }}
       >
         <Table>
-          <TableHead sx={{ bgcolor: 'grey.50' }}>
+          <TableHead>
             <TableRow>
-              <TableCell sx={{ fontWeight: 700 }}>Mã phiếu</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Bệnh nhân</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Triệu chứng sơ bộ</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Ưu tiên</TableCell>
-              <TableCell sx={{ fontWeight: 700 }}>Thời gian nhận</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 700 }}>Hành động</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Mã phiếu</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Bệnh nhân</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Triệu chứng sơ bộ</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Ưu tiên</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Thời gian nhận</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Hành động</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -229,18 +261,43 @@ export default function TriageTicketInbox() {
               filteredTickets.map((t) => {
                 const pInfo = getPriorityInfo(t.priority)
                 return (
-                  <TableRow key={t.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-                    <TableCell sx={{ fontWeight: 600, color: 'primary.main' }}>#{t.ticketNumber}</TableCell>
+                  <TableRow 
+                    key={t.id} 
+                    sx={{ 
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      '& td': { 
+                        bgcolor: 'oklch(100% 0 0 / 0.4)', 
+                        backdropFilter: 'blur(8px)',
+                        borderTop: '1px solid oklch(92% 0.02 160)',
+                        borderBottom: '1px solid oklch(92% 0.02 160)',
+                        py: 3,
+                        '&:first-of-type': { 
+                          borderLeft: '1px solid oklch(92% 0.02 160)',
+                          borderRadius: '16px 0 0 16px' 
+                        },
+                        '&:last-of-type': { 
+                          borderRight: '1px solid oklch(92% 0.02 160)',
+                          borderRadius: '0 16px 16px 0' 
+                        }
+                      },
+                      '&:hover td': { 
+                        bgcolor: 'oklch(100% 0 0 / 0.8)',
+                        borderColor: 'oklch(65% 0.15 160)',
+                        boxShadow: '0 10px 30px oklch(20% 0.05 160 / 0.03)'
+                      }
+                    }}
+                  >
+                    <TableCell sx={{ fontWeight: 700, color: 'oklch(55% 0.18 160)' }}>#{t.ticketNumber}</TableCell>
                     <TableCell>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Avatar sx={{ width: 32, height: 32, fontSize: 14, bgcolor: 'primary.light' }}>
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Avatar sx={{ width: 40, height: 40, fontSize: 16, bgcolor: 'oklch(96% 0.05 160)', color: 'oklch(55% 0.18 160)', border: '2px solid white' }}>
                           {t.requesterName?.charAt(0)}
                         </Avatar>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>{t.requesterName}</Typography>
+                        <Typography variant="body1" sx={{ fontWeight: 600, color: 'oklch(20% 0.05 160)' }}>{t.requesterName}</Typography>
                       </Stack>
                     </TableCell>
                     <TableCell sx={{ maxWidth: 300 }}>
-                      <Typography variant="body2" noWrap sx={{ color: 'text.secondary' }}>
+                      <Typography variant="body2" noWrap sx={{ color: 'oklch(40% 0.02 160)', fontWeight: 400 }}>
                         {t.description || 'Không có mô tả'}
                       </Typography>
                     </TableCell>
@@ -248,13 +305,19 @@ export default function TriageTicketInbox() {
                       <Chip
                         size="small"
                         label={pInfo.label}
-                        color={pInfo.color}
                         icon={pInfo.icon}
-                        sx={{ fontWeight: 700, borderRadius: 1.5, px: 0.5 }}
+                        sx={{ 
+                          fontWeight: 600, 
+                          borderRadius: 2, 
+                          px: 1,
+                          bgcolor: pInfo.bg,
+                          color: pInfo.textColor,
+                          border: `1px solid ${pInfo.textColor}20`
+                        }}
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                      <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>
                         {t.createdAt ? format(new Date(t.createdAt), 'HH:mm - dd/MM', { locale: vi }) : '-'}
                       </Typography>
                     </TableCell>
@@ -265,7 +328,13 @@ export default function TriageTicketInbox() {
                         size="small"
                         endIcon={<ChevronRight size={16} />}
                         onClick={() => handleOpenDetail(t)}
-                        sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
+                        sx={{ 
+                          borderRadius: 3, 
+                          textTransform: 'none', 
+                          fontWeight: 600,
+                          bgcolor: 'oklch(60% 0.18 160)',
+                          '&:hover': { bgcolor: 'oklch(55% 0.18 160)' }
+                        }}
                       >
                         Xử lý
                       </Button>
@@ -285,7 +354,7 @@ export default function TriageTicketInbox() {
             )}
           </TableBody>
         </Table>
-      </Paper>
+      </Box>
 
       {/* Detail Dialog */}
       <Dialog
@@ -294,23 +363,37 @@ export default function TriageTicketInbox() {
         fullWidth
         maxWidth="lg"
         TransitionComponent={Zoom}
-        PaperProps={{ sx: { borderRadius: 5, overflow: 'hidden' } }}
+        PaperProps={{ 
+          sx: { 
+            borderRadius: 10, 
+            overflow: 'hidden',
+            bgcolor: 'oklch(100% 0 0 / 0.3)',
+            backdropFilter: 'blur(50px)',
+            border: '1px solid oklch(100% 0 0 / 0.2)',
+            boxShadow: 'none'
+          } 
+        }}
       >
         <DialogTitle sx={{ px: 4, pt: 3, pb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <Box sx={{ p: 1, bgcolor: 'primary.main', color: 'white', borderRadius: 2, display: 'flex' }}>
-              <Stethoscope size={24} />
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Box sx={{ p: 1.5, bgcolor: 'oklch(60% 0.18 160)', color: 'white', borderRadius: 3, display: 'flex', boxShadow: '0 10px 20px oklch(60% 0.18 160 / 0.2)' }}>
+              <Stethoscope size={28} />
             </Box>
             <Box>
-              <Typography variant="h5" sx={{ fontWeight: 800 }}>Chi tiết phiếu phân luồng</Typography>
-              <Typography variant="caption" color="text.secondary">Mã định danh: #{selectedTicket?.ticketNumber}</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 160)' }}>Chi tiết phiếu phân luồng</Typography>
+              <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>Mã định danh: #{selectedTicket?.ticketNumber}</Typography>
             </Box>
           </Stack>
           {selectedTicket && (
             <Chip
               label={getPriorityInfo(selectedTicket.priority).label}
-              color={getPriorityInfo(selectedTicket.priority).color}
-              sx={{ fontWeight: 800, borderRadius: 2 }}
+              sx={{ 
+                fontWeight: 600, 
+                borderRadius: 2,
+                bgcolor: getPriorityInfo(selectedTicket.priority).bg,
+                color: getPriorityInfo(selectedTicket.priority).textColor,
+                border: `1px solid ${getPriorityInfo(selectedTicket.priority).textColor}20`
+              }}
             />
           )}
         </DialogTitle>
@@ -320,45 +403,57 @@ export default function TriageTicketInbox() {
             <Box sx={{ 
               width: { xs: '100%', lg: '33.33%' }, 
               p: 3, 
-              borderRight: '1px solid', 
+              borderRight: '1px solid oklch(100% 0 0 / 0.1)', 
               borderColor: 'divider',
               display: 'flex', 
               flexDirection: 'column', 
               gap: 3,
-              bgcolor: 'rgba(248, 250, 252, 0.5)'
+              bgcolor: 'oklch(100% 0 0 / 0.1)'
             }}>
-              <Box sx={{ p: 2, bgcolor: '#fff', borderRadius: 4, border: '1px solid', borderColor: 'rgba(0,0,0,0.05)', boxShadow: '0 2px 8px rgba(0,0,0,0.02)' }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <User size={16} /> Thông tin bệnh nhân
+              <Box sx={{ p: 2.5, bgcolor: 'oklch(100% 0 0 / 0.2)', borderRadius: 5, border: '1px solid oklch(100% 0 0 / 0.1)', boxShadow: 'none' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, color: 'oklch(30% 0.05 160)' }}>
+                  <User size={18} /> Thông tin bệnh nhân
                 </Typography>
-                <Stack spacing={1.5}>
+                <Stack spacing={2}>
                   <Box>
-                    <Typography variant="caption" color="text.secondary">Họ và tên</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>{selectedTicket?.requesterName}</Typography>
+                    <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>Họ và tên</Typography>
+                    <Typography variant="body1" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 160)' }}>{selectedTicket?.requesterName}</Typography>
                   </Box>
                   <Box>
-                    <Typography variant="caption" color="text.secondary">Triệu chứng khai báo</Typography>
-                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>"{selectedTicket?.description}"</Typography>
+                    <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>Triệu chứng khai báo</Typography>
+                    <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'oklch(30% 0.05 160)', lineHeight: 1.6 }}>"{selectedTicket?.description}"</Typography>
                   </Box>
                 </Stack>
               </Box>
 
-              <Box sx={{ p: 2, bgcolor: '#e0f2fe', borderRadius: 4, border: '1px solid', borderColor: '#bae6fd' }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 700, color: '#0369a1', display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <MessageSquare size={16} /> Kết luận AI
+              <Box sx={{ p: 2.5, bgcolor: 'oklch(96% 0.05 200 / 0.2)', borderRadius: 5, border: '1px solid oklch(85% 0.1 200 / 0.2)' }}>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, color: 'oklch(40% 0.15 200)', display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <MessageSquare size={18} /> Kết luận AI
                 </Typography>
-                <Typography variant="body2" sx={{ color: '#0c4a6e', lineHeight: 1.6 }}>
-                  {selectedTicket?.aiSummary || "Đang phân tích dữ liệu..."}
-                </Typography>
+                <Box sx={{ 
+                  color: 'oklch(20% 0.1 200)', 
+                  fontSize: '0.875rem',
+                  lineHeight: 1.7, 
+                  fontWeight: 600,
+                  '& p': { m: 0, mb: 1.5 },
+                  '& p:last-child': { mb: 0 },
+                  '& ul, & ol': { pl: 2.5, mt: 1 },
+                  '& li': { mb: 0.5 },
+                  '& h3': { fontSize: '1rem', fontWeight: 900, mb: 1, mt: 0.5, color: 'oklch(20% 0.1 200)' }
+                }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {selectedTicket?.aiSummary || "Đang phân tích dữ liệu..."}
+                  </ReactMarkdown>
+                </Box>
               </Box>
 
-              <Box sx={{ p: 2, border: '1px solid', borderColor: 'divider', borderRadius: 4, bgcolor: '#fff' }}>
-                <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Calendar size={16} /> Chuyển đổi thành lịch hẹn
+              <Box sx={{ p: 2.5, border: '1px solid oklch(100% 0 0 / 0.1)', borderRadius: 5, bgcolor: 'oklch(100% 0 0 / 0.2)' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2.5, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, color: 'oklch(30% 0.05 160)' }}>
+                  <Calendar size={18} /> Chuyển đổi thành lịch hẹn
                 </Typography>
-                {createError && <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }}>{createError}</Alert>}
-                {createSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 3 }}>{createSuccess}</Alert>}
-                <Stack spacing={2}>
+                {createError && <Alert severity="error" sx={{ mb: 2, borderRadius: 3, bgcolor: 'oklch(96% 0.05 10 / 0.2)', border: '1px solid oklch(50% 0.15 10 / 0.3)', color: 'oklch(40% 0.15 10)' }}>{createError}</Alert>}
+                {createSuccess && <Alert severity="success" sx={{ mb: 2, borderRadius: 3, bgcolor: 'oklch(96% 0.05 160 / 0.2)', border: '1px solid oklch(55% 0.18 160 / 0.3)', color: 'oklch(40% 0.18 160)' }}>{createSuccess}</Alert>}
+                <Stack spacing={2.5}>
                   <TextField
                     label="Ngày khám"
                     type={appointmentDate ? "date" : "text"}
@@ -369,6 +464,7 @@ export default function TriageTicketInbox() {
                     onChange={(e) => setAppointmentDate(e.target.value)}
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 4, bgcolor: 'oklch(100% 0 0 / 0.1)', '& fieldset': { borderColor: 'oklch(100% 0 0 / 0.1)' } } }}
                   />
                   <TextField
                     label="Giờ khám"
@@ -380,6 +476,7 @@ export default function TriageTicketInbox() {
                     onChange={(e) => setAppointmentTime(e.target.value)}
                     fullWidth
                     InputLabelProps={{ shrink: true }}
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 4, bgcolor: 'oklch(100% 0 0 / 0.1)', '& fieldset': { borderColor: 'oklch(100% 0 0 / 0.1)' } } }}
                   />
                   <TextField
                     select
@@ -388,9 +485,10 @@ export default function TriageTicketInbox() {
                     value={departmentId}
                     onChange={(e) => setDepartmentId(e.target.value)}
                     fullWidth
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 4, bgcolor: 'oklch(100% 0 0 / 0.1)', '& fieldset': { borderColor: 'oklch(100% 0 0 / 0.1)' } } }}
                   >
                     {departments.map((d) => (
-                      <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
+                      <MenuItem key={d.id} value={d.id} sx={{ fontWeight: 600 }}>{d.name}</MenuItem>
                     ))}
                   </TextField>
                   <Button 
@@ -398,8 +496,16 @@ export default function TriageTicketInbox() {
                     fullWidth 
                     onClick={handleCreateAppointment} 
                     disabled={createLoading}
-                    startIcon={<ArrowRight size={18} />}
-                    sx={{ py: 1.2, borderRadius: 3, fontWeight: 700, textTransform: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    startIcon={<ArrowRight size={20} />}
+                    sx={{ 
+                      py: 1.5, 
+                      borderRadius: 4, 
+                      fontWeight: 600, 
+                      textTransform: 'none', 
+                      bgcolor: 'oklch(60% 0.18 160)',
+                      boxShadow: '0 10px 30px oklch(60% 0.18 160 / 0.3)',
+                      '&:hover': { bgcolor: 'oklch(55% 0.18 160)' }
+                    }}
                   >
                     {createLoading ? 'Đang xử lý...' : 'Xác nhận tạo lịch hẹn'}
                   </Button>
@@ -413,7 +519,7 @@ export default function TriageTicketInbox() {
               p: 3, 
               display: 'flex', 
               flexDirection: 'column',
-              bgcolor: '#fff'
+              bgcolor: 'oklch(100% 0 0 / 0.1)'
             }}>
               <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1, color: 'text.secondary' }}>
                 <MessageSquare size={16} /> Chi tiết hội thoại tư vấn
@@ -421,10 +527,9 @@ export default function TriageTicketInbox() {
               <Box sx={{ 
                 flexGrow: 1, 
                 p: 3, 
-                bgcolor: '#f8fafc', 
+                bgcolor: 'oklch(100% 0 0 / 0.1)', 
                 borderRadius: 8, 
-                border: '1px solid', 
-                borderColor: 'divider',
+                border: '1px solid oklch(100% 0 0 / 0.1)',
                 maxHeight: 600, 
                 overflowY: 'auto',
                 display: 'flex', 
@@ -440,7 +545,7 @@ export default function TriageTicketInbox() {
                     opacity: 0.4 
                   }}>
                     <MessageSquare size={64} strokeWidth={1} />
-                    <Typography sx={{ mt: 2, fontWeight: 800 }}>Chưa có dữ liệu hội thoại</Typography>
+                    <Typography sx={{ mt: 2, fontWeight: 700, color: 'oklch(40% 0.02 160)' }}>Chưa có dữ liệu hội thoại</Typography>
                     <Typography variant="caption">Hệ thống đang đồng bộ tin nhắn từ AI Triage...</Typography>
                   </Box>
                 ) : chatHistory.map((m) => {
@@ -459,16 +564,28 @@ export default function TriageTicketInbox() {
                         )}
                         <Box 
                           sx={{ 
-                            p: 2, 
-                            borderRadius: isUser ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                            bgcolor: isUser ? 'primary.main' : '#fff',
-                            color: isUser ? '#fff' : 'text.primary',
-                            boxShadow: isUser ? '0 4px 12px rgba(25, 118, 210, 0.2)' : '0 2px 8px rgba(0,0,0,0.05)',
-                            border: isUser ? 'none' : '1px solid',
-                            borderColor: 'divider'
+                            p: 2.5, 
+                            borderRadius: isUser ? '28px 28px 4px 28px' : '28px 28px 28px 4px',
+                            bgcolor: isUser ? 'oklch(60% 0.18 160 / 0.8)' : 'oklch(100% 0 0 / 0.3)',
+                            color: isUser ? '#fff' : 'oklch(20% 0.05 160)',
+                            boxShadow: 'none',
+                            border: '1px solid oklch(100% 0 0 / 0.1)',
                           }}
                         >
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{m.content}</Typography>
+                          <Box sx={{ 
+                            '& p': { m: 0, mb: 1.5, lineHeight: 1.6 },
+                            '& p:last-child': { mb: 0 },
+                            '& ul, & ol': { pl: 2.5, mt: 1 },
+                            '& li': { mb: 0.5 },
+                            '& strong': { fontWeight: 800 },
+                            '& h3': { fontSize: '1rem', fontWeight: 900, mb: 1, mt: 0.5, color: isUser ? '#fff' : 'oklch(20% 0.05 160)' },
+                            fontSize: '0.875rem',
+                            fontWeight: 500
+                          }}>
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {m.content}
+                            </ReactMarkdown>
+                          </Box>
                         </Box>
                       </Stack>
                       <Typography 
@@ -489,6 +606,6 @@ export default function TriageTicketInbox() {
           </Box>
         </DialogContent>
       </Dialog>
-    </Container>
+    </PatientPageShell>
   )
 }

@@ -32,6 +32,36 @@ class TriageService:
 
     async def analyze(self, session_id: str, message: str, history: list[dict], context: str = "", attachments: list[dict] = None, metadata: dict = None) -> dict:
         """Process a triage message and return AI response."""
+        import re
+        RED_FLAG_PATTERNS = [
+            r"\bđột quỵ\b",
+            r"\bméo miệng\b",
+            r"\bnói ngọng\b",
+            r"\byếu.*(tay|chân|nửa người)\b",
+            r"\bliệt.*(tay|chân|nửa người)\b",
+            r"\bđau ngực.*(tay trái|hàm|lưng)\b",
+            r"\bkhó thở (nặng|dữ dội|không thở được)\b",
+            r"\bmất ý thức\b",
+            r"\bco giật\b",
+            r"\bnhồi máu\b",
+        ]
+        
+        message_lower = message.lower()
+        for pattern in RED_FLAG_PATTERNS:
+            if re.search(pattern, message_lower):
+                return {
+                    "reply": "Các dấu hiệu bạn mô tả có thể liên quan tình trạng cấp cứu. Vui lòng gọi 115 hoặc đến khoa Cấp cứu gần nhất ngay lập tức. Không tự lái xe.",
+                    "thinking": "Deterministic red-flag filter triggered by regex match.",
+                    "is_complete": True,
+                    "triage_result": {
+                      "suggested_department": "Cấp cứu",
+                      "urgency_level": "EMERGENCY",
+                      "possible_conditions": ["Tình trạng cấp cứu cần bác sĩ đánh giá ngay"],
+                      "suggested_actions": ["Gọi 115", "Đến khoa Cấp cứu gần nhất"],
+                      "confidence_score": 1.0
+                    }
+                }
+                
         # Build conversation history for Gemini
         gemini_history = []
         for msg in history:
@@ -100,9 +130,13 @@ class TriageService:
         triage_result = None
 
         if is_complete:
-            reply_text = reply_text.replace("[TRIAGE_COMPLETE]", "").strip()
-            # Also clean infection control flag from display text
-            reply_text = reply_text.replace("[INFECTION_CONTROL: YES]", "").replace("[INFECTION_CONTROL: NO]", "").strip()
+            # Clean up all technical markers from the display text
+            import re
+            reply_text = reply_text.replace("[TRIAGE_COMPLETE]", "")
+            reply_text = re.sub(r"\[CONFIDENCE_SCORE:.*?\]", "", reply_text)
+            reply_text = re.sub(r"\[INFECTION_CONTROL:.*?\]", "", reply_text)
+            reply_text = reply_text.strip()
+            
             triage_result = await self._extract_triage_result(reply_text)
 
         return {
@@ -120,7 +154,7 @@ class TriageService:
 - possible_conditions: string array
 - suggested_actions: string array
 - confidence_score: float (0.0 to 1.0)
-- summary: string (Vietnamese)
+- summary: string (Vietnamese, concise 2-3 sentences summarizing symptoms and history for medical record)
 - infection_control: boolean (true if [INFECTION_CONTROL: YES] was in the original text)
 
 Text to analyze: {text}"""

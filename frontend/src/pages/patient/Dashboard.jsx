@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, Chip, Divider, Grid, Paper, Stack, Typography } from '@mui/material'
+import { Box, Button, Card, CardContent, Chip, Divider, Grid, Paper, Stack, Typography, alpha } from '@mui/material'
 import { CalendarDays, ChevronRight, ClipboardList, FileText, PhoneCall, Clock, Stethoscope } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
@@ -97,7 +97,8 @@ export default function Dashboard() {
     <PatientPageShell
       title={t('dashboard.title')}
       subtitle={t('dashboard.subtitle')}
-      maxWidth="lg"
+      maxWidth={false}
+      transparent={true}
       actions={
         <Button
           variant="contained"
@@ -116,277 +117,297 @@ export default function Dashboard() {
         </Button>
       }
     >
-      <Stack spacing={3}>
-        {/* KPI / Stats Section */}
-        <Grid container spacing={2.5}>
-          <Grid item xs={12} sm={6} md={4}>
-            <DashboardCard
-              title={t('dashboard.upcoming_appointment')}
-              value={upcomingAppointment ? upcomingAppointment.appointmentTime : 'None'}
-              subtitle={upcomingAppointment ? upcomingAppointment.doctorName : t('dashboard.no_upcoming')}
-              icon={Clock}
-              color="#2563eb"
-              onClick={() => navigate('/patient/appointments')}
-              loading={loading}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <DashboardCard
-              title={t('dashboard.medical_records')}
-              value={records.length}
-              subtitle={t('dashboard.total_records')}
-              icon={FileText}
-              color="#059669"
-              onClick={() => navigate('/patient/records')}
-              loading={loading}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6} md={4}>
-            <DashboardCard
-              title={t('dashboard.active_tickets')}
-              value={tickets.filter(t => t.status !== 'CLOSED' && t.status !== 'COMPLETED').length}
-              subtitle={t('dashboard.triage_status')}
-              icon={Stethoscope}
-              color="#7c3aed"
-              onClick={() => navigate('/patient/triage-tickets')}
-              loading={loading}
-            />
-          </Grid>
-        </Grid>
-
-        {/* Quick Start / Banner */}
-        <Paper
-          sx={{
-            p: { xs: 3, md: 4 },
-            borderRadius: 4,
-            border: '1px solid rgba(16, 185, 129, 0.14)',
-            backgroundImage: 'linear-gradient(135deg, rgba(236, 253, 245, 0.95) 0%, rgba(255, 255, 255, 0.96) 100%)'
-          }}
-        >
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={3}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', md: 'center' }}
-          >
-            <Box sx={{ maxWidth: 720 }}>
-              <Chip
-                label={t('dashboard.quick_title')}
-                size="small"
-                sx={{
-                  mb: 2,
-                  fontWeight: 800,
-                  bgcolor: 'rgba(16, 185, 129, 0.12)',
-                  color: '#065f46'
-                }}
-              />
-              <Typography variant="h5" sx={{ fontWeight: 900, color: '#0f172a', mb: 1 }}>
-                {t('dashboard.quick_desc')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.75 }}>
-                {t('dashboard.subtitle')}
-              </Typography>
-            </Box>
-
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ width: { xs: '100%', md: 'auto' } }}>
-              <Button
-                variant="contained"
-                onClick={() => navigate('/patient/appointments/book-appointment')}
-                sx={{
-                  borderRadius: 3,
-                  bgcolor: '#10b981',
-                  '&:hover': { bgcolor: '#059669' },
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1.2,
-                  boxShadow: '0 4px 14px rgba(16, 185, 129, 0.24)',
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                {t('dashboard.book_appointment')}
-              </Button>
-              <Button
-                variant="outlined"
+      <Box sx={{ mt: -2 }}>
+        <Stack spacing={4}>
+          {/* KPI / Stats Section */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={4}>
+              <DashboardCard
+                title={t('dashboard.upcoming_appointment')}
+                value={upcomingAppointment ? upcomingAppointment.appointmentTime : 'None'}
+                subtitle={upcomingAppointment ? upcomingAppointment.doctorName : t('dashboard.no_upcoming')}
+                icon={Clock}
+                color="#2563eb"
                 onClick={() => navigate('/patient/appointments')}
-                sx={{
-                  borderRadius: 3,
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1.2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                {t('dashboard.view_appointments')}
-              </Button>
-            </Stack>
-          </Stack>
-        </Paper>
+                loading={loading}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <DashboardCard
+                title={t('dashboard.medical_records')}
+                value={records.length}
+                subtitle={t('dashboard.total_records')}
+                icon={FileText}
+                color="#10b981"
+                onClick={() => navigate('/patient/records')}
+                loading={loading}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <DashboardCard
+                title={t('dashboard.active_tickets')}
+                value={tickets.filter(t => t.status !== 'CLOSED' && t.status !== 'COMPLETED').length}
+                subtitle={t('dashboard.triage_status')}
+                icon={Stethoscope}
+                color="#7c3aed"
+                onClick={() => navigate('/patient/triage-tickets')}
+                loading={loading}
+              />
+            </Grid>
+          </Grid>
 
-        <Grid container spacing={3}>
-          {/* Quick Actions Grid */}
-          <Grid item xs={12} md={7}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                {t('dashboard.quick_title')}
-              </Typography>
-              <Grid container spacing={2.5}>
-                {quickActions.map((action) => {
-                  const Icon = action.icon
-                  return (
-                    <Grid item xs={12} sm={6} key={action.to}>
-                      <Card
-                        onClick={() => navigate(action.to)}
-                        sx={{
-                          height: '100%',
-                          cursor: 'pointer',
-                          borderRadius: 4,
-                          border: '1px solid #e2e8f0',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            transform: 'translateY(-2px)',
-                            boxShadow: '0 14px 32px rgba(16, 185, 129, 0.12)',
-                            borderColor: '#10b981'
+          <Grid container spacing={5}>
+            {/* Quick Actions Grid */}
+            <Grid item xs={12} lg={7}>
+              <Box>
+                <Typography 
+                  variant="h4" 
+                  sx={{ 
+                    fontWeight: 950, 
+                    mb: 4, 
+                    color: 'oklch(20% 0.05 250)', 
+                    letterSpacing: '-0.04em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2
+                  }}
+                >
+                  {t('dashboard.quick_title')}
+                </Typography>
+                <Grid container spacing={3}>
+                  {quickActions.map((action) => {
+                    const Icon = action.icon
+                    return (
+                      <Grid item xs={12} sm={6} key={action.to}>
+                        <Box
+                          onClick={() => navigate(action.to)}
+                          sx={{
+                            p: 3,
+                            height: '100%',
+                            cursor: 'pointer',
+                            borderRadius: 5,
+                            border: '1px solid oklch(95% 0.01 250)',
+                            bgcolor: 'white',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.02)',
+                            transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 2.5,
+                            '&:hover': {
+                              transform: 'translateY(-6px)',
+                              borderColor: action.color,
+                              boxShadow: `0 20px 40px ${alpha(action.color, 0.08)}`,
+                              '& .action-icon-box': { 
+                                bgcolor: action.color, 
+                                color: 'white',
+                                transform: 'scale(1.05)' 
+                              },
+                              '& .action-chevron': { transform: 'translateX(4px)', color: action.color }
+                            }
+                          }}
+                        >
+                          <Stack direction="row" justifyContent="space-between" alignItems="center">
+                            <Box className="action-icon-box" sx={{
+                              width: 52, height: 52, borderRadius: '16px',
+                              bgcolor: alpha(action.color, 0.1), color: action.color,
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              transition: 'all 0.4s'
+                            }}>
+                              <Icon size={24} />
+                            </Box>
+                            <ChevronRight className="action-chevron" size={20} color="oklch(70% 0.02 250)" style={{ transition: 'all 0.3s' }} />
+                          </Stack>
+                          <Box>
+                            <Typography variant="h6" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 0.5, letterSpacing: '-0.02em' }}>
+                              {action.label}
+                            </Typography>
+                            <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 500, lineHeight: 1.5 }}>
+                              {action.desc}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Grid>
+                    )
+                  })}
+                </Grid>
+              </Box>
+            </Grid>
+            
+            {/* Recent Records / Timeline Preview */}
+            <Grid item xs={12} lg={5}>
+              <Box sx={{ 
+                p: 4, 
+                borderRadius: 6, 
+                bgcolor: 'white',
+                border: '1px solid oklch(92% 0.02 250)',
+                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.03)',
+                height: '100%'
+              }}>
+                <Typography variant="h5" sx={{ fontWeight: 700, mb: 4, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
+                  {t('dashboard.recent_records')}
+                </Typography>
+                <Stack spacing={0}>
+                  {loading ? (
+                    [1, 2, 3, 4].map(i => <Box key={i} sx={{ height: 80, mb: 2, bgcolor: 'oklch(96% 0.01 250)', borderRadius: 3, animation: 'pulse 1.5s infinite' }} />)
+                  ) : records.length === 0 ? (
+                    <Box sx={{ py: 8, textAlign: 'center' }}>
+                      <FileText size={48} color="oklch(80% 0.02 250)" strokeWidth={1} style={{ marginBottom: 16 }} />
+                      <Typography variant="body1" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 600 }}>
+                        {t('dashboard.no_records_yet')}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    records.slice(0, 5).map((record, idx) => (
+                      <Box 
+                        key={record.id} 
+                        onClick={() => navigate(`/patient/records/${record.id}`)} 
+                        sx={{ 
+                          cursor: 'pointer', 
+                          py: 2.5, 
+                          position: 'relative',
+                          '&:hover': { 
+                            '& .record-title': { color: '#10b981' },
+                            '& .record-dot': { transform: 'scale(1.3)', borderColor: '#10b981' }
+                          },
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            left: 11,
+                            top: idx === 0 ? '50%' : 0,
+                            bottom: idx === Math.min(records.length, 5) - 1 ? '50%' : 0,
+                            width: 2,
+                            bgcolor: 'oklch(95% 0.01 250)',
+                            display: idx === 0 && records.length === 1 ? 'none' : 'block'
                           }
                         }}
                       >
-                        <CardContent sx={{ p: 2.5 }}>
-                          <Stack spacing={1.5}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                              <Box sx={{
-                                width: 44, height: 44, borderRadius: 2,
-                                bgcolor: action.bg, color: action.color,
-                                display: 'flex', alignItems: 'center', justifyContent: 'center'
-                              }}>
-                                <Icon size={20} />
-                              </Box>
-                              <ChevronRight size={18} color="#94a3b8" />
-                            </Box>
-                            <Box>
-                              <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 0.5 }}>
-                                {action.label}
+                        <Stack direction="row" spacing={3} alignItems="center">
+                          <Box 
+                            className="record-dot"
+                            sx={{ 
+                              width: 24, height: 24, borderRadius: '50%', 
+                              bgcolor: 'white',
+                              border: '3px solid oklch(92% 0.02 250)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              zIndex: 1,
+                              transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                            }} 
+                          >
+                             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: idx === 0 ? '#10b981' : 'oklch(85% 0.01 250)' }} />
+                          </Box>
+
+                          <Box sx={{ flex: 1 }}>
+                            <Typography className="record-title" variant="h6" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', transition: 'color 0.3s', mb: 0.2, fontSize: '1rem' }}>
+                              {record.diagnosis}
+                            </Typography>
+                            <Stack direction="row" spacing={1.5} alignItems="center">
+                              <Typography variant="body2" sx={{ fontWeight: 600, color: 'oklch(50% 0.02 250)' }}>
+                                {record.doctorName}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                                {action.desc}
+                              <Typography variant="caption" sx={{ color: 'oklch(80% 0.01 250)', fontWeight: 800 }}>
+                                •
                               </Typography>
-                            </Box>
-                          </Stack>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  )
-                })}
-              </Grid>
-            </Box>
+                              <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 600 }}>
+                                {new Date(record.createdAt).toLocaleDateString()}
+                              </Typography>
+                            </Stack>
+                          </Box>
+                          <ChevronRight size={18} color="oklch(80% 0.01 250)" />
+                        </Stack>
+                      </Box>
+                    ))
+                  )}
+                  {records.length > 5 && (
+                    <Button 
+                      fullWidth 
+                      variant="text" 
+                      onClick={() => navigate('/patient/records')}
+                      sx={{ 
+                        mt: 2, 
+                        fontWeight: 700, 
+                        color: '#10b981',
+                        fontSize: '0.875rem',
+                        py: 1.5,
+                        borderRadius: 3,
+                        textTransform: 'none',
+                        '&:hover': { 
+                          bgcolor: alpha('#10b981', 0.05),
+                        }
+                      }}
+                    >
+                      {t('dashboard.view_all_records')}
+                    </Button>
+                  )}
+                </Stack>
+              </Box>
+            </Grid>
           </Grid>
 
-          {/* Recent Records / Timeline Preview */}
-          <Grid item xs={12} md={5}>
-            <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', height: '100%' }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2 }}>
-                {t('dashboard.recent_records')}
-              </Typography>
-              <Stack spacing={2}>
-                {loading ? (
-                  [1, 2, 3].map(i => <Box key={i} sx={{ height: 60, bgcolor: '#f1f5f9', borderRadius: 2, animation: 'pulse 1.5s infinite' }} />)
-                ) : records.length === 0 ? (
-                  <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-                    {t('dashboard.no_records_yet')}
-                  </Typography>
-                ) : (
-                  records.slice(0, 5).map((record, idx) => (
-                    <Box key={record.id}>
-                      <Stack direction="row" spacing={1.5} alignItems="center">
-                        <Box sx={{ 
-                          width: 8, height: 8, borderRadius: '50%', 
-                          bgcolor: idx === 0 ? '#10b981' : '#cbd5e1' 
-                        }} />
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                            {record.diagnosis}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {new Date(record.createdAt).toLocaleDateString()} · {record.doctorName}
-                          </Typography>
-                        </Box>
-                        <ChevronRight size={14} color="#94a3b8" />
-                      </Stack>
-                      {idx < Math.min(records.length, 5) - 1 && <Divider sx={{ mt: 1.5, mb: 0.5 }} />}
-                    </Box>
-                  ))
-                )}
-                {records.length > 5 && (
-                  <Button 
-                    fullWidth 
-                    variant="text" 
-                    size="small" 
-                    onClick={() => navigate('/patient/records')}
-                    sx={{ fontWeight: 700, color: '#10b981' }}
-                  >
-                    {t('dashboard.view_all_records')}
-                  </Button>
-                )}
-              </Stack>
-            </Paper>
-          </Grid>
-        </Grid>
-
-        {/* Support Footer */}
-        <Paper
-          sx={{
-            p: { xs: 3, md: 4 },
-            borderRadius: 4,
-            bgcolor: '#f8fafc',
-            border: '1px solid #e2e8f0'
-          }}
-        >
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={2}
-            justifyContent="space-between"
-            alignItems={{ xs: 'flex-start', md: 'center' }}
+          {/* Support Footer */}
+          <Box
+            sx={{
+              p: 6,
+              borderRadius: 8,
+              bgcolor: 'oklch(98% 0.01 250)',
+              border: '1px solid oklch(94% 0.02 250)'
+            }}
           >
-            <Box sx={{ maxWidth: 720 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
-                {t('dashboard.support_title')}
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.7 }}>
-                {t('dashboard.support_desc')}
-              </Typography>
-            </Box>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={4}
+              justifyContent="space-between"
+              alignItems={{ xs: 'flex-start', md: 'center' }}
+            >
+              <Box sx={{ maxWidth: 800 }}>
+                <Typography variant="h5" sx={{ fontWeight: 950, mb: 1.5, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
+                  {t('dashboard.support_title')}
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'oklch(50% 0.02 250)', lineHeight: 1.7, fontWeight: 500 }}>
+                  {t('dashboard.support_desc')}
+                </Typography>
+              </Box>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ width: { xs: '100%', md: 'auto' } }}>
-              <Button
-                variant="outlined"
-                startIcon={<PhoneCall size={16} />}
-                onClick={() => navigate('/contact')}
-                sx={{
-                  borderRadius: 3,
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1.2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                {t('dashboard.contact_support')}
-              </Button>
-              <Button
-                variant="contained"
-                color="error"
-                onClick={() => navigate('/emergency')}
-                sx={{
-                  borderRadius: 3,
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1.2,
-                  width: { xs: '100%', sm: 'auto' }
-                }}
-              >
-                {t('dashboard.emergency')}
-              </Button>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ width: { xs: '100%', md: 'auto' } }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<PhoneCall size={18} />}
+                  onClick={() => navigate('/contact')}
+                  sx={{
+                    borderRadius: 4,
+                    fontWeight: 900,
+                    px: 4,
+                    py: 1.5,
+                    borderWidth: 2,
+                    borderColor: 'oklch(20% 0.05 250)',
+                    color: 'oklch(20% 0.05 250)',
+                    '&:hover': { borderWidth: 2, bgcolor: 'oklch(96% 0.01 250)' },
+                    width: { xs: '100%', sm: 'auto' }
+                  }}
+                >
+                  {t('dashboard.contact_support')}
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate('/emergency')}
+                  sx={{
+                    borderRadius: 4,
+                    fontWeight: 950,
+                    px: 4,
+                    py: 1.5,
+                    bgcolor: 'oklch(60% 0.15 20)',
+                    color: 'white',
+                    boxShadow: '0 10px 30px oklch(60% 0.15 20 / 0.3)',
+                    '&:hover': { bgcolor: 'oklch(55% 0.15 20)' },
+                    width: { xs: '100%', sm: 'auto' }
+                  }}
+                >
+                  {t('dashboard.emergency')}
+                </Button>
+              </Stack>
             </Stack>
-          </Stack>
-        </Paper>
-      </Stack>
+          </Box>
+        </Stack>
+      </Box>
     </PatientPageShell>
   )
 }

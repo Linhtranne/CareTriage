@@ -1,4 +1,6 @@
 import { motion } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const decodeHTML = (html) => {
   if (!html) return '';
@@ -75,7 +77,21 @@ const MessageBubble = ({ message, prevMessage, nextMessage }) => {
             borderBottomRightRadius: br,
           }}
         >
-          {decodeHTML(message.content)}
+          <div className="markdown-content" style={{ whiteSpace: 'pre-wrap' }}>
+            <ReactMarkdown 
+              remarkPlugins={[remarkGfm]}
+              components={{
+                p: ({node, ...props}) => <p style={{ margin: '0 0 8px 0', lastChild: { margin: 0 } }} {...props} />,
+                ul: ({node, ...props}) => <ul style={{ paddingLeft: '20px', marginBottom: '8px', listStyleType: 'disc' }} {...props} />,
+                ol: ({node, ...props}) => <ol style={{ paddingLeft: '20px', marginBottom: '8px', listStyleType: 'decimal' }} {...props} />,
+                li: ({node, ...props}) => <li style={{ marginBottom: '4px' }} {...props} />,
+                strong: ({node, ...props}) => <strong style={{ fontWeight: 800 }} {...props} />,
+                h3: ({node, ...props}) => <h3 style={{ fontSize: '1.1rem', fontWeight: 900, margin: '12px 0 8px 0', color: isAI ? '#064e3b' : '#fff' }} {...props} />,
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -4,20 +4,22 @@ import {
   Box,
   Typography,
   Grid,
-  Paper,
   Stack,
   Button,
   CircularProgress,
   Alert,
   Chip,
   Divider,
-  alpha,
+  IconButton,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { Refresh, ArrowForward, Schedule, Assignment, PendingActions, PlayArrow } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
 import appointmentApi from '../../api/appointmentApi'
 import triageTicketApi from '../../api/triageTicketApi'
 import DashboardCard from '../../components/common/DashboardCard'
+import PatientPageShell from '../../components/patient/PatientPageShell'
+import { motion } from 'framer-motion'
 
 function statusLabel(status, t) {
   switch (status) {
@@ -68,7 +70,7 @@ export default function Dashboard() {
   const loadDashboardData = async (isInitial = false) => {
     if (isInitial) setLoading(true)
     else setRefreshing(true)
-    
+
     setError('')
     try {
       const [appointmentRes, ticketRes] = await Promise.all([
@@ -92,9 +94,7 @@ export default function Dashboard() {
   }
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadDashboardData(true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
@@ -104,7 +104,6 @@ export default function Dashboard() {
       }
     }, 60000)
     return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const stats = useMemo(() => {
@@ -126,191 +125,257 @@ export default function Dashboard() {
   const ticketPreview = pendingTickets.slice(0, 5)
 
   return (
-    <Box>
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'flex-start', sm: 'center' }}
-        spacing={2}
-        sx={{ mb: 3 }}
-      >
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5, letterSpacing: '-0.02em' }}>
-            {t('dashboard.doctor.title')}
-          </Typography>
-          <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
-            {new Date().toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
-              weekday: 'long',
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Typography>
-        </Box>
+    <PatientPageShell
+      title={t('dashboard.doctor.title')}
+      subtitle={new Date().toLocaleDateString(i18n.language === 'vi' ? 'vi-VN' : 'en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+      maxWidth={false}
+      transparent={true}
+      badge="Khu vực bác sĩ"
+      actions={
         <Button
           variant="outlined"
           startIcon={refreshing ? <CircularProgress size={16} color="inherit" /> : <Refresh />}
           onClick={() => loadDashboardData()}
           disabled={loading || refreshing}
-          sx={{ borderRadius: 2.5, px: 2, fontWeight: 700 }}
+          sx={{ borderRadius: 3, px: 2.5, fontWeight: 700, textTransform: 'none' }}
         >
           {t('common.refresh')}
         </Button>
-      </Stack>
+      }
+    >
+      <Box sx={{ mt: -2 }}>
+        {error && (
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
+            {error}
+          </Alert>
+        )}
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>
-          {error}
-        </Alert>
-      )}
+        <Grid container spacing={4} sx={{ mb: 10, width: '100%' }} alignItems="stretch">
+          {[
+            { title: t('dashboard.doctor.total_today'), value: stats.totalToday, icon: Schedule, color: '#2563eb' },
+            { title: t('dashboard.doctor.waiting'), value: stats.waiting, icon: PendingActions, color: '#f59e0b' },
+            { title: t('dashboard.doctor.in_progress'), value: stats.inProgress, icon: PlayArrow, color: '#10b981' },
+            { title: t('dashboard.doctor.pending_tickets'), value: stats.pendingTicketTotal, icon: Assignment, color: '#7c3aed' },
+          ].map((stat, idx) => (
+            <Grid item xs={12} sm={6} md={3} key={idx} sx={{ display: 'flex', flexGrow: 1 }}>
+              <DashboardCard
+                title={stat.title}
+                value={stat.value}
+                icon={stat.icon}
+                color={stat.color}
+                loading={loading}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
-      <Grid container spacing={2.5} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title={t('dashboard.doctor.total_today')}
-            value={stats.totalToday}
-            icon={Schedule}
-            color="#2563eb"
-            loading={loading}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title={t('dashboard.doctor.waiting')}
-            value={stats.waiting}
-            icon={PendingActions}
-            color="#f59e0b"
-            loading={loading}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title={t('dashboard.doctor.in_progress')}
-            value={stats.inProgress}
-            icon={PlayArrow}
-            color="#10b981"
-            loading={loading}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <DashboardCard
-            title={t('dashboard.doctor.pending_tickets')}
-            value={stats.pendingTicketTotal}
-            icon={Assignment}
-            color="#7c3aed"
-            loading={loading}
-          />
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', height: '100%', bgcolor: '#ffffff' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                {t('dashboard.doctor.today_schedule')}
-              </Typography>
-              <Button 
-                endIcon={<ArrowForward size={18} />} 
-                onClick={() => navigate('/doctor/appointments')}
-                sx={{ fontWeight: 700, borderRadius: 2 }}
-              >
-                {t('common.view_all')}
-              </Button>
-            </Stack>
-
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress size={32} thickness={5} sx={{ color: '#10b981' }} />
-              </Box>
-            ) : appointmentPreview.length === 0 ? (
-              <Box sx={{ py: 6, textAlign: 'center' }}>
-                <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
-                  {t('dashboard.doctor.no_appointments')}
+        <Grid container spacing={6}>
+          {/* Today's Schedule Island */}
+          <Grid item xs={12} lg={7}>
+            <Box sx={{
+              p: 4,
+              borderRadius: 8,
+              bgcolor: 'oklch(100% 0 0 / 0.02)',
+              border: '1px solid oklch(100% 0 0 / 0.05)',
+              backdropFilter: 'blur(20px)',
+              height: '100%'
+            }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.03em' }}>
+                  {t('dashboard.doctor.today_schedule')}
                 </Typography>
-              </Box>
-            ) : (
-              <Stack spacing={2}>
-                {appointmentPreview.map((item, idx) => (
-                  <Box key={item.id}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 700, mb: 0.25 }}>
-                          {item.patientName || t('common.patient')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {item.appointmentTime} • {item.departmentName || t('common.no_dept')}
-                        </Typography>
-                      </Box>
-                      <Chip 
-                        size="small" 
-                        label={statusLabel(item.status, t)} 
-                        color={statusColor(item.status)}
-                        sx={{ fontWeight: 800, borderRadius: 1.5 }}
-                      />
-                    </Stack>
-                    {idx < appointmentPreview.length - 1 && <Divider sx={{ mt: 2 }} />}
-                  </Box>
-                ))}
+                <Button
+                  variant="text"
+                  endIcon={<ArrowForward size={18} />}
+                  onClick={() => navigate('/doctor/appointments')}
+                  sx={{ fontWeight: 800, color: '#10b981', textTransform: 'none', borderRadius: 2 }}
+                >
+                  {t('common.view_all')}
+                </Button>
               </Stack>
-            )}
-          </Paper>
-        </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', height: '100%', bgcolor: '#ffffff' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ fontWeight: 800 }}>
-                {t('dashboard.doctor.pending_triage')}
-              </Typography>
-              <Button 
-                endIcon={<ArrowForward size={18} />} 
-                onClick={() => navigate('/doctor/triage-tickets')}
-                sx={{ fontWeight: 700, borderRadius: 2 }}
-              >
-                {t('common.view_all')}
-              </Button>
-            </Stack>
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 12 }}>
+                  <CircularProgress size={40} thickness={5} sx={{ color: '#10b981' }} />
+                </Box>
+              ) : appointmentPreview.length === 0 ? (
+                <Box sx={{
+                  py: 10,
+                  textAlign: 'center',
+                  borderRadius: 6,
+                  border: '1px dashed oklch(90% 0.02 250)',
+                  bgcolor: 'oklch(100% 0 0 / 0.01)'
+                }}>
+                  <Typography sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 700 }}>
+                    {t('dashboard.doctor.no_appointments')}
+                  </Typography>
+                </Box>
+              ) : (
+                <Stack spacing={2}>
+                  {appointmentPreview.map((item, idx) => (
+                    <motion.div
+                      key={item.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1, type: 'spring', stiffness: 300, damping: 25 }}
+                    >
+                      <Box sx={{
+                        p: 2.5,
+                        borderRadius: 5,
+                        border: '1px solid oklch(100% 0 0 / 0.05)',
+                        bgcolor: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateX(12px)',
+                          boxShadow: '0 20px 40px oklch(20% 0.05 250 / 0.04)',
+                          borderColor: '#10b981'
+                        }
+                      }}>
+                        <Box sx={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 3,
+                          bgcolor: alpha('#10b981', 0.1),
+                          color: '#10b981',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1rem',
+                          fontWeight: 900
+                        }}>
+                          <Schedule size={20} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontWeight: 800, color: 'oklch(20% 0.05 250)' }}>
+                            {item.patientName || t('common.patient')}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 700 }}>
+                            {item.appointmentTime} • {item.departmentName || t('common.no_dept')}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={statusLabel(item.status, t)}
+                          color={statusColor(item.status)}
+                          sx={{ fontWeight: 900, borderRadius: 2 }}
+                        />
+                      </Box>
+                    </motion.div>
+                  ))}
+                </Stack>
+              )}
+            </Box>
+          </Grid>
 
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress size={32} thickness={5} sx={{ color: '#7c3aed' }} />
-              </Box>
-            ) : ticketPreview.length === 0 ? (
-              <Box sx={{ py: 6, textAlign: 'center' }}>
-                <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
-                  {t('dashboard.doctor.no_tickets')}
+          {/* Pending Triage Island */}
+          <Grid item xs={12} lg={5}>
+            <Box sx={{
+              p: 4,
+              borderRadius: 8,
+              bgcolor: 'oklch(100% 0 0 / 0.02)',
+              border: '1px solid oklch(100% 0 0 / 0.05)',
+              backdropFilter: 'blur(20px)',
+              height: '100%'
+            }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+                <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
+                  {t('dashboard.doctor.pending_triage')}
                 </Typography>
-              </Box>
-            ) : (
-              <Stack spacing={2}>
-                {ticketPreview.map((ticket, idx) => (
-                  <Box key={ticket.id}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography sx={{ fontWeight: 700, mb: 0.25 }}>
-                          {ticket.patientName || t('common.patient')}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
-                          {ticket.ticketNumber} • {ticket.priority || 'MEDIUM'}
-                        </Typography>
-                      </Box>
-                      <Chip 
-                        size="small" 
-                        label={ticket.status || 'NEW'} 
-                        variant="outlined"
-                        sx={{ fontWeight: 800, borderRadius: 1.5, borderColor: alpha('#7c3aed', 0.3), color: '#7c3aed' }}
-                      />
-                    </Stack>
-                    {idx < ticketPreview.length - 1 && <Divider sx={{ mt: 2 }} />}
-                  </Box>
-                ))}
+                <IconButton
+                  onClick={() => navigate('/doctor/triage-tickets')}
+                  sx={{ color: '#7c3aed', bgcolor: alpha('#7c3aed', 0.1), '&:hover': { bgcolor: alpha('#7c3aed', 0.2) } }}
+                >
+                  <ArrowForward size={20} />
+                </IconButton>
               </Stack>
-            )}
-          </Paper>
+
+              {loading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 12 }}>
+                  <CircularProgress size={32} thickness={5} sx={{ color: '#7c3aed' }} />
+                </Box>
+              ) : ticketPreview.length === 0 ? (
+                <Box sx={{ py: 10, textAlign: 'center' }}>
+                  <Typography sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 700 }}>
+                    {t('dashboard.doctor.no_tickets')}
+                  </Typography>
+                </Box>
+              ) : (
+                <Stack spacing={2}>
+                  {ticketPreview.map((ticket, idx) => (
+                    <motion.div
+                      key={ticket.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.1, type: 'spring', stiffness: 300, damping: 25 }}
+                    >
+                      <Box sx={{
+                        p: 2.5,
+                        borderRadius: 5,
+                        border: '1px solid oklch(100% 0 0 / 0.05)',
+                        bgcolor: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateX(12px)',
+                          boxShadow: '0 20px 40px oklch(20% 0.05 250 / 0.04)',
+                          borderColor: '#7c3aed'
+                        }
+                      }}>
+                        <Box sx={{
+                          width: 52,
+                          height: 52,
+                          borderRadius: 3,
+                          bgcolor: alpha('#7c3aed', 0.1),
+                          color: '#7c3aed',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '1rem',
+                          fontWeight: 900
+                        }}>
+                          <Assignment size={20} />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography sx={{ fontWeight: 800, color: 'oklch(20% 0.05 250)' }}>
+                            {ticket.patientName || t('common.patient')}
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 700 }}>
+                            {ticket.ticketNumber} • {ticket.priority || 'MEDIUM'}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={ticket.status || 'NEW'}
+                          variant="outlined"
+                          sx={{ fontWeight: 900, borderRadius: 2, borderColor: alpha('#7c3aed', 0.2), color: '#7c3aed' }}
+                        />
+                      </Box>
+                    </motion.div>
+                  ))}
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={() => navigate('/doctor/triage-tickets')}
+                    sx={{ mt: 2, borderRadius: 3, py: 1.5, fontWeight: 800, borderColor: alpha('#7c3aed', 0.3), color: '#7c3aed', textTransform: 'none' }}
+                  >
+                    Xem tất cả phiếu phân loại
+                  </Button>
+                </Stack>
+              )}
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
-    </Box>
+      </Box>
+    </PatientPageShell>
   )
 }
-
