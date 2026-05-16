@@ -93,8 +93,10 @@ public class AppointmentController {
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     @Operation(summary = "Chi tiết lịch hẹn", description = "Xem chi tiết một lịch hẹn")
-    public ResponseEntity<ApiResponse<AppointmentResponse>> getAppointmentById(@PathVariable Long id) {
-        AppointmentResponse response = appointmentService.getAppointmentById(id);
+    public ResponseEntity<ApiResponse<AppointmentResponse>> getAppointmentById(
+            @PathVariable Long id,
+            Authentication authentication) {
+        AppointmentResponse response = appointmentService.getAppointmentById(id, authentication.getName());
         return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết lịch hẹn thành công", response));
     }
 
@@ -103,7 +105,7 @@ public class AppointmentController {
     @Operation(summary = "Hủy lịch hẹn", description = "Hủy lịch hẹn với lý do (yêu cầu trước ít nhất 02 tiếng)")
     public ResponseEntity<ApiResponse<AppointmentResponse>> cancelAppointment(
             @PathVariable Long id,
-            @RequestBody(required = false) CancelAppointmentRequest request,
+            @Valid @RequestBody(required = false) CancelAppointmentRequest request,
             Authentication authentication) {
         Long userId = getUserId(authentication);
         AppointmentResponse response = appointmentService.cancelAppointment(id, userId, request);
@@ -134,7 +136,7 @@ public class AppointmentController {
     private Long getUserId(Authentication authentication) {
         String email = authentication.getName();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new com.caretriage.exception.ResourceNotFoundException("Không tìm thấy người dùng"));
         return user.getId();
     }
 }

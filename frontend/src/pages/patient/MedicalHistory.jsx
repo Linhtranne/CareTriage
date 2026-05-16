@@ -1,16 +1,16 @@
 import { useState, useEffect, useMemo } from 'react';
 import { 
-  Box, Typography, Card, CardContent, Grid, TextField, 
-  MenuItem, Select, FormControl, InputLabel, IconButton,
-  Chip, Avatar, Divider,
-  Button, Dialog, DialogTitle, DialogContent, DialogActions,
+  Box, Typography, Grid, TextField, 
+  MenuItem,
+  Chip, Avatar,
+  Button,
+  Stack,
   useTheme, useMediaQuery
 } from '@mui/material';
 import {
   Search, Filter, Calendar,
-  Stethoscope, Pill, ClipboardList,
-  Download, Printer, User,
-  Info
+  Stethoscope, User, FileText,
+  ChevronRight
 } from 'lucide-react';
 import { format, isValid } from 'date-fns';
 import { vi, enUS } from 'date-fns/locale';
@@ -39,8 +39,6 @@ const MedicalHistory = () => {
   const [records, setRecords] = useState([]);
   const [filterType, setFilterType] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedRecord, setSelectedRecord] = useState(null);
-  const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const dateLocale = i18n.language === 'vi' ? vi : enUS;
   const navigate = useNavigate();
@@ -84,12 +82,7 @@ const MedicalHistory = () => {
   }, [records, searchQuery, filterType]);
 
   const handleOpenDetail = (record) => {
-    setSelectedRecord(record);
-    setIsDetailOpen(true);
-  };
-
-  const handleCloseDetail = () => {
-    setIsDetailOpen(false);
+    navigate(`/patient/records/${record.id}`);
   };
 
   const handleCardKeyDown = (event, record) => {
@@ -119,351 +112,261 @@ const MedicalHistory = () => {
     <PatientPageShell
       title={t('records.title')}
       subtitle={t('records.subtitle')}
-      maxWidth="lg"
+      maxWidth={false}
+      transparent={true}
       actions={
         <Button
           variant="contained"
-          startIcon={<Calendar size={18} />}
+          startIcon={<Calendar size={20} />}
           onClick={() => navigate('/patient/appointments/book-appointment')}
           sx={{
-            borderRadius: 3,
+            borderRadius: 4,
             bgcolor: '#10b981',
             '&:hover': { bgcolor: '#059669' },
             fontWeight: 700,
-            px: 3,
-            py: 1.2,
-            boxShadow: '0 4px 14px rgba(16, 185, 129, 0.3)',
-            width: 'auto',
-            minWidth: 0,
-            alignSelf: 'flex-end',
+            px: 4,
+            py: 1.5,
+            boxShadow: '0 10px 30px rgba(16, 185, 129, 0.2)',
+            textTransform: 'none',
           }}
         >
           {t('records.book_now')}
         </Button>
       }
     >
-      <Box sx={{ maxWidth: 1000, mx: 'auto' }}>
-        {/* Filters */}
-        <Box sx={{ mb: 4 }}>
-          <Card sx={{
-          p: 2, 
-          bgcolor: 'rgba(255, 255, 255, 0.6)', 
-          backdropFilter: 'blur(10px)',
-          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
-          border: '1px solid rgba(16, 185, 129, 0.1)',
-          borderRadius: 4
+      <Box sx={{ width: '100%' }}>
+        {/* Modern Filter Bar */}
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mb: 8, 
+          bgcolor: 'white', 
+          p: 1.5, 
+          borderRadius: 6,
+          border: '1px solid oklch(92% 0.02 250)',
+          flexWrap: { xs: 'wrap', lg: 'nowrap' },
+          boxShadow: '0 10px 30px rgba(0,0,0,0.02)'
         }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: { xs: 'column', md: 'row' }, 
-            gap: 2, 
-            alignItems: 'center',
-            width: '100%'
-          }}>
-            <TextField
-              placeholder={t('records.search_placeholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: <Search size={20} style={{ marginRight: 8, color: '#64748b' }} />,
-              }}
-              size="small"
-              sx={{ 
-                flex: 1, // Giãn ra chiếm 100% không gian còn lại
-                width: '100%',
-                '& .MuiOutlinedInput-root': { 
-                  bgcolor: '#ffffff',
-                  borderRadius: 2,
-                  '&:hover fieldset': { borderColor: '#10b981' },
-                } 
-              }}
-            />
-            
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 220 } }}>
-              <InputLabel>{t('records.department_filter')}</InputLabel>
-              <Select
-                value={filterType}
-                label={t('records.department_filter')}
-                onChange={(e) => setFilterType(e.target.value)}
-                sx={{ 
-                  bgcolor: '#ffffff',
-                  borderRadius: 2,
-                  '& .MuiOutlinedInput-notchedOutline': { borderRadius: 2 }
-                }}
-              >
-                <MenuItem value="ALL">{t('records.all_departments')}</MenuItem>
-                {[...new Set(records.map(r => r.departmentName).filter(Boolean))].map(dept => (
-                  <MenuItem key={dept} value={dept}>{dept}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          <TextField
+            placeholder={t('records.search_placeholder')}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            InputProps={{
+              startAdornment: <Search size={20} style={{ marginRight: 12, color: 'oklch(60% 0.02 250)' }} />,
+            }}
+            sx={{ 
+              flex: 1,
+              minWidth: { xs: '100%', lg: 400 },
+              '& .MuiOutlinedInput-root': { 
+                height: 52,
+                borderRadius: 5,
+                bgcolor: 'oklch(98% 0.01 250)',
+                '& fieldset': { border: 'none' },
+              } 
+            }}
+          />
+          
+          <TextField
+            select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value)}
+            sx={{ 
+              minWidth: { xs: '100%', lg: 240 },
+              '& .MuiOutlinedInput-root': { 
+                height: 52,
+                borderRadius: 5,
+                bgcolor: 'oklch(98% 0.01 250)',
+                '& fieldset': { border: 'none' }
+              }
+            }}
+          >
+            <MenuItem value="ALL">{t('records.all_departments')}</MenuItem>
+            {[...new Set(records.map(r => r.departmentName).filter(Boolean))].map(dept => (
+              <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+            ))}
+          </TextField>
 
-            <Button 
-              variant="contained" 
-              startIcon={<Filter size={18} />}
-              sx={{ 
-                height: 40, 
-                minWidth: { xs: '100%', md: 160 },
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 700,
-                whiteSpace: 'nowrap'
-              }}
-            >
-              {t('records.advanced_filter')}
-            </Button>
-          </Box>
-        </Card>
-      </Box>
-
-      {/* Timeline Content */}
-      {loading ? (
-        <LoadingScreen message={t('records.loading')} />
-      ) : filteredRecords.length > 0 ? (
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          style={{ position: 'relative', paddingLeft: isMobile ? '20px' : '40px' }}
-        >
-          {/* Vertical Line */}
-          {!isMobile && (
-            <Box sx={{
-              position: 'absolute',
-              left: '48px',
-              top: 0,
-              bottom: 0,
-              width: '2px',
-              bgcolor: 'rgba(16, 185, 129, 0.15)',
-              zIndex: 0
-            }} />
-          )}
-
-          {filteredRecords.map((record) => (
-            <motion.div key={record.id} variants={itemVariants} style={{ marginBottom: '24px', position: 'relative', paddingLeft: isMobile ? 0 : '40px' }}>
-              {/* Node Icon */}
-              <Box sx={{
-                position: 'absolute',
-                left: isMobile ? '-14px' : '-24px',
-                top: '20px',
-                width: isMobile ? '32px' : '48px',
-                height: isMobile ? '32px' : '48px',
-                borderRadius: '50%',
-                bgcolor: 'white',
-                border: '4px solid',
-                borderColor: CATEGORY_COLORS.EXAM,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1,
-                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-              }}>
-                <Stethoscope size={isMobile ? 16 : 24} color={CATEGORY_COLORS.EXAM} />
-              </Box>
-
-              {/* Card Content */}
-              <Card
-                role="button"
-                tabIndex={0}
-                aria-haspopup="dialog"
-                onClick={() => handleOpenDetail(record)}
-                onKeyDown={(event) => handleCardKeyDown(event, record)}
-                sx={{
-                  ml: isMobile ? 0 : '40px',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 32px rgba(8, 187, 163, 0.12)',
-                    borderColor: 'primary.main'
-                  },
-                  '&:focus-visible': {
-                    outline: 'none',
-                    borderColor: 'primary.main',
-                    boxShadow: '0 0 0 4px rgba(8, 187, 163, 0.18)'
-                  }
-                }}
-              >
-                <CardContent sx={{ p: isMobile ? 2 : 3 }}>
-                  <Grid container spacing={2}>
-                    <Grid item xs={12} md={8}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                        <Typography variant="overline" sx={{ fontWeight: 800, color: 'text.secondary', display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                          <Calendar size={14} />
-                          {formatDateValue(record.createdAt, 'dd MMMM, yyyy HH:mm')}
-                        </Typography>
-                        <Chip 
-                          label={record.departmentName || t('records.department_filter')} 
-                          size="small" 
-                          sx={{ 
-                            height: 20, 
-                            fontSize: '0.65rem', 
-                            fontWeight: 700, 
-                            bgcolor: 'rgba(59, 130, 246, 0.1)', 
-                            color: '#2563eb' 
-                          }} 
-                        />
-                      </Box>
-                      <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
-                        {record.diagnosis}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary" noWrap sx={{ mb: 1 }}>
-                        {record.symptoms || t('records.no_symptoms')}
-                      </Typography>
-                    </Grid>
-                    <Grid item xs={12} md={4} sx={{ borderLeft: { md: '1px solid #e2e8f0' }, pl: { md: 3 } }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Avatar sx={{ width: 36, height: 36, bgcolor: 'primary.main' }}>
-                          <User size={20} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="caption" sx={{ display: 'block', color: 'text.secondary', fontWeight: 600 }}>
-                            {t('records.attending_doctor')}
-                          </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {record.doctorName}
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Grid>
-                  </Grid>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
-      ) : (
-        <Box sx={{ textAlign: 'center', py: 10 }}>
-
-          <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 700 }}>
-            {t('records.no_records')}
-          </Typography>
           <Button 
             variant="contained" 
-            sx={{ mt: 3 }}
-            onClick={() => navigate('/patient/appointments/book-appointment')}
+            startIcon={<Filter size={18} />}
+            sx={{ 
+              height: 52, 
+              minWidth: { xs: '100%', lg: 180 },
+              borderRadius: 5,
+              bgcolor: 'oklch(20% 0.05 250)',
+              color: 'white',
+              fontWeight: 700,
+              textTransform: 'none',
+              '&:hover': { bgcolor: 'black' }
+            }}
           >
-            {t('records.book_now')}
+            {t('records.advanced_filter')}
           </Button>
         </Box>
-      )}
 
-      {/* Detail Modal */}
-      <Dialog
-        open={isDetailOpen}
-        onClose={handleCloseDetail}
-        fullWidth
-        maxWidth="md"
-        aria-labelledby="medical-history-detail-title"
-        PaperProps={{
-          sx: { borderRadius: '20px', p: 1 }
-        }}
-      >
-        {selectedRecord && (
-          <>
-            <DialogTitle id="medical-history-detail-title" sx={{ pb: 0 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Box>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>{t('records.detail_title')}</Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {t('records.record_id')}: {selectedRecord.id != null ? selectedRecord.id.toString().padStart(6, '0') : '-'}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <IconButton aria-label={t('records.print')} onClick={() => window.print()}><Printer size={20} /></IconButton>
-                  <IconButton aria-label={t('records.download_pdf')} onClick={() => window.print()}><Download size={20} /></IconButton>
-                </Box>
-              </Box>
-            </DialogTitle>
-            <DialogContent>
-              <Box sx={{ mt: 2 }}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={4}>
-                    <Card variant="outlined" sx={{ bgcolor: 'rgba(8, 187, 163, 0.03)', border: '1px dashed rgba(8, 187, 163, 0.3)' }}>
-                      <CardContent>
-                        <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Info size={16} /> {t('records.general_info')}
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.exam_date')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                              {formatDateValue(selectedRecord.createdAt, 'dd/MM/yyyy HH:mm')}
-                            </Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.doctor')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedRecord.doctorName || '-'}</Typography>
-                            <Typography variant="caption" color="primary.main">{selectedRecord.doctorSpecialization || '-'}</Typography>
-                          </Box>
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">{t('records.department')}</Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>{selectedRecord.departmentName || '-'}</Typography>
-                          </Box>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
+        {/* Timeline Content */}
+        {loading ? (
+          <LoadingScreen message={t('records.loading')} />
+        ) : filteredRecords.length > 0 ? (
+          <Box sx={{ position: 'relative', pl: { xs: 4, md: 8 } }}>
+            {/* Timeline Vertical Line */}
+            <Box sx={{
+              position: 'absolute',
+              left: { xs: '31px', md: '63px' },
+              top: 0,
+              bottom: 0,
+              width: 3,
+              bgcolor: 'oklch(95% 0.01 160)',
+              borderRadius: 2,
+              zIndex: 0
+            }} />
 
-                  <Grid item xs={12} md={8}>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <ClipboardList size={20} color={CATEGORY_COLORS.EXAM} /> {t('records.diagnosis_symptoms')}
-                        </Typography>
-                        <Typography variant="body1" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
-                          {selectedRecord.diagnosis || '-'}
-                        </Typography>
-                        <Typography variant="body2" sx={{ p: 2, bgcolor: '#f8fafc', borderRadius: 2 }}>
-                          {selectedRecord.symptoms || t('records.no_symptoms')}
-                        </Typography>
-                      </Box>
-
-                      <Divider />
-
-                      <Box>
-                        <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Pill size={20} color={CATEGORY_COLORS.MEDICATION} /> {t('records.prescription_treatment')}
-                        </Typography>
-                        <Typography variant="body2" sx={{ whiteSpace: 'pre-line', p: 2, border: '1px solid #e2e8f0', borderRadius: 2 }}>
-                          {selectedRecord.prescription || t('records.no_prescription')}
-                        </Typography>
-                        {selectedRecord.treatmentPlan && (
-                          <Box sx={{ mt: 2 }}>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>{t('records.treatment_plan')}</Typography>
-                            <Typography variant="body2" sx={{ mt: 0.5 }}>{selectedRecord.treatmentPlan}</Typography>
-                          </Box>
-                        )}
-                      </Box>
-
-                      {selectedRecord.notes && (
-                        <Box sx={{ p: 2, bgcolor: 'rgba(245, 158, 11, 0.05)', borderRadius: 2, borderLeft: '4px solid #f59e0b' }}>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 0.5 }}>{t('records.doctor_notes')}</Typography>
-                          <Typography variant="body2">{selectedRecord.notes}</Typography>
-                        </Box>
-                      )}
-
-                      {selectedRecord.followUpDate && (
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'error.main' }}>
-                          <Calendar size={16} />
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {t('records.follow_up')}: {formatDateValue(selectedRecord.followUpDate, 'dd/MM/yyyy')}
-                          </Typography>
-                        </Box>
-                      )}
+            <Stack spacing={6}>
+              {filteredRecords.map((record, idx) => (
+                <motion.div 
+                  key={record.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: idx * 0.05 }}
+                >
+                  <Box sx={{ position: 'relative' }}>
+                    {/* Node Icon */}
+                    <Box sx={{
+                      position: 'absolute',
+                      left: { xs: '-44px', md: '-64px' },
+                      top: '16px',
+                      width: 52,
+                      height: 52,
+                      borderRadius: '16px',
+                      bgcolor: 'white',
+                      border: '1.5px solid oklch(92% 0.02 250)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 1,
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.03)',
+                      color: '#10b981'
+                    }}>
+                      <Stethoscope size={24} />
                     </Box>
-                  </Grid>
-                </Grid>
-              </Box>
-            </DialogContent>
-            <DialogActions sx={{ p: 3 }}>
-              <Button onClick={handleCloseDetail} variant="outlined">{t('records.close')}</Button>
-              <Button variant="contained" startIcon={<Download size={18} />} onClick={() => window.print()}>{t('records.download_pdf')}</Button>
-            </DialogActions>
-          </>
+
+                    {/* Card Content */}
+                    <Box
+                      onClick={() => handleOpenDetail(record)}
+                      sx={{
+                        p: 4,
+                        borderRadius: 6,
+                        border: '1px solid oklch(95% 0.01 250)',
+                        bgcolor: 'white',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          transform: 'translateX(8px)',
+                          boxShadow: '0 15px 40px rgba(0,0,0,0.03)',
+                          borderColor: '#10b981'
+                        }
+                      }}
+                    >
+                      <Grid container spacing={4}>
+                        <Grid item xs={12} md={8}>
+                          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
+                            <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(50% 0.02 250)', display: 'flex', alignItems: 'center', gap: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                              <Calendar size={14} />
+                              {formatDateValue(record.createdAt, 'dd MMMM, yyyy HH:mm')}
+                            </Typography>
+                            <Chip 
+                              label={record.departmentName} 
+                              size="small"
+                              sx={{ 
+                                bgcolor: alpha('#10b981', 0.08), 
+                                color: '#10b981',
+                                fontWeight: 700,
+                                borderRadius: '6px'
+                              }} 
+                            />
+                          </Stack>
+                          <Typography variant="h4" sx={{ fontWeight: 700, mb: 1, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
+                            {record.diagnosis}
+                          </Typography>
+                          <Typography variant="body1" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 500, lineHeight: 1.6, mb: 3 }}>
+                            {record.symptoms || t('records.no_symptoms')}
+                          </Typography>
+                          <Button 
+                            variant="text" 
+                            size="small"
+                            endIcon={<ChevronRight size={16} className="chevron-icon" />}
+                            sx={{ 
+                              fontWeight: 700, 
+                              color: '#10b981', 
+                              textTransform: 'none',
+                              px: 0,
+                              '&:hover': {
+                                bgcolor: 'transparent',
+                                '& .chevron-icon': { transform: 'translateX(4px)' }
+                              }
+                            }}
+                          >
+                            {t('records.view_detail')}
+                          </Button>
+                        </Grid>
+                        <Grid item xs={12} md={4}>
+                          <Box sx={{ 
+                            p: 3, 
+                            borderRadius: 5, 
+                            bgcolor: 'oklch(99% 0.01 250)', 
+                            border: '1px solid oklch(96% 0.01 250)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 2.5,
+                            height: '100%'
+                          }}>
+                            <Avatar sx={{ width: 48, height: 48, borderRadius: '12px', bgcolor: alpha('#10b981', 0.1), color: '#10b981', fontWeight: 700 }}>
+                              {record.doctorName?.charAt(0)}
+                            </Avatar>
+                            <Box>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                {t('records.attending_doctor')}
+                              </Typography>
+                              <Typography variant="h6" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', fontSize: '1rem' }}>
+                                {record.doctorName}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  </Box>
+                </motion.div>
+              ))}
+            </Stack>
+          </Box>
+        ) : (
+          <Box sx={{ textAlign: 'center', py: 16 }}>
+            <Box sx={{ 
+              width: 120, height: 120, borderRadius: '50%', 
+              bgcolor: 'oklch(96% 0.01 250)', color: 'oklch(80% 0.02 250)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              mx: 'auto', mb: 4
+            }}>
+              <FileText size={64} strokeWidth={1.5} />
+            </Box>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 2, letterSpacing: '-0.02em' }}>
+              {t('records.no_records')}
+            </Typography>
+            <Button 
+              variant="contained" 
+              onClick={() => navigate('/patient/appointments/book-appointment')}
+              sx={{ 
+                borderRadius: 4, px: 6, py: 1.8, 
+                bgcolor: '#10b981', fontWeight: 700,
+                boxShadow: '0 10px 30px rgba(16, 185, 129, 0.2)'
+              }}
+            >
+              {t('records.book_now')}
+            </Button>
+          </Box>
         )}
-      </Dialog>
-    </Box>
+      </Box>
     </PatientPageShell>
   );
 };

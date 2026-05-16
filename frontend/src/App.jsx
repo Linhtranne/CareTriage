@@ -12,6 +12,7 @@ const PatientDashboard = lazy(() => import('./pages/patient/Dashboard'))
 const BookAppointment = lazy(() => import('./pages/patient/BookAppointment'))
 const MyAppointments = lazy(() => import('./pages/patient/MyAppointments'))
 const MedicalHistory = lazy(() => import('./pages/patient/MedicalHistory'))
+const MedicalRecordDetail = lazy(() => import('./pages/patient/MedicalRecordDetail'))
 const DoctorDashboard = lazy(() => import('./pages/doctor/Dashboard'))
 const DoctorAppointments = lazy(() => import('./pages/doctor/DoctorAppointments'))
 const TriageTicketInbox = lazy(() => import('./pages/doctor/TriageTicketInbox'))
@@ -90,6 +91,7 @@ export default function App() {
           </Route>
           <Route path="/patient/book-appointment" element={<Navigate to="/patient/appointments/book-appointment" replace />} />
           <Route path="/patient/records" element={<MedicalHistory />} />
+          <Route path="/patient/records/:id" element={<MedicalRecordDetail />} />
           <Route path="/patient/triage-tickets" element={<PatientTriageTickets />} />
         </Route>
       </Route>

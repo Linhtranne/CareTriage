@@ -74,17 +74,20 @@ export default function BookAppointment() {
   async function fetchDepartments() {
     try {
       const res = await publicApi.getDepartments({ size: 100 });
-      setDepartments(res.data?.content || []);
+      const depts = res.data.data?.content || [];
+      setDepartments(depts);
+      return depts;
     } catch (err) {
       console.error('Failed to fetch departments', err);
       setDepartments([]);
+      return [];
     }
   }
 
   async function fetchDoctors(deptId) {
     try {
       const res = await publicApi.getDoctors({ departmentId: deptId, size: 100 });
-      setDoctors(res.data?.content || []);
+      setDoctors(res.data.data?.content || []);
     } catch (err) {
       console.error('Failed to fetch doctors', err);
       setDoctors([]);
@@ -94,7 +97,7 @@ export default function BookAppointment() {
   async function fetchDoctorSchedules(doctorId) {
     try {
       const res = await appointmentApi.getDoctorSchedules(doctorId);
-      setDoctorSchedules(res.data || []);
+      setDoctorSchedules(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch doctor schedules', err);
       setDoctorSchedules([]);
@@ -105,7 +108,7 @@ export default function BookAppointment() {
     setLoading(true);
     try {
       const res = await appointmentApi.getAvailableSlots(doctorId, dateStr);
-      setAvailableSlots(res.data || []);
+      setAvailableSlots(res.data.data || []);
     } catch (err) {
       console.error('Failed to fetch slots', err);
       setAvailableSlots([]);
@@ -118,19 +121,69 @@ export default function BookAppointment() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- effect triggers async server fetch for initial department options
     fetchDepartments();
 
-    // Check for pre-filled data from navigation state
-    if (location.state) {
-      const { doctor, date, slot } = location.state;
-      if (doctor) setSelectedDoctor(doctor);
-      if (date) setSelectedDate(new Date(date));
-      if (slot) {
-        setSelectedSlot(slot);
-        setActiveStep(2); // Jump to step 3 (Confirm & Reason) if everything is pre-selected
-      } else if (doctor && date) {
-        setActiveStep(1); // Jump to step 2 (Slot Selection) if doctor and date are pre-selected
+    // Check for pre-filled data from navigation state or query params
+    const checkPreFilled = async (deptList) => {
+      if (location.state) {
+        const { doctor, date, slot, fromTriage, departmentName, reason: triageReason } = location.state;
+        
+        if (fromTriage) {
+          if (triageReason) setReason(triageReason);
+          if (departmentName && deptList) {
+            const normalize = (str) => str?.toLowerCase()
+              .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Remove accents
+              .replace(/đ/g, "d")
+              .replace(/^khoa\s+/i, '')
+              .replace(/\s+/g, ' ')
+              .trim() || '';
+            
+            // Split by comma or slash to handle multiple suggestions
+            const suggestedParts = departmentName.split(/[,/]/).map(p => normalize(p));
+            
+            const matchedDept = deptList.find(d => {
+              const dName = normalize(d.name);
+              const dNameVi = normalize(d.nameVi);
+              return suggestedParts.some(target => 
+                (target && dName.includes(target)) || (dName && target.includes(dName)) || 
+                (target && dNameVi.includes(target)) || (dNameVi && target.includes(dNameVi))
+              );
+            });
+
+            if (matchedDept) {
+              setSelectedDept(matchedDept);
+              fetchDoctors(matchedDept.id);
+              setActiveStep(1);
+            }
+          }
+          return;
+        }
+
+        if (doctor) setSelectedDoctor(doctor);
+        if (date) setSelectedDate(new Date(date));
+        if (slot) {
+          setSelectedSlot(slot);
+          setActiveStep(2);
+        } else if (doctor && date) {
+          setActiveStep(1);
+        }
+      } else {
+        const params = new URLSearchParams(location.search);
+        const doctorId = params.get('doctorId');
+        if (doctorId) {
+          try {
+            const res = await publicApi.getDoctorById(doctorId);
+            setSelectedDoctor(res.data.data);
+            setActiveStep(1);
+          } catch (err) {
+            console.error('Failed to fetch pre-selected doctor', err);
+          }
+        }
       }
-    }
-  }, [location.state]);
+    };
+
+    fetchDepartments().then(depts => {
+      checkPreFilled(depts);
+    });
+  }, [location.state, location.search]);
 
   useEffect(() => {
     if (selectedDept) {
@@ -206,11 +259,7 @@ export default function BookAppointment() {
     switch (step) {
       case 0:
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Stethoscope size={20} /> {t('booking.step1_title')}
-            </Typography>
-            
+          <Box sx={{ mt: 2 }}>
             <TextField
               select
               fullWidth
@@ -221,7 +270,7 @@ export default function BookAppointment() {
                 setSelectedDept(dept);
                 setSelectedDoctor(null);
               }}
-              sx={{ mb: 4, mt: 2 }}
+              sx={{ mb: 6, '& .MuiOutlinedInput-root': { borderRadius: 4, height: 64, bgcolor: 'white' } }}
             >
               <MenuItem value="">{t('booking.all_departments')}</MenuItem>
               {(departments || []).map((dept) => (
@@ -229,180 +278,218 @@ export default function BookAppointment() {
               ))}
             </TextField>
 
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500 }}>
+            <Typography variant="h5" sx={{ fontWeight: 950, mb: 4, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.03em' }}>
               {t('booking.available_doctors', { count: doctors.length })}
             </Typography>
             
-            <Grid container spacing={2}>
-              {(doctors || []).map((doc) => (
-                <Grid item xs={12} sm={6} key={doc.id}>
-                  <Card 
-                    variant="outlined" 
-                    sx={{ 
-                      borderRadius: 3,
-                      transition: 'all 0.2s',
-                      border: selectedDoctor?.id === doc.id ? '2px solid #10b981' : '1px solid #e2e8f0',
-                      bgcolor: selectedDoctor?.id === doc.id ? '#f0fdf4' : 'white',
-                      '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }
-                    }}
-                  >
-                    <CardActionArea onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setError(''); }}>
-                      <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Avatar src={doc.avatarUrl} sx={{ width: 64, height: 64, bgcolor: '#10b981' }}>
-                          {doc.fullName.charAt(0)}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{doc.fullName}</Typography>
-                          <Typography variant="body2" color="text.secondary">{doc.specialization}</Typography>
-                          <Typography variant="caption" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5, color: '#10b981', fontWeight: 600 }}>
-                            <CheckCircle2 size={12} /> {t('booking.ready_to_book')}
+            <Grid container spacing={3}>
+              {(doctors || []).map((doc) => {
+                const isSelected = selectedDoctor?.id === doc.id;
+                return (
+                  <Grid item xs={12} sm={6} lg={4} key={doc.id}>
+                    <Box 
+                      onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setError(''); }}
+                      sx={{ 
+                        p: 3,
+                        cursor: 'pointer',
+                        borderRadius: 6,
+                        border: '2px solid',
+                        borderColor: isSelected ? 'oklch(65% 0.15 160)' : 'oklch(92% 0.02 250)',
+                        bgcolor: isSelected ? 'oklch(98% 0.01 160)' : 'transparent',
+                        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 3,
+                        '&:hover': { 
+                          transform: 'translateY(-6px)', 
+                          borderColor: 'oklch(65% 0.15 160)',
+                          boxShadow: '0 20px 40px oklch(20% 0.05 250 / 0.06)'
+                        }
+                      }}
+                    >
+                      <Avatar 
+                        src={doc.avatarUrl} 
+                        sx={{ 
+                          width: 80, height: 80, borderRadius: 5,
+                          border: '3px solid white',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.08)'
+                        }}
+                      >
+                        {doc.fullName.charAt(0)}
+                      </Avatar>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 0.5, letterSpacing: '-0.02em' }}>
+                          {doc.fullName}
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'oklch(55% 0.02 250)', fontWeight: 700, mb: 1.5 }}>
+                          {doc.specialization}
+                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ color: 'oklch(65% 0.15 160)' }}>
+                          <CheckCircle2 size={16} />
+                          <Typography variant="caption" sx={{ fontWeight: 900, letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+                            {t('booking.ready_to_book')}
                           </Typography>
-                        </Box>
-                      </CardContent>
-                    </CardActionArea>
-                  </Card>
-                </Grid>
-              ))}
+                        </Stack>
+                      </Box>
+                    </Box>
+                  </Grid>
+                );
+              })}
             </Grid>
           </Box>
         );
 
       case 1:
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CalendarDays size={20} /> {t('booking.step2_title')}
-            </Typography>
-
-            <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 2, mt: 2, px: 1 }}>
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 3, px: 1, '&::-webkit-scrollbar': { display: 'none' } }}>
               {[...Array(14)].map((_, i) => {
                 const date = addDays(new Date(), i);
                 const isSelected = isSameDay(date, selectedDate);
                 const isWorking = isDoctorWorkingOn(date);
                 
                 return (
-                  <Card 
+                  <Box 
                     key={i}
-                    variant="outlined"
-                    sx={{ 
-                      minWidth: 85, 
-                      textAlign: 'center', 
-                      borderRadius: 4,
-                      cursor: isWorking ? 'pointer' : 'not-allowed',
-                      transition: 'all 0.2s',
-                      opacity: isWorking ? 1 : 0.4,
-                      border: isSelected ? '2px solid #10b981' : '1px solid #e2e8f0',
-                      bgcolor: isSelected ? '#10b981' : (isWorking ? 'white' : '#f8fafc'),
-                      color: isSelected ? 'white' : 'inherit',
-                      boxShadow: isSelected ? '0 4px 12px rgba(16, 185, 129, 0.2)' : 'none',
-                      '&:hover': isWorking ? { transform: 'translateY(-4px)', borderColor: '#10b981' } : {}
-                    }}
                     onClick={() => isWorking && setSelectedDate(date)}
+                    sx={{ 
+                      minWidth: 100, 
+                      p: 2.5,
+                      textAlign: 'center', 
+                      borderRadius: 5,
+                      cursor: isWorking ? 'pointer' : 'not-allowed',
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      opacity: isWorking ? 1 : 0.3,
+                      border: '2px solid',
+                      borderColor: isSelected ? 'oklch(65% 0.15 160)' : 'oklch(92% 0.02 250)',
+                      bgcolor: isSelected ? 'oklch(65% 0.15 160)' : 'transparent',
+                      color: isSelected ? 'white' : 'inherit',
+                      '&:hover': isWorking ? { transform: 'translateY(-4px)', borderColor: 'oklch(65% 0.15 160)' } : {}
+                    }}
                   >
-                    <CardContent sx={{ p: '14px !important' }}>
-                      <Typography variant="caption" sx={{ textTransform: 'uppercase', opacity: 0.8, fontWeight: 700, fontSize: '0.65rem' }}>
-                        {format(date, 'eee', { locale: dateLocale })}
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontWeight: 800, my: 0.2 }}>
-                        {format(date, 'dd')}
-                      </Typography>
-                      <Typography variant="caption" sx={{ fontSize: '0.7rem' }}>
-                        {format(date, 'MMM', { locale: dateLocale })}
-                      </Typography>
-                    </CardContent>
-                  </Card>
+                    <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, letterSpacing: '0.1em', opacity: isSelected ? 0.9 : 0.6 }}>
+                      {format(date, 'eee', { locale: dateLocale })}
+                    </Typography>
+                    <Typography variant="h4" sx={{ fontWeight: 950, my: 0.5, letterSpacing: '-0.04em' }}>
+                      {format(date, 'dd')}
+                    </Typography>
+                    <Typography variant="caption" sx={{ fontWeight: 800, textTransform: 'uppercase', opacity: isSelected ? 0.9 : 0.6 }}>
+                      {format(date, 'MMM', { locale: dateLocale })}
+                    </Typography>
+                  </Box>
                 );
               })}
             </Box>
 
-            <Divider sx={{ my: 3 }} />
-
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 500, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Clock size={18} /> {t('booking.available_slots')}
+            <Typography variant="h5" sx={{ fontWeight: 950, mt: 6, mb: 4, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.03em' }}>
+              {t('booking.available_slots')}
             </Typography>
 
             {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress size={32} />
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress size={48} sx={{ color: 'oklch(65% 0.15 160)' }} />
               </Box>
             ) : (availableSlots || []).length > 0 ? (
-              <Grid container spacing={1} sx={{ mt: 1 }}>
+              <Grid container spacing={2}>
                 {(availableSlots || []).map((slot, idx) => (
-                  <Grid item xs={4} sm={3} md={2} key={idx}>
-                    <Button
-                      fullWidth
-                      variant={selectedSlot === slot ? "contained" : "outlined"}
-                      disabled={!slot.available}
-                      onClick={() => { setSelectedSlot(slot); setError(''); }}
+                  <Grid item xs={6} sm={4} md={3} lg={2} key={idx}>
+                    <Box
+                      onClick={() => { if(slot.available) { setSelectedSlot(slot); setError(''); } }}
                       sx={{ 
-                        borderRadius: 2,
-                        py: 1,
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        bgcolor: selectedSlot === slot ? '#10b981' : 'transparent',
-                        borderColor: slot.available ? '#10b981' : '#e2e8f0',
-                        color: selectedSlot === slot ? 'white' : (slot.available ? '#10b981' : '#94a3b8'),
-                        '&:hover': { bgcolor: selectedSlot === slot ? '#059669' : '#f0fdf4' }
+                        py: 2.5,
+                        textAlign: 'center',
+                        borderRadius: 4,
+                        cursor: slot.available ? 'pointer' : 'not-allowed',
+                        border: '2px solid',
+                        borderColor: selectedSlot === slot ? 'oklch(65% 0.15 160)' : 'oklch(92% 0.02 250)',
+                        bgcolor: selectedSlot === slot ? 'oklch(65% 0.15 160)' : 'transparent',
+                        color: selectedSlot === slot ? 'white' : (slot.available ? 'oklch(20% 0.05 250)' : 'oklch(85% 0.02 250)'),
+                        fontWeight: 900,
+                        fontSize: '1.1rem',
+                        transition: 'all 0.2s',
+                        '&:hover': slot.available ? { borderColor: 'oklch(65% 0.15 160)', bgcolor: selectedSlot === slot ? 'oklch(65% 0.15 160)' : 'oklch(98% 0.01 160)' } : {}
                       }}
                     >
                       {slot.startTime.substring(0, 5)}
-                    </Button>
+                    </Box>
                   </Grid>
                 ))}
               </Grid>
             ) : (
-              <Alert severity="info" sx={{ mt: 2, borderRadius: 2 }}>
-                {t('booking.no_slots')}
-              </Alert>
+              <Box sx={{ py: 8, textAlign: 'center', bgcolor: 'oklch(98% 0.01 250)', borderRadius: 6 }}>
+                <Clock size={48} color="oklch(80% 0.02 250)" style={{ marginBottom: 16 }} />
+                <Typography variant="h6" sx={{ color: 'oklch(60% 0.02 250)', fontWeight: 800 }}>
+                  {t('booking.no_slots')}
+                </Typography>
+              </Box>
             )}
           </Box>
         );
 
       case 2:
         return (
-          <Box sx={{ mt: 3 }}>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CheckCircle2 size={20} /> {t('booking.step3_title')}
-            </Typography>
-
-            <Paper variant="outlined" sx={{ p: 3, borderRadius: 4, bgcolor: '#f8fafc', mb: 4, mt: 2 }}>
-              <Grid container spacing={3}>
+          <Box sx={{ mt: 2 }}>
+            <Box sx={{ 
+              p: 6, 
+              borderRadius: 8, 
+              bgcolor: 'oklch(98% 0.01 250)', 
+              border: '1px solid oklch(92% 0.02 250)',
+              mb: 6
+            }}>
+              <Grid container spacing={6}>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary">{t('booking.confirm_doctor')}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.5 }}>
-                    <Avatar src={selectedDoctor?.avatarUrl} sx={{ width: 40, height: 40 }} />
+                  <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
+                    {t('booking.confirm_doctor')}
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mt: 2.5 }}>
+                    <Avatar src={selectedDoctor?.avatarUrl} sx={{ width: 72, height: 72, borderRadius: 4 }} />
                     <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{selectedDoctor?.fullName}</Typography>
-                      <Typography variant="caption">{selectedDoctor?.specialization}</Typography>
+                      <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
+                        {selectedDoctor?.fullName}
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 700, color: 'oklch(65% 0.15 160)' }}>
+                        {selectedDoctor?.specialization}
+                      </Typography>
                     </Box>
                   </Box>
                 </Grid>
                 <Grid item xs={12} md={6}>
-                  <Typography variant="caption" color="text.secondary">{t('booking.confirm_time')}</Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <CalendarDays size={18} color="#10b981" />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {format(selectedDate, 'eeee, dd/MM/yyyy', { locale: dateLocale })}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                    <Clock size={18} color="#10b981" />
-                    <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                      {selectedSlot?.startTime.substring(0, 5)} - {selectedSlot?.endTime.substring(0, 5)}
-                    </Typography>
-                  </Box>
+                  <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
+                    {t('booking.confirm_time')}
+                  </Typography>
+                  <Stack spacing={2} sx={{ mt: 2.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)' }}>
+                        <CalendarDays size={24} />
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 250)' }}>
+                        {format(selectedDate, 'eeee, dd/MM/yyyy', { locale: dateLocale })}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ p: 1.5, borderRadius: 3, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)' }}>
+                        <Clock size={24} />
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 250)' }}>
+                        {selectedSlot?.startTime.substring(0, 5)} - {selectedSlot?.endTime.substring(0, 5)}
+                      </Typography>
+                    </Box>
+                  </Stack>
                 </Grid>
                 <Grid item xs={12}>
-                  <Divider sx={{ my: 1 }} />
-                  <Typography variant="caption" color="text.secondary">{t('booking.confirm_patient')}</Typography>
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600, mt: 0.5 }}>
-                    {user?.fullName} — {user?.phone}
-                  </Typography>
+                  <Box sx={{ p: 3, bgcolor: 'white', borderRadius: 4, border: '1px solid oklch(92% 0.02 250)' }}>
+                    <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
+                      {t('booking.confirm_patient')}
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, mt: 1, color: 'oklch(20% 0.05 250)' }}>
+                      {user?.fullName} <span style={{ opacity: 0.5, margin: '0 8px' }}>•</span> {user?.phone}
+                    </Typography>
+                  </Box>
                 </Grid>
               </Grid>
-            </Paper>
+            </Box>
 
-            <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
+            <Typography variant="h6" sx={{ fontWeight: 950, mb: 2, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
               {t('booking.reason_label')}
             </Typography>
             <TextField
@@ -415,7 +502,7 @@ export default function BookAppointment() {
               error={!!error && reason.length < 10}
               helperText={reason.length > 0 && reason.length < 10 ? t('booking.reason_short') : ""}
               sx={{ 
-                '& .MuiOutlinedInput-root': { borderRadius: 3 }
+                '& .MuiOutlinedInput-root': { borderRadius: 5, bgcolor: 'white', p: 3, fontSize: '1.1rem' }
               }}
             />
           </Box>
@@ -423,30 +510,48 @@ export default function BookAppointment() {
 
       case 3: // Success
         return (
-          <Box sx={{ textAlign: 'center', py: 6 }}>
-            <Box sx={{ mb: 3 }}>
-              <CheckCircle2 size={80} color="#10b981" />
+          <Box sx={{ textAlign: 'center', py: 8 }}>
+            <Box sx={{ 
+              width: 120, height: 120, borderRadius: '50%', 
+              bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              mx: 'auto', mb: 4,
+              boxShadow: '0 20px 40px oklch(65% 0.15 160 / 0.1)'
+            }}>
+              <CheckCircle2 size={64} strokeWidth={2.5} />
             </Box>
-            <Typography variant="h4" gutterBottom sx={{ fontWeight: 800 }}>{t('booking.success_title')}</Typography>
-            <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 500, mx: 'auto' }}>
+            <Typography variant="h3" sx={{ fontWeight: 950, mb: 2, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.04em' }}>
+              {t('booking.success_title')}
+            </Typography>
+            <Typography variant="h6" sx={{ color: 'oklch(50% 0.02 250)', mb: 8, maxWidth: 600, mx: 'auto', fontWeight: 500, lineHeight: 1.6 }}>
               {t('booking.success_desc')}
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} justifyContent="center">
               <Button 
                 variant="contained" 
                 onClick={() => navigate('/patient/appointments')}
-                sx={{ borderRadius: 2, px: 4, py: 1.2, bgcolor: '#10b981', '&:hover': { bgcolor: '#059669' } }}
+                sx={{ 
+                  borderRadius: 4, px: 6, py: 2, 
+                  bgcolor: 'oklch(20% 0.05 250)', color: 'white',
+                  fontWeight: 950, fontSize: '1.1rem',
+                  '&:hover': { bgcolor: 'oklch(15% 0.05 250)' }
+                }}
               >
                 {t('booking.manage_btn')}
               </Button>
               <Button 
                 variant="outlined" 
                 onClick={() => navigate('/patient/dashboard')}
-                sx={{ borderRadius: 2, px: 4, py: 1.2, color: '#10b981', borderColor: '#10b981' }}
+                sx={{ 
+                  borderRadius: 4, px: 6, py: 2, 
+                  color: 'oklch(20% 0.05 250)', borderColor: 'oklch(20% 0.05 250)',
+                  borderWidth: 2, fontWeight: 950, fontSize: '1.1rem',
+                  '&:hover': { borderWidth: 2, bgcolor: 'oklch(96% 0.01 250)' }
+                }}
               >
                 {t('booking.dashboard_btn')}
               </Button>
-            </Box>
+            </Stack>
           </Box>
         );
 
@@ -459,7 +564,8 @@ export default function BookAppointment() {
     <PatientPageShell
       title={t('booking.title')}
       subtitle={t('booking.subtitle')}
-      maxWidth="md"
+      maxWidth={false}
+      transparent={true}
       actions={
         <Button
           variant="outlined"
@@ -484,96 +590,107 @@ export default function BookAppointment() {
         </Button>
       }
     >
-      <Paper
-        elevation={0} 
-        sx={{ 
-          p: { xs: 3, md: 5 }, 
-          borderRadius: 6, 
-          boxShadow: '0 10px 40px rgba(0,0,0,0.04)',
-          border: '1px solid #f1f5f9'
-        }}
-      >
-        {activeStep < 3 && (
-          <Stepper
-            activeStep={activeStep}
-            orientation={isMobile ? 'vertical' : 'horizontal'}
-            alternativeLabel={!isMobile}
-            sx={{ mb: { xs: 4, sm: 5 } }}
-          >
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel
-                  slotProps={{
-                    stepIcon: {
-                      sx: {
-                        '&.Mui-active': { color: '#10b981' },
-                        '&.Mui-completed': { color: '#10b981' }
-                      }
-                    }
-                  }}
-                >
-                  <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>{label}</Typography>
-                </StepLabel>
-              </Step>
-            ))}
-          </Stepper>
-        )}
+      <Box sx={{ mt: -2 }}>
+        <Paper
+          elevation={0} 
+          sx={{ 
+            p: { xs: 4, md: 6 }, 
+            borderRadius: 8, 
+            border: '1px solid oklch(92% 0.02 250)',
+            bgcolor: 'transparent',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          {activeStep < 3 && (
+            <Box sx={{ mb: 6 }}>
+              <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+                {steps.map((_, i) => (
+                  <Box 
+                    key={i} 
+                    sx={{ 
+                      flex: 1, 
+                      height: 6, 
+                      borderRadius: 1, 
+                      bgcolor: i <= activeStep ? 'oklch(65% 0.15 160)' : 'oklch(92% 0.02 250)',
+                      transition: 'all 0.6s cubic-bezier(0.16, 1, 0.3, 1)'
+                    }} 
+                  />
+                ))}
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.04em' }}>
+                  {steps[activeStep]}
+                </Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(60% 0.02 250)', letterSpacing: '-0.02em' }}>
+                  {activeStep + 1} / {steps.length}
+                </Typography>
+              </Stack>
+            </Box>
+          )}
 
-        {error && (
-          <Alert 
-            severity="error" 
-            onClose={() => setError('')} 
-            sx={{ mb: 3, borderRadius: 3, alignItems: 'center' }}
-            icon={<AlertCircle size={20} />}
-          >
-            {error}
-          </Alert>
-        )}
-
-        {renderStepContent(activeStep)}
-
-        {activeStep < 3 && (
-          <Stack
-            direction={{ xs: 'column-reverse', sm: 'row' }}
-            spacing={2}
-            sx={{ mt: 6 }}
-            justifyContent="space-between"
-          >
-            <Button
-              disabled={activeStep === 0 || loading}
-              onClick={handleBack}
-              startIcon={<ChevronLeft size={18} />}
-              fullWidth={isMobile}
-              sx={{ borderRadius: 2, px: 3, color: '#64748b', fontWeight: 600 }}
+          {error && (
+            <Alert 
+              severity="error" 
+              onClose={() => setError('')} 
+              sx={{ mb: 4, borderRadius: 4, bgcolor: 'oklch(98% 0.01 20)', color: 'oklch(40% 0.1 20)', fontWeight: 700 }}
+              icon={<AlertCircle size={22} />}
             >
-              {t('booking.back')}
-            </Button>
+              {error}
+            </Alert>
+          )}
 
-            {activeStep === steps.length - 1 ? (
+          {renderStepContent(activeStep)}
+
+          {activeStep < 3 && (
+            <Stack
+              direction={{ xs: 'column-reverse', sm: 'row' }}
+              spacing={3}
+              sx={{ mt: 8 }}
+              justifyContent="space-between"
+            >
+              <Button
+                disabled={activeStep === 0 || loading}
+                onClick={handleBack}
+                startIcon={<ChevronLeft size={20} />}
+                fullWidth={isMobile}
+                sx={{ 
+                  borderRadius: 4, 
+                  px: 4, 
+                  py: 1.5,
+                  color: 'oklch(40% 0.02 250)', 
+                  fontWeight: 900,
+                  fontSize: '1rem',
+                  '&:hover': { bgcolor: 'oklch(96% 0.01 250)' }
+                }}
+              >
+                {t('booking.back')}
+              </Button>
+
               <Button
                 variant="contained"
-                onClick={handleBooking}
+                onClick={activeStep === steps.length - 1 ? handleBooking : handleNext}
                 disabled={loading}
                 fullWidth={isMobile}
-                endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ChevronRight size={18} />}
-                sx={{ borderRadius: 2, px: 4, py: 1.2, bgcolor: '#10b981', fontWeight: 700, '&:hover': { bgcolor: '#059669' } }}
+                endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ChevronRight size={20} />}
+                sx={{ 
+                  borderRadius: 4, 
+                  px: 6, 
+                  py: 1.5, 
+                  bgcolor: 'oklch(65% 0.15 160)', 
+                  fontWeight: 950,
+                  fontSize: '1rem',
+                  boxShadow: '0 10px 30px oklch(65% 0.15 160 / 0.3)',
+                  '&:hover': { bgcolor: 'oklch(60% 0.15 160)', transform: 'translateY(-2px)' },
+                  transition: 'all 0.3s'
+                }}
               >
-                {t('booking.confirm_booking')}
+                {activeStep === steps.length - 1 ? t('booking.confirm_booking') : t('booking.next')}
               </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                fullWidth={isMobile}
-                endIcon={<ChevronRight size={18} />}
-                sx={{ borderRadius: 2, px: 4, py: 1.2, bgcolor: '#10b981', fontWeight: 700, '&:hover': { bgcolor: '#059669' } }}
-              >
-                {t('booking.next')}
-              </Button>
-            )}
-          </Stack>
-        )}
-      </Paper>
+            </Stack>
+          )}
+        </Paper>
+      </Box>
     </PatientPageShell>
   );
 }

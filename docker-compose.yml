@@ -30,6 +30,7 @@ services:
       DB_PASSWORD: 123456
       JWT_SECRET: ${JWT_SECRET:-caretriage-docker-secret-key-min-256-bits-long-for-hmac-sha256}
       AI_SERVICE_URL: http://ai-service:8000
+      AI_SERVICE_INTERNAL_KEY: ${INTERNAL_API_KEY:-caretriage-internal-secret-for-dev-only-min-32-chars-long}
     depends_on:
       mysql:
         condition: service_healthy
@@ -37,10 +38,11 @@ services:
   ai-service:
     build: ./ai-service
     container_name: caretriage-ai
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     environment:
       GEMINI_API_KEY: ${GEMINI_API_KEY}
+      INTERNAL_API_KEY: ${INTERNAL_API_KEY:-caretriage-internal-secret-for-dev-only-min-32-chars-long}
 
   frontend:
     build: ./frontend

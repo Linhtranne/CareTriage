@@ -25,7 +25,7 @@ public class MedicalRecord {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "appointment_id")
+    @JoinColumn(name = "appointment_id", unique = true)
     private Appointment appointment;
 
     @ManyToOne(fetch = FetchType.LAZY)

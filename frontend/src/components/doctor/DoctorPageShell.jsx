@@ -1,7 +1,7 @@
-import { Box, Chip, Container, Paper, Stack, Typography } from '@mui/material'
+import { Box, Container, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
-export default function PatientPageShell({
+export default function DoctorPageShell({
   title,
   subtitle,
   actions,
@@ -12,7 +12,7 @@ export default function PatientPageShell({
   transparent = false
 }) {
   const { t } = useTranslation()
-  const badgeLabel = badge || t('patient_shell.badge')
+  const badgeLabel = badge || 'Clinical Workspace'
 
   return (
     <Box sx={{ minHeight: '100%', bgcolor: 'white' }}>
@@ -31,9 +31,10 @@ export default function PatientPageShell({
             <Box
               sx={{
                 px: 1.5, py: 0.5, borderRadius: 2, 
-                bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)',
-                fontSize: '0.75rem', fontWeight: 600, textTransform: 'uppercase',
-                alignSelf: 'flex-start', letterSpacing: '0.1em'
+                bgcolor: 'oklch(96% 0.01 250)', color: 'oklch(50% 0.15 250)',
+                fontSize: '0.75rem', fontWeight: 950, textTransform: 'uppercase',
+                alignSelf: 'flex-start', letterSpacing: '0.1em',
+                border: '1px solid oklch(90% 0.02 250)'
               }}
             >
               {badgeLabel}
@@ -51,7 +52,7 @@ export default function PatientPageShell({
                 <Typography
                   variant="h2"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 950,
                     letterSpacing: '-0.05em',
                     lineHeight: 1.05,
                     color: 'oklch(20% 0.05 250)',

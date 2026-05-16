@@ -170,13 +170,13 @@ public class AppointmentServiceImpl implements AppointmentService {
         // Verify ownership (patient or doctor can cancel)
         if (!appointment.getPatient().getId().equals(userId)
                 && !appointment.getDoctor().getId().equals(userId)) {
-            throw new RuntimeException("Bạn không có quyền hủy lịch hẹn này");
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không có quyền hủy lịch hẹn này");
         }
 
         // Business Rule: Cannot cancel less than 2 hours before appointment
         LocalDateTime appointmentDateTime = LocalDateTime.of(appointment.getAppointmentDate(), appointment.getAppointmentTime());
-        if (LocalDateTime.now().plusHours(2).isAfter(appointmentDateTime)) {
-            throw new RuntimeException("Không thể hủy lịch hẹn trước giờ khám ít hơn 02 tiếng");
+        if (LocalDateTime.now(SYSTEM_ZONE).plusHours(2).isAfter(appointmentDateTime)) {
+            throw new BusinessException("Không thể hủy lịch hẹn trước giờ khám ít hơn 02 tiếng");
         }
 
         AppointmentStatus previousStatus = appointment.getStatus();
@@ -196,12 +196,16 @@ public class AppointmentServiceImpl implements AppointmentService {
         List<Appointment> appointments;
 
         if (status != null && !status.isEmpty()) {
-            try {
-                AppointmentStatus appointmentStatus = AppointmentStatus.valueOf(status.toUpperCase());
-                appointments = appointmentRepository.findByPatientIdAndStatus(patientId, appointmentStatus);
-            } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Trạng thái không hợp lệ: " + status);
+            String[] statusArray = status.split(",");
+            List<AppointmentStatus> statuses = new ArrayList<>();
+            for (String s : statusArray) {
+                try {
+                    statuses.add(AppointmentStatus.valueOf(s.trim().toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    throw new BusinessException("Trạng thái không hợp lệ: " + s);
+                }
             }
+            appointments = appointmentRepository.findByPatientIdAndStatusInOrderByAppointmentDateDesc(patientId, statuses);
         } else {
             appointments = appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId);
         }
@@ -249,27 +253,27 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn"));
 
         if (!appointment.getDoctor().getId().equals(doctorId)) {
-            throw new RuntimeException("Bạn không có quyền cập nhật lịch hẹn này");
+            throw new org.springframework.security.access.AccessDeniedException("Bạn không có quyền cập nhật lịch hẹn này");
         }
 
         AppointmentStatus newStatus;
         try {
             newStatus = AppointmentStatus.valueOf(request.getStatus().toUpperCase());
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Trạng thái không hợp lệ: " + request.getStatus());
+            throw new BusinessException("Trạng thái không hợp lệ: " + request.getStatus());
         }
 
         // Business Rule: One IN_PROGRESS at a time (T-032)
         if (newStatus == AppointmentStatus.IN_PROGRESS) {
             List<Appointment> inProgress = appointmentRepository.findByDoctorIdAndStatus(doctorId, AppointmentStatus.IN_PROGRESS);
             if (!inProgress.isEmpty() && !inProgress.get(0).getId().equals(appointmentId)) {
-                throw new RuntimeException("Bạn đang có một ca khám chưa kết thúc. Vui lòng hoàn thành ca cũ trước.");
+                throw new com.caretriage.exception.ConflictException("Bạn đang có một ca khám chưa kết thúc. Vui lòng hoàn thành ca cũ trước.");
             }
         }
 
         // Business Rule: Cancellation requires reason
         if (newStatus == AppointmentStatus.CANCELLED && (request.getNotes() == null || request.getNotes().trim().isEmpty())) {
-            throw new RuntimeException("Vui lòng nhập lý do khi hủy lịch khám");
+            throw new BusinessException("Vui lòng nhập lý do khi hủy lịch khám");
         }
 
         // Validate status transitions
@@ -365,11 +369,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy triage ticket"));
 
         if (appointmentRepository.existsByTriageTicketId(request.getTicketId())) {
-            throw new RuntimeException("Phiếu này đã có lịch hẹn trước đó");
+            throw new com.caretriage.exception.ConflictException("Phiếu này đã có lịch hẹn trước đó");
         }
 
         if (request.getAppointmentDate().isBefore(LocalDate.now())) {
-            throw new RuntimeException("Không thể tạo lịch hẹn trong quá khứ");
+            throw new BusinessException("Không thể tạo lịch hẹn trong quá khứ");
         }
 
         AppointmentRequest appointmentRequest = new AppointmentRequest();
@@ -393,9 +397,22 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
-    public AppointmentResponse getAppointmentById(Long appointmentId) {
+    public AppointmentResponse getAppointmentById(Long appointmentId, String userEmail) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn"));
+
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy người dùng"));
+
+        boolean isAuthorized = user.getRoles().stream()
+                .anyMatch(r -> r.getName().equals("ROLE_ADMIN") || r.getName().equals("ROLE_SUPER_ADMIN"))
+                || appointment.getPatient().getId().equals(user.getId())
+                || appointment.getDoctor().getId().equals(user.getId());
+
+        if (!isAuthorized) {
+            throw new BusinessException("Bạn không có quyền xem chi tiết lịch hẹn này");
+        }
+
         return mapToResponse(appointment);
     }
 
@@ -421,7 +438,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         };
 
         if (!valid) {
-            throw new RuntimeException(
+            throw new BusinessException(
                     String.format("Không thể chuyển trạng thái từ %s sang %s", current, next));
         }
     }

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, X, ChevronDown, WifiOff,
@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import MessageBubble from './MessageBubble';
 import TypingIndicator from './TypingIndicator';
+import EmergencyOverlay from './EmergencyOverlay';
+import TriageConclusionCard from './TriageConclusionCard';
 
 const QUICK_REPLIES = ['Đau đầu', 'Sốt cao', 'Ho có đờm', 'Khó thở', 'Đau ngực', 'Mất ngủ'];
 
@@ -34,6 +36,41 @@ const ChatWindow = ({
   const prevScrollHeightRef = useRef(0);
   const [inputValue, setInputValue] = useState('');
   const [showScrollBtn, setShowScrollBtn] = useState(false);
+
+  // Triage Logic
+  const triageResult = useMemo(() => {
+    const lastAiWithMeta = [...messages].reverse().find(m => m.senderType === 'AI' && (m.metadata || m.content?.includes('### 🏥')));
+    if (!lastAiWithMeta) return null;
+    
+    // If we have structured metadata, use it
+    if (lastAiWithMeta.metadata) {
+      try {
+        const meta = typeof lastAiWithMeta.metadata === 'string' 
+          ? JSON.parse(lastAiWithMeta.metadata) 
+          : lastAiWithMeta.metadata;
+        return meta.triage_result || meta;
+      } catch { /* fall through to content parsing */ }
+    }
+
+    // Fallback: Parse from content if metadata is missing/malformed but looks like a result
+    if (lastAiWithMeta.content?.includes('### 🏥')) {
+      const content = lastAiWithMeta.content;
+      const deptMatch = content.match(/Chuyên khoa đề xuất:\s*\*\*?(.*?)\*\*?(\n|$)/i);
+      const urgencyMatch = content.match(/Mức độ ưu tiên:\s*\[(.*?)\]/i);
+      
+      return {
+        suggested_department: deptMatch ? deptMatch[1].trim() : 'Nội tổng quát',
+        urgency_level: urgencyMatch ? (urgencyMatch[1].includes('CẤP CỨU') ? 'EMERGENCY' : 'MEDIUM') : 'MEDIUM',
+        summary: 'Dựa trên thông tin sơ chẩn vừa thực hiện.',
+        is_complete: true
+      };
+    }
+    
+    return null;
+  }, [messages]);
+
+  const isEmergency = triageResult?.urgency_level === 'EMERGENCY';
+  const isComplete = triageResult?.is_complete || triageResult?.urgency_level !== undefined;
 
   // ... (auto scroll logic remains same)
   useEffect(() => {
@@ -151,7 +188,7 @@ const ChatWindow = ({
               {onOpenHistory && (
                 <button
                   onClick={onOpenHistory}
-                  disabled={isTyping || isSessionLoading}
+                  disabled={isTyping || isSessionLoading || isEmergency}
                   className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-50 text-slate-400 transition-colors disabled:opacity-40"
                   title="Lịch sử chat"
                 >
@@ -161,7 +198,7 @@ const ChatWindow = ({
               {onNewChat && (
                 <button
                   onClick={onNewChat}
-                  disabled={isTyping || isSessionLoading}
+                  disabled={isTyping || isSessionLoading || isEmergency}
                   className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-slate-50 text-slate-400 transition-colors disabled:opacity-40"
                   title="Chat mới"
                 >
@@ -173,6 +210,8 @@ const ChatWindow = ({
               </button>
             </div>
           </div>
+
+          {isEmergency && <EmergencyOverlay />}
 
           {/* ─── Messages Area ─── */}
           <div
@@ -236,6 +275,10 @@ const ChatWindow = ({
                     nextMessage={messages[idx + 1]}
                   />
                 ))}
+                
+                {isComplete && !isEmergency && triageResult && (
+                  <TriageConclusionCard result={triageResult} />
+                )}
               </AnimatePresence>
 
               {/* Typing */}
@@ -334,8 +377,8 @@ const ChatWindow = ({
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
                 }}
                 onKeyDown={handleKeyDown}
-                disabled={isTyping || !isConnected || !isSessionReady}
-                placeholder="Aa"
+                disabled={isTyping || !isConnected || !isSessionReady || isEmergency}
+                placeholder={isEmergency ? "Hệ thống đã khóa" : "Aa"}
                 className="flex-1 w-full text-[15px] resize-none bg-transparent border-none focus:ring-0 focus:outline-none focus-visible:outline-none disabled:opacity-50 m-0 !shadow-none"
                 style={{ 
                   color: '#1e293b',

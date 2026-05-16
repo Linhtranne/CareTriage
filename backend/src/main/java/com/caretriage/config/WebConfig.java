@@ -17,6 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(rateLimitInterceptor)
                 .addPathPatterns("/api/v1/doctors/**/slots")
                 .addPathPatterns("/api/v1/appointments/slots")
-                .addPathPatterns("/api/v1/schedules/**");
+                .addPathPatterns("/api/v1/schedules/**")
+                .addPathPatterns("/api/v1/medical-records/**");
     }
 }

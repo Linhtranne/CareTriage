@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-
-
 import {
   Box,
   Container,
@@ -32,6 +30,7 @@ import {
   Switch,
   FormControlLabel,
   Autocomplete,
+  Stack,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -66,6 +65,9 @@ import { keyframes } from '@emotion/react';
 import { useTranslation } from 'react-i18next';
 import axiosClient from '../../api/axiosClient';
 import useAuthStore from '../../store/authStore';
+import PatientPageShell from '../../components/patient/PatientPageShell';
+import CustomTextField from '../../components/common/CustomTextField';
+import InteractiveParticles from '../../components/common/InteractiveParticles';
 
 // Animations
 const float = keyframes`
@@ -73,197 +75,24 @@ const float = keyframes`
   50% { transform: translateY(-10px); }
 `;
 
-// Interactive Particle Visualizer
-function InteractiveParticles({ mode = 'neural', color = '16, 185, 129' }) {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    let animationFrameId;
-
-    const parent = canvas.parentElement;
-    let width = (canvas.width = parent.clientWidth);
-    let height = (canvas.height = parent.clientHeight);
-
-    const handleResize = () => {
-      width = (canvas.width = parent.clientWidth);
-      height = (canvas.height = parent.clientHeight);
-    };
-    window.addEventListener('resize', handleResize);
-
-    const mouse = { x: null, y: null };
-    const handleMouseMove = (e) => {
-      const rect = parent.getBoundingClientRect();
-      mouse.x = e.clientX - rect.left;
-      mouse.y = e.clientY - rect.top;
-    };
-    const handleMouseLeave = () => {
-      mouse.x = null;
-      mouse.y = null;
-    };
-    parent.addEventListener('mousemove', handleMouseMove);
-    parent.addEventListener('mouseleave', handleMouseLeave);
-
-    const particles = [];
-    const particleCount = 40;
-    const connectionDistance = 100;
-
-    class Particle {
-      constructor() {
-        this.x = Math.random() * width;
-        this.y = Math.random() * height;
-        this.vx = (Math.random() - 0.5) * 0.3;
-        this.vy = (Math.random() - 0.5) * 0.3;
-        this.radius = Math.random() * 1.5 + 1;
-      }
-
-      update() {
-        if (mouse.x !== null && mouse.y !== null) {
-          const dx = mouse.x - this.x;
-          const dy = mouse.y - this.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < 100) {
-            this.x += (dx / dist) * 0.2;
-            this.y += (dy / dist) * 0.2;
-          }
-        }
-
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > width) this.vx *= -1;
-        if (this.y < 0 || this.y > height) this.vy *= -1;
-      }
-
-      draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${color}, 0.2)`;
-        ctx.fill();
-      }
-    }
-
-    for (let i = 0; i < particleCount; i++) {
-      particles.push(new Particle());
-    }
-
-    const animate = () => {
-      ctx.clearRect(0, 0, width, height);
-      for (let i = 0; i < particles.length; i++) {
-        const p1 = particles[i];
-        p1.update();
-        p1.draw();
-
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const dx = p1.x - p2.x;
-          const dy = p1.y - p2.y;
-          const dist = Math.sqrt(dx * dx + dy * dy);
-          if (dist < connectionDistance) {
-            ctx.beginPath();
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
-            ctx.strokeStyle = `rgba(${color}, ${0.1 * (1 - dist / connectionDistance)})`;
-            ctx.lineWidth = 0.5;
-            ctx.stroke();
-          }
-        }
-      }
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animate();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      parent.removeEventListener('mousemove', handleMouseMove);
-      parent.removeEventListener('mouseleave', handleMouseLeave);
-      cancelAnimationFrame(animationFrameId);
-    };
-  }, [mode, color]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      style={{
-        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-        zIndex: 0, pointerEvents: 'none',
-      }}
-    />
-  );
-}
-
 const ProfileInfoDisplay = ({ icon, label, value }) => {
   const { t } = useTranslation();
   return (
-    <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.5, gap: 1 }}>
-        <Box sx={{ color: 'primary.main', display: 'flex' }}>{icon}</Box>
-        <Typography variant="caption" sx={{ fontWeight: 600, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+    <Box sx={{ mb: 4 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1, gap: 1.5 }}>
+        <Box sx={{ color: 'oklch(65% 0.15 160)', display: 'flex' }}>
+          {React.cloneElement(icon, { sx: { fontSize: 22, strokeWidth: 2 } })}
+        </Box>
+        <Typography variant="caption" sx={{ fontWeight: 950, color: 'oklch(50% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           {label}
         </Typography>
       </Box>
-      <Typography variant="body1" sx={{ ml: 4, fontWeight: 500, color: value ? 'text.primary' : 'text.disabled' }}>
+      <Typography variant="h6" sx={{ ml: 4.25, fontWeight: 700, color: value ? 'oklch(20% 0.05 250)' : 'oklch(70% 0.02 250)' }}>
         {value || t('common.not_provided', 'Not provided')}
       </Typography>
     </Box>
   );
 };
-
-const CustomTextField = ({ icon, label, error, helperText, ...props }) => (
-  <TextField
-    fullWidth
-    label={label}
-    variant="outlined"
-    error={!!error}
-    helperText={error || helperText}
-    slotProps={{
-      inputLabel: { shrink: true },
-      input: {
-        startAdornment: icon ? (
-          <InputAdornment position="start" sx={{ mt: props.multiline ? '2px' : 0, alignSelf: props.multiline ? 'flex-start' : 'center' }}>
-            <Box sx={{ color: 'primary.main', display: 'flex', mr: 0.5, mt: props.multiline ? 1.2 : 0 }}>
-              {React.cloneElement(icon, { sx: { fontSize: 20 } })}
-            </Box>
-          </InputAdornment>
-        ) : null,
-        sx: {
-          borderRadius: 3,
-          backgroundColor: 'rgba(255, 255, 255, 0.6)',
-          backdropFilter: 'blur(4px)',
-          '& .MuiOutlinedInput-input': {
-            py: props.multiline ? 1.5 : 1.2,
-          },
-          '&:hover': {
-            backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          },
-          '&.Mui-focused': {
-            backgroundColor: '#fff',
-          }
-        }
-      }
-    }}
-    sx={{ 
-      mb: 1.5,
-      '& .MuiOutlinedInput-notchedOutline': {
-        borderColor: 'rgba(16, 185, 129, 0.2)',
-        borderRadius: 3,
-      },
-      '&:hover .MuiOutlinedInput-notchedOutline': {
-        borderColor: 'primary.main',
-      },
-      '& .MuiInputLabel-root': {
-        color: 'text.secondary',
-        transform: 'translate(14px, -9px) scale(0.75)',
-        background: 'transparent',
-        padding: '0 4px',
-      }
-    }}
-    {...props}
-  />
-);
 
 const Profile = () => {
   const { t } = useTranslation();
@@ -297,13 +126,11 @@ const Profile = () => {
       .catch(e => console.error('Failed to load provinces from API:', e));
   }, []);
 
-  // Password state
   const [passForm, setPassForm] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: '',
   });
-
 
   const fetchProfile = useCallback(async () => {
     try {
@@ -322,16 +149,12 @@ const Profile = () => {
   }, [t]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- initial profile bootstrap on mount
     fetchProfile();
   }, [fetchProfile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setEditForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setEditForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handlePassChange = (e) => {
@@ -342,59 +165,33 @@ const Profile = () => {
   const handleOpenEdit = () => {
     setEditForm({ ...profileData });
     setStreetAddr(profileData?.address || '');
-    setSelectedProv(null);
-    setSelectedDist(null);
-    setSelectedWard(null);
-    setError(null);
-    setSuccess(null);
-    setFieldErrors({});
+    setSelectedProv(null); setSelectedDist(null); setSelectedWard(null);
+    setError(null); setSuccess(null); setFieldErrors({});
     setOpenModal(true);
   };
 
-  const handleAvatarClick = (event) => {
-    setAvatarAnchor(event.currentTarget);
-  };
-
-  const handleAvatarClose = () => {
-    setAvatarAnchor(null);
-  };
-
-  const handleUploadClick = () => {
-    handleAvatarClose();
-    fileInputRef.current?.click();
-  };
-
-  const handleUrlClick = () => {
-    handleAvatarClose();
-    setTempUrl(profileData?.avatarUrl || '');
-    setOpenUrlDialog(true);
-  };
+  const handleAvatarClick = (event) => setAvatarAnchor(event.currentTarget);
+  const handleAvatarClose = () => setAvatarAnchor(null);
+  const handleUploadClick = () => { handleAvatarClose(); fileInputRef.current?.click(); };
+  const handleUrlClick = () => { handleAvatarClose(); setTempUrl(profileData?.avatarUrl || ''); setOpenUrlDialog(true); };
 
   const handleFileChange = async (event) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (file.size > 5 * 1024 * 1024) {
       setError(t('profile.file_too_large', 'Dung lượng ảnh tối đa là 5MB'));
       return;
     }
-
     try {
       setSaving(true);
       setError(null);
-      
       const formData = new FormData();
       formData.append('file', file);
-      
-      // 1. Upload to Firebase via Backend
       const uploadRes = await axiosClient.post('/api/users/profile/avatar', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      
       if (uploadRes.data.success) {
-        const newAvatarUrl = uploadRes.data.data;
-        // 2. Persist to Profile
-        await updateAvatar(newAvatarUrl);
+        await updateAvatar(uploadRes.data.data);
       }
     } catch (err) {
       setError(err.response?.data?.message || t('profile.upload_error', 'Lỗi khi upload ảnh'));
@@ -407,18 +204,15 @@ const Profile = () => {
   const updateAvatar = async (newUrl) => {
     try {
       setSaving(true);
-      const updateRequest = { 
+      const response = await axiosClient.put('/api/users/profile', { 
         fullName: profileData.fullName,
         phone: profileData.phone,
         avatarUrl: newUrl 
-      };
-      const response = await axiosClient.put('/api/users/profile', updateRequest);
+      });
       if (response.data.success) {
         setProfileData(response.data.data);
         setSuccess(t('profile.success'));
-        if (user) {
-          updateUser({ avatarUrl: newUrl });
-        }
+        if (user) updateUser({ avatarUrl: newUrl });
         setTimeout(() => setSuccess(null), 3000);
       }
     } catch {
@@ -434,17 +228,14 @@ const Profile = () => {
     if (!editForm.fullName?.trim()) errors.fullName = t('validation.required');
     if (!editForm.phone?.trim()) errors.phone = t('validation.required');
     else if (!/^\d{8,15}$/.test(editForm.phone.trim())) errors.phone = t('validation.invalid_phone');
-    
     if (isPatient) {
       if (!editForm.dateOfBirth) errors.dateOfBirth = t('validation.required');
       if (!editForm.gender) errors.gender = t('validation.required');
     }
-    
     if (isDoctor) {
       if (!editForm.specialization?.trim()) errors.specialization = t('validation.required');
       if (!editForm.hospitalName?.trim()) errors.hospitalName = t('validation.required');
     }
-    
     setFieldErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -454,70 +245,31 @@ const Profile = () => {
     try {
       setSaving(true);
       setError(null);
-      
       let finalAddress = streetAddr;
-      if (selectedWard && selectedDist && selectedProv) {
-        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedWard.name}, ${selectedDist.name}, ${selectedProv.name}`;
-      } else if (selectedDist && selectedProv) {
-        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedDist.name}, ${selectedProv.name}`;
-      } else if (selectedProv) {
-        finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedProv.name}`;
-      }
+      if (selectedWard && selectedDist && selectedProv) finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedWard.name}, ${selectedDist.name}, ${selectedProv.name}`;
+      else if (selectedDist && selectedProv) finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedDist.name}, ${selectedProv.name}`;
+      else if (selectedProv) finalAddress = `${streetAddr ? streetAddr + ', ' : ''}${selectedProv.name}`;
       
-      const response = await axiosClient.put('/api/users/profile', {
-        fullName: editForm.fullName,
-        phone: editForm.phone,
-        avatarUrl: editForm.avatarUrl,
-        dateOfBirth: editForm.dateOfBirth,
-        gender: editForm.gender,
-        address: finalAddress,
-        bloodType: editForm.bloodType,
-        allergies: editForm.allergies,
-        insuranceNumber: editForm.insuranceNumber,
-        emergencyContactName: editForm.emergencyContactName,
-        emergencyContactPhone: editForm.emergencyContactPhone,
-        chronicConditions: editForm.chronicConditions,
-        bio: editForm.bio,
-        specialization: editForm.specialization,
-        experienceYears: editForm.experienceYears,
-        degrees: editForm.degrees,
-        hospitalName: editForm.hospitalName
-      });
-      
+      const response = await axiosClient.put('/api/users/profile', { ...editForm, address: finalAddress });
       if (response.data.success) {
         setProfileData(response.data.data);
         setSuccess(t('profile.success'));
         setOpenModal(false);
-        if (user) {
-          updateUser({
-            fullName: response.data.data.fullName,
-            phone: response.data.data.phone,
-            avatarUrl: response.data.data.avatarUrl,
-          });
-        }
+        if (user) updateUser({ fullName: response.data.data.fullName, phone: response.data.data.phone, avatarUrl: response.data.data.avatarUrl });
         setTimeout(() => setSuccess(null), 3000);
       }
     } catch (err) {
       setError(t('profile.error'));
-      console.error(err);
     } finally {
       setSaving(false);
     }
   };
 
   const handleUpdatePassword = async () => {
-    if (passForm.currentPassword === passForm.newPassword) {
-      setError(t('auth.password_same_as_old'));
-      return;
-    }
-    if (passForm.newPassword !== passForm.confirmPassword) {
-      setError(t('auth.passwords_not_match'));
-      return;
-    }
+    if (passForm.currentPassword === passForm.newPassword) { setError(t('auth.password_same_as_old')); return; }
+    if (passForm.newPassword !== passForm.confirmPassword) { setError(t('auth.passwords_not_match')); return; }
     try {
       setSaving(true);
-      // TODO: Implement /api/users/change-password on backend
-      // const response = await axiosClient.post('/api/users/change-password', passForm);
       setSuccess(t('auth.password_updated', 'Password updated successfully!'));
       setPassForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => setSuccess(null), 3000);
@@ -528,309 +280,226 @@ const Profile = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
-        <CircularProgress thickness={5} size={60} sx={{ color: 'primary.main' }} />
-      </Box>
-    );
-  }
+  if (loading) return <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}><CircularProgress thickness={2} size={60} sx={{ color: 'oklch(65% 0.15 160)' }} /></Box>;
 
   const isDoctor = profileData?.role?.includes('DOCTOR');
   const isPatient = profileData?.role?.includes('PATIENT');
 
   return (
-    <Container maxWidth="lg" sx={{ py: 6, position: 'relative' }}>
-      <Fade in timeout={800}>
-        <Box>
-          <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
+    <PatientPageShell
+      title={t('profile.profile_tab')}
+      subtitle="Quản lý thông tin cá nhân và cài đặt bảo mật"
+      maxWidth={false}
+      transparent={true}
+    >
+      <Box sx={{ width: '100%' }}>
+        <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleFileChange} />
 
-          {/* Hero Header Card */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 0,
-              borderRadius: 6,
-              overflow: 'hidden',
-              mb: 4,
-              position: 'relative',
-              background: 'rgba(255, 255, 255, 0.4)',
-              backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.5)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.05)',
-            }}
-          >
-            <Box sx={{ height: 200, background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', position: 'relative', overflow: 'hidden' }}>
-              <InteractiveParticles color="255, 255, 255" />
-            </Box>
-
-            <Box sx={{ px: 4, pb: 4, mt: -8, position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: 3 }}>
-                <ButtonBase onClick={handleAvatarClick} sx={{ borderRadius: '50%', transition: 'transform 0.3s ease', '&:hover': { transform: 'scale(1.05)' } }}>
-                  <Box sx={{ position: 'relative' }}>
-                    <Avatar src={profileData?.avatarUrl} sx={{ width: 160, height: 160, border: '6px solid #fff', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', animation: `${float} 6s ease-in-out infinite` }} />
-                    <Box sx={{ position: 'absolute', bottom: 10, right: 10, bgcolor: 'primary.main', color: '#fff', borderRadius: '50%', p: 0.5, display: 'flex', boxShadow: 2 }}>
-                      <CameraIcon fontSize="small" />
-                    </Box>
-                  </Box>
-                </ButtonBase>
-
-              <Menu anchorEl={avatarAnchor} open={Boolean(avatarAnchor)} onClose={handleAvatarClose} TransitionComponent={Zoom} slotProps={{ paper: { sx: { borderRadius: 3, mt: 1, boxShadow: '0 10px 30px rgba(0,0,0,0.1)', minWidth: 180 } } }}>
-                <MenuItem onClick={handleUploadClick}><ListItemIcon><UploadIcon fontSize="small" /></ListItemIcon><ListItemText primary="Tải ảnh từ máy" /></MenuItem>
-                <MenuItem onClick={handleUrlClick}><ListItemIcon><LinkIcon fontSize="small" /></ListItemIcon><ListItemText primary="Sử dụng link ảnh" /></MenuItem>
-              </Menu>
-
-              <Box sx={{ flex: 1, minWidth: 200 }}>
-                <Typography variant="h3" fontWeight={900} sx={{ color: '#064e3b', mb: 0.5 }}>{profileData?.fullName}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Box sx={{ px: 2, py: 0.5, borderRadius: 4, bgcolor: 'rgba(16, 185, 129, 0.1)', color: 'primary.main', fontWeight: 700, fontSize: '0.85rem', textTransform: 'uppercase' }}>{profileData?.role ? t(`roles.${profileData.role}`) : ''}</Box>
-                </Box>
-              </Box>
-
-              <Box sx={{ mb: 1 }}>
-                <Button variant="contained" startIcon={<EditIcon />} onClick={handleOpenEdit} sx={{ borderRadius: 3, px: 3, py: 1, textTransform: 'none', fontWeight: 700, boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)', '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 12px 25px rgba(16, 185, 129, 0.4)' }, transition: 'all 0.3s ease' }}>
-                  {t('profile.edit')}
-                </Button>
+        <Box sx={{ borderRadius: 8, overflow: 'hidden', mb: 8, position: 'relative', border: '1px solid oklch(92% 0.02 250)', bgcolor: 'transparent' }}>
+          <Box sx={{ height: 240, background: 'oklch(20% 0.05 250)', position: 'relative', overflow: 'hidden' }}>
+            <InteractiveParticles color="255, 255, 255" />
+          </Box>
+          <Box sx={{ px: { xs: 4, md: 8 }, pb: 8, mt: -10, position: 'relative', zIndex: 1, display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: { xs: 3, md: 6 } }}>
+            <ButtonBase onClick={handleAvatarClick} sx={{ borderRadius: 6, transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)', '&:hover': { transform: 'translateY(-10px)' } }}>
+              <Avatar src={profileData?.avatarUrl} sx={{ width: 200, height: 200, borderRadius: 6, border: '8px solid white', boxShadow: '0 30px 60px oklch(20% 0.05 250 / 0.12)' }} />
+              <Box sx={{ position: 'absolute', bottom: 12, right: 12, bgcolor: 'oklch(65% 0.15 160)', color: 'white', borderRadius: 3, p: 1, boxShadow: '0 8px 20px oklch(65% 0.15 160 / 0.3)' }}><CameraIcon /></Box>
+            </ButtonBase>
+            <Menu anchorEl={avatarAnchor} open={Boolean(avatarAnchor)} onClose={handleAvatarClose} slotProps={{ paper: { sx: { borderRadius: 4, mt: 2, minWidth: 220, border: '1px solid oklch(92% 0.02 250)' } } }}>
+              <MenuItem onClick={handleUploadClick} sx={{ py: 1.5, fontWeight: 800 }}><ListItemIcon><UploadIcon /></ListItemIcon><ListItemText primary="Tải ảnh từ máy" /></MenuItem>
+              <MenuItem onClick={handleUrlClick} sx={{ py: 1.5, fontWeight: 800 }}><ListItemIcon><LinkIcon /></ListItemIcon><ListItemText primary="Sử dụng link ảnh" /></MenuItem>
+            </Menu>
+            <Box sx={{ flex: 1, minWidth: 320 }}>
+              <Typography variant="h1" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.05em', mb: 1 }}>{profileData?.fullName}</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ px: 2, py: 0.75, borderRadius: 2, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)', fontWeight: 950, fontSize: '0.8rem', textTransform: 'uppercase' }}>{profileData?.role ? t(`roles.${profileData.role}`) : ''}</Box>
+                <Typography variant="h6" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 500 }}>{profileData?.email}</Typography>
               </Box>
             </Box>
-          </Paper>
+            <Box sx={{ mb: 2 }}><Button variant="contained" startIcon={<EditIcon />} onClick={handleOpenEdit} sx={{ borderRadius: 4, px: 6, py: 2, bgcolor: 'oklch(65% 0.15 160)', fontWeight: 950, '&:hover': { bgcolor: 'oklch(60% 0.15 160)' } }}>{t('profile.edit')}</Button></Box>
+          </Box>
+        </Box>
 
-          {/* Tab Navigation */}
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-            <Tabs 
-              value={activeTab} 
-              onChange={(e, v) => setActiveTab(v)} 
-              textColor="primary" 
-              indicatorColor="primary"
-              sx={{
-                '& .MuiTab-root': { fontWeight: 800, fontSize: '1rem', textTransform: 'none', px: 4 }
+        <Box sx={{ mb: 8, display: 'flex', gap: 1, p: 1, borderRadius: 4, bgcolor: 'oklch(98% 0.01 250)', width: 'fit-content' }}>
+          {[t('profile.profile_tab'), t('profile.security_tab')].map((label, idx) => (
+            <Button 
+              key={idx} 
+              onClick={() => setActiveTab(idx)} 
+              sx={{ 
+                px: 4, 
+                py: 1.5, 
+                borderRadius: 3, 
+                bgcolor: activeTab === idx ? 'white' : 'transparent', 
+                color: activeTab === idx ? 'oklch(20% 0.05 250)' : 'oklch(60% 0.02 250)', 
+                fontWeight: 950, 
+                textTransform: 'none', 
+                boxShadow: activeTab === idx ? '0 10px 20px oklch(20% 0.05 250 / 0.05)' : 'none',
+                transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                '&:hover': {
+                  transform: activeTab === idx ? 'translateY(-2px)' : 'scale(1.05)',
+                  bgcolor: activeTab === idx ? 'white' : 'oklch(96% 0.01 250)'
+                }
               }}
             >
-              <Tab icon={<PersonIcon />} iconPosition="start" label={t('profile.profile_tab')} />
-              <Tab icon={<ShieldIcon />} iconPosition="start" label={t('profile.security_tab')} />
-            </Tabs>
-          </Box>
+              {label}
+            </Button>
+          ))}
+        </Box>
 
-          {error && <Grow in><Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>{error}</Alert></Grow>}
-          {success && <Grow in><Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>{success}</Alert></Grow>}
+        {error && <Alert severity="error" variant="outlined" sx={{ mb: 4, borderRadius: 4 }}>{error}</Alert>}
+        {success && <Alert severity="success" variant="outlined" sx={{ mb: 4, borderRadius: 4 }}>{success}</Alert>}
 
-          {/* TAB 0: Profile Information */}
-          {activeTab === 0 && (
-            <Grid container spacing={4}>
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
-                  <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <ContactPageIcon /> {t('profile.detailed_info')}
-                  </Typography>
-
-                  <Grid container spacing={1}>
-                    <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<PersonIcon />} label={t('profile.full_name')} value={profileData?.fullName} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<PhoneIcon />} label={t('profile.phone')} value={profileData?.phone} /></Grid>
-                    <Grid size={{ xs: 12 }}><ProfileInfoDisplay icon={<EmailIcon />} label={t('profile.email')} value={profileData?.email} /></Grid>
-                    <Grid size={{ xs: 12 }}><Divider sx={{ my: 1, mb: 3, opacity: 0.5 }} /></Grid>
-
+        <Box sx={{ opacity: 1, transition: 'all 0.5s ease' }}>
+          {activeTab === 0 ? (
+            <Grid container spacing={8}>
+              <Grid item xs={12} lg={7}>
+                <Box sx={{ p: 6, borderRadius: 8, border: '1px solid oklch(92% 0.02 250)', bgcolor: 'transparent' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 6, display: 'flex', alignItems: 'center', gap: 2 }}><ContactPageIcon sx={{ fontSize: 32, color: 'oklch(65% 0.15 160)' }} /> {t('profile.detailed_info')}</Typography>
+                  <Grid container spacing={4}>
+                    <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<PersonIcon />} label={t('profile.full_name')} value={profileData?.fullName} /></Grid>
+                    <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<PhoneIcon />} label={t('profile.phone')} value={profileData?.phone} /></Grid>
+                    <Grid item xs={12}><ProfileInfoDisplay icon={<EmailIcon />} label={t('profile.email')} value={profileData?.email} /></Grid>
+                    <Grid item xs={12}><Divider sx={{ my: 2, borderColor: 'oklch(94% 0.02 250)' }} /></Grid>
                     {isPatient && (
                       <>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<CakeIcon />} label={t('profile.dob')} value={profileData?.dateOfBirth} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<GenderIcon />} label={t('profile.gender')} value={profileData?.gender} /></Grid>
-                        <Grid size={{ xs: 12 }}><ProfileInfoDisplay icon={<HomeIcon />} label={t('profile.address')} value={profileData?.address} /></Grid>
-                        <Grid size={{ xs: 12 }}><Divider sx={{ my: 1, mb: 3, opacity: 0.5 }} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<CardIcon />} label={t('profile.insurance_number')} value={profileData?.insuranceNumber} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<ContactPhoneIcon />} label={t('profile.emergency_contact')} value={`${profileData?.emergencyContactName || ''} (${profileData?.emergencyContactPhone || ''})`} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<CakeIcon />} label={t('profile.dob')} value={profileData?.dateOfBirth} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<GenderIcon />} label={t('profile.gender')} value={profileData?.gender} /></Grid>
+                        <Grid item xs={12}><ProfileInfoDisplay icon={<HomeIcon />} label={t('profile.address')} value={profileData?.address} /></Grid>
+                        <Grid item xs={12}><Divider sx={{ my: 2, borderColor: 'oklch(94% 0.02 250)' }} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<CardIcon />} label={t('profile.insurance_number')} value={profileData?.insuranceNumber} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<ContactPhoneIcon />} label={t('profile.emergency_contact')} value={`${profileData?.emergencyContactName || ''} (${profileData?.emergencyContactPhone || ''})`} /></Grid>
                       </>
                     )}
-
                     {isDoctor && (
                       <>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<SchoolIcon />} label={t('profile.degrees')} value={profileData?.degrees} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<BusinessIcon />} label={t('profile.hospital')} value={profileData?.hospitalName} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<SpecializationIcon />} label={t('profile.specialization')} value={profileData?.specialization} /></Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}><ProfileInfoDisplay icon={<ExperienceIcon />} label={t('profile.experience')} value={profileData?.experienceYears} /></Grid>
-                        <Grid size={{ xs: 12 }}><ProfileInfoDisplay icon={<BioIcon />} label={t('profile.bio')} value={profileData?.bio} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<SchoolIcon />} label={t('profile.degrees')} value={profileData?.degrees} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<BusinessIcon />} label={t('profile.hospital')} value={profileData?.hospitalName} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<SpecializationIcon />} label={t('profile.specialization')} value={profileData?.specialization} /></Grid>
+                        <Grid item xs={12} sm={6}><ProfileInfoDisplay icon={<ExperienceIcon />} label={t('profile.experience')} value={profileData?.experienceYears} /></Grid>
+                        <Grid item xs={12}><ProfileInfoDisplay icon={<BioIcon />} label={t('profile.bio')} value={profileData?.bio} /></Grid>
                       </>
                     )}
                   </Grid>
-                </Paper>
+                </Box>
               </Grid>
-
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                  {isPatient && (
-                    <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
-                      <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <MedicalServicesIcon /> {t('profile.health_vitals')}
-                      </Typography>
+              <Grid item xs={12} lg={5}>
+                {isPatient && (
+                  <Box sx={{ p: 6, borderRadius: 8, bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(94% 0.02 250)' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 6, display: 'flex', alignItems: 'center', gap: 2 }}><MedicalServicesIcon sx={{ fontSize: 32, color: 'oklch(65% 0.15 160)' }} /> {t('profile.health_vitals')}</Typography>
+                    <Stack spacing={4}>
                       <ProfileInfoDisplay icon={<BloodTypeIcon />} label={t('profile.blood_type')} value={profileData?.bloodType} />
                       <ProfileInfoDisplay icon={<AllergyIcon />} label={t('profile.allergies')} value={profileData?.allergies} />
                       <ProfileInfoDisplay icon={<HealthIcon />} label={t('profile.chronic_conditions')} value={profileData?.chronicConditions} />
-                    </Paper>
-                  )}
-
+                    </Stack>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
+          ) : (
+            <Grid container spacing={8}>
+              <Grid item xs={12} lg={7}>
+                <Box sx={{ p: 6, borderRadius: 8, border: '1px solid oklch(92% 0.02 250)', bgcolor: 'transparent' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 6, display: 'flex', alignItems: 'center', gap: 2 }}><LockIcon sx={{ fontSize: 32, color: 'oklch(65% 0.15 160)' }} /> {t('profile.change_password')}</Typography>
+                  <Stack spacing={4}>
+                    <CustomTextField icon={<KeyIcon />} type="password" label={t('profile.current_password')} name="currentPassword" value={passForm.currentPassword} onChange={handlePassChange} />
+                    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4}>
+                      <CustomTextField icon={<LockIcon />} type="password" label={t('profile.new_password')} name="newPassword" value={passForm.newPassword} onChange={handlePassChange} />
+                      <CustomTextField icon={<LockIcon />} type="password" label={t('profile.confirm_password')} name="confirmPassword" value={passForm.confirmPassword} onChange={handlePassChange} />
+                    </Stack>
+                    <Button variant="contained" fullWidth onClick={handleUpdatePassword} disabled={saving} sx={{ borderRadius: 4, py: 2, fontWeight: 950, bgcolor: 'oklch(20% 0.05 250)' }}>{t('profile.update_password_btn')}</Button>
+                  </Stack>
+                </Box>
+              </Grid>
+              <Grid item xs={12} lg={5}>
+                <Box sx={{ p: 6, borderRadius: 8, bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(94% 0.02 250)' }}>
+                  <Typography variant="h4" sx={{ fontWeight: 950, color: 'oklch(20% 0.05 250)', mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}><ShieldIcon sx={{ fontSize: 32, color: 'oklch(65% 0.15 160)' }} /> {t('profile.two_factor')}</Typography>
+                  <Stack spacing={3} sx={{ mb: 6 }}>
+                    <FormControlLabel control={<Switch defaultChecked sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: 'oklch(65% 0.15 160)' }, '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { bgcolor: 'oklch(65% 0.15 160)' } }} />} label={<Typography sx={{ fontWeight: 800 }}>Email Authentication</Typography>} />
+                    <FormControlLabel control={<Switch sx={{ '& .MuiSwitch-switchBase.Mui-checked': { color: 'oklch(65% 0.15 160)' } }} />} label={<Typography sx={{ fontWeight: 800 }}>SMS Authentication</Typography>} />
+                  </Stack>
+                  <Divider sx={{ mb: 4 }} />
+                  <Typography variant="caption" sx={{ fontWeight: 950, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Sơ đồ phiên hoạt động</Typography>
+                  <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 3, p: 2, borderRadius: 3, bgcolor: 'white', border: '1px solid oklch(94% 0.02 250)' }}>
+                    <Box sx={{ width: 12, height: 12, borderRadius: '50%', bgcolor: 'oklch(65% 0.15 160)' }} />
+                    <Box><Typography sx={{ fontWeight: 900 }}>Windows 11 • Chrome</Typography><Typography variant="caption" sx={{ color: 'oklch(65% 0.15 160)', fontWeight: 950 }}>Đang hoạt động</Typography></Box>
+                  </Box>
                 </Box>
               </Grid>
             </Grid>
           )}
+        </Box>
+      </Box>
 
-          {/* TAB 1: Security Settings */}
-          {activeTab === 1 && (
-            <Grid container spacing={4}>
-              <Grid size={{ xs: 12, md: 7 }}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
-                  <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 4, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <LockIcon /> {t('profile.change_password')}
-                  </Typography>
-                  
-                  <Grid container spacing={2}>
-                    <Grid size={{ xs: 12 }}>
-                      <CustomTextField icon={<KeyIcon />} type="password" label={t('profile.current_password')} name="currentPassword" value={passForm.currentPassword} onChange={handlePassChange} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <CustomTextField icon={<LockIcon />} type="password" label={t('profile.new_password')} name="newPassword" value={passForm.newPassword} onChange={handlePassChange} />
-                    </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <CustomTextField icon={<LockIcon />} type="password" label={t('profile.confirm_password')} name="confirmPassword" value={passForm.confirmPassword} onChange={handlePassChange} />
-                    </Grid>
-                    <Grid size={{ xs: 12 }} sx={{ mt: 2 }}>
-                      <Button variant="contained" fullWidth onClick={handleUpdatePassword} disabled={saving} sx={{ borderRadius: 4, py: 1.5, fontWeight: 800 }}>
-                        {t('profile.update_password_btn')}
-                      </Button>
-                    </Grid>
-                  </Grid>
-                </Paper>
-              </Grid>
-
-              <Grid size={{ xs: 12, md: 5 }}>
-                <Paper elevation={0} sx={{ p: 4, borderRadius: 6, background: 'rgba(255, 255, 255, 0.4)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.5)', boxShadow: '0 20px 40px rgba(0,0,0,0.03)' }}>
-                  <Typography variant="h6" fontWeight={800} color="primary.dark" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <ShieldIcon /> {t('profile.two_factor')}
-                  </Typography>
-                  <FormControlLabel control={<Switch defaultChecked color="primary" />} label="Email Authentication" sx={{ mb: 1, display: 'flex' }} />
-                  <FormControlLabel control={<Switch color="primary" />} label="SMS Authentication" sx={{ display: 'flex' }} />
-                  <Divider sx={{ my: 3 }} />
-                  <Typography variant="caption" fontWeight={700} color="text.secondary">ACTIVE SESSIONS</Typography>
-                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-                    <Typography variant="body2">Windows 11 • Chrome • <b>Active Now</b></Typography>
-                  </Box>
-                </Paper>
+      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="lg" fullWidth PaperProps={{ sx: { borderRadius: 8, bgcolor: 'white', backgroundImage: 'none', p: 0 } }}>
+        <DialogTitle sx={{ p: 4, bgcolor: 'oklch(20% 0.05 250)', color: 'white' }}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="h3" sx={{ fontWeight: 950 }}>{t('profile.edit')}</Typography><IconButton onClick={() => setOpenModal(false)} sx={{ color: 'white' }}><CloseIcon /></IconButton></Stack>
+        </DialogTitle>
+        <DialogContent sx={{ p: 6, pt: 8 }}>
+          <Grid container spacing={6}>
+            <Grid item xs={12}>
+              <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(65% 0.15 160)', mb: 4, textTransform: 'uppercase' }}>{t('profile.account_section')}</Typography>
+              <Grid container spacing={4}>
+                <Grid item xs={12} sm={6}><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} error={fieldErrors.fullName} /></Grid>
+                <Grid item xs={12} sm={6}><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} error={fieldErrors.phone} /></Grid>
               </Grid>
             </Grid>
-          )}
-        </Box>
-      </Fade>
-
-      {/* Edit Profile Modal (EXPANDED WITH NEW FIELDS) */}
-      <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="md" fullWidth TransitionComponent={Zoom} TransitionProps={{ timeout: 500 }} slotProps={{ paper: { sx: { borderRadius: 8, overflow: 'hidden', background: 'rgba(255, 255, 255, 0.9)', backdropFilter: 'blur(20px)', border: '1px solid rgba(255, 255, 255, 0.6)', boxShadow: '0 40px 80px rgba(0,0,0,0.15)' } } }}>
-        <Box sx={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', p: 3, color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <Typography variant="h5" fontWeight={900}>{t('profile.edit')}</Typography>
-          </Box>
-          <IconButton onClick={() => setOpenModal(false)} sx={{ color: '#fff' }}><CloseIcon /></IconButton>
-        </Box>
-
-        <DialogContent sx={{ p: 4 }}>
-          {error && <Grow in><Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>{error}</Alert></Grow>}
-          {success && <Grow in><Alert severity="success" sx={{ mb: 3, borderRadius: 3 }}>{success}</Alert></Grow>}
-          <Grid container spacing={3}>
-            <Grid size={12}>
-              <Typography variant="subtitle2" color="primary.main" fontWeight={800} sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}><ContactPageIcon fontSize="small" /> {t('profile.account_section')}</Typography>
-              <Grid container spacing={2}>
-                <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} error={fieldErrors.fullName} /></Grid>
-                <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} error={fieldErrors.phone} /></Grid>
-              </Grid>
-            </Grid>
-            <Grid size={12}>
-              <Typography variant="subtitle2" color="primary.main" fontWeight={800} sx={{ mb: 2, mt: 1, display: 'flex', alignItems: 'center', gap: 1 }}>{isPatient ? <HealthIcon fontSize="small" /> : <BioIcon fontSize="small" />} {isPatient ? t('profile.details_section') : t('profile.pro_section')}</Typography>
-              <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(65% 0.15 160)', mb: 4, textTransform: 'uppercase' }}>{isPatient ? t('profile.details_section') : t('profile.pro_section')}</Typography>
+              <Grid container spacing={4}>
                 {isPatient && (
                   <>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} error={fieldErrors.dateOfBirth} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} error={fieldErrors.gender} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<BloodTypeIcon />} label={t('profile.blood_type')} name="bloodType" value={editForm?.bloodType || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<CardIcon />} label={t('profile.insurance_number')} name="insuranceNumber" value={editForm?.insuranceNumber || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={12}>
-                      <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600, ml: 1, mb: 1, display: 'block' }}>{t('profile.address')}</Typography>
-                      <Grid container spacing={2}>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <Autocomplete
-                            options={provincesList}
-                            getOptionLabel={(option) => option.name}
-                            value={selectedProv}
-                            onChange={(e, v) => {
-                              setSelectedProv(v);
-                              setSelectedDist(null);
-                              setSelectedWard(null);
-                            }}
-                            renderInput={(params) => (
-                              <TextField {...params} label={t('profile.province')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
-                            )}
-                          />
+                    <Grid item xs={12} sm={6}><CustomTextField label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} error={fieldErrors.dateOfBirth} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} error={fieldErrors.gender} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<BloodTypeIcon />} label={t('profile.blood_type')} name="bloodType" value={editForm?.bloodType || ''} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<CardIcon />} label={t('profile.insurance_number')} name="insuranceNumber" value={editForm?.insuranceNumber || ''} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12}>
+                      <Box sx={{ p: 4, borderRadius: 6, bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(94% 0.02 250)' }}>
+                        <Typography variant="caption" sx={{ fontWeight: 950, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', mb: 4, display: 'block' }}>Địa chỉ liên lạc</Typography>
+                        <Grid container spacing={3}>
+                          <Grid item xs={12} sm={4}><Autocomplete options={provincesList} getOptionLabel={(option) => option.name} value={selectedProv} onChange={(e, v) => { setSelectedProv(v); setSelectedDist(null); setSelectedWard(null); }} renderInput={(params) => <TextField {...params} label={t('profile.province')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 3 } }} />} /></Grid>
+                          <Grid item xs={12} sm={4}><Autocomplete options={districtsList} getOptionLabel={(option) => option.name} value={selectedDist} onChange={(e, v) => { setSelectedDist(v); setSelectedWard(null); }} disabled={!selectedProv} renderInput={(params) => <TextField {...params} label={t('profile.district')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 3 } }} />} /></Grid>
+                          <Grid item xs={12} sm={4}><Autocomplete options={wardsList} getOptionLabel={(option) => option.name} value={selectedWard} onChange={(e, v) => setSelectedWard(v)} disabled={!selectedDist} renderInput={(params) => <TextField {...params} label={t('profile.ward')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'white', borderRadius: 3 } }} />} /></Grid>
+                          <Grid item xs={12}><CustomTextField icon={<HomeIcon />} label={t('profile.street_address')} value={streetAddr} onChange={(e) => setStreetAddr(e.target.value)} multiline minRows={1} /></Grid>
                         </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <Autocomplete
-                            options={districtsList}
-                            getOptionLabel={(option) => option.name}
-                            value={selectedDist}
-                            onChange={(e, v) => {
-                              setSelectedDist(v);
-                              setSelectedWard(null);
-                            }}
-                            disabled={!selectedProv}
-                            renderInput={(params) => (
-                              <TextField {...params} label={t('profile.district')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
-                            )}
-                          />
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 4 }}>
-                          <Autocomplete
-                            options={wardsList}
-                            getOptionLabel={(option) => option.name}
-                            value={selectedWard}
-                            onChange={(e, v) => setSelectedWard(v)}
-                            disabled={!selectedDist}
-                            renderInput={(params) => (
-                              <TextField {...params} label={t('profile.ward')} variant="outlined" InputLabelProps={{ shrink: true }} sx={{ '& .MuiOutlinedInput-root': { bgcolor: 'rgba(255, 255, 255, 0.6)', borderRadius: 3, '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }, '&.Mui-focused': { bgcolor: '#fff' } } }} />
-                            )}
-                          />
-                        </Grid>
-                        <Grid size={12}>
-                          <CustomTextField icon={<HomeIcon />} label={t('profile.street_address')} value={streetAddr} onChange={(e) => setStreetAddr(e.target.value)} multiline minRows={1} />
-                        </Grid>
-                      </Grid>
+                      </Box>
                     </Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<PersonIcon />} label={t('profile.emergency_contact')} name="emergencyContactName" value={editForm?.emergencyContactName || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<ContactPhoneIcon />} label={t('profile.emergency_phone')} name="emergencyContactPhone" value={editForm?.emergencyContactPhone || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={12}><CustomTextField icon={<AllergyIcon />} label={t('profile.allergies')} name="allergies" value={editForm?.allergies || ''} onChange={handleInputChange} multiline minRows={1} /></Grid>
-                    <Grid size={12}><CustomTextField icon={<HealthIcon />} label={t('profile.chronic_conditions')} name="chronicConditions" value={editForm?.chronicConditions || ''} onChange={handleInputChange} multiline minRows={1} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<PersonIcon />} label={t('profile.emergency_contact')} name="emergencyContactName" value={editForm?.emergencyContactName || ''} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<PhoneIcon />} label={t('profile.emergency_contact_phone')} name="emergencyContactPhone" value={editForm?.emergencyContactPhone || ''} onChange={handleInputChange} /></Grid>
                   </>
                 )}
                 {isDoctor && (
                   <>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<SchoolIcon />} label={t('profile.degrees')} name="degrees" value={editForm?.degrees || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }}><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} error={fieldErrors.hospitalName} /></Grid>
-                    <Grid size={{ xs: 12, sm: 8 }}><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} error={fieldErrors.specialization} /></Grid>
-                    <Grid size={{ xs: 12, sm: 4 }}><CustomTextField icon={<ExperienceIcon />} label={t('profile.experience')} name="experienceYears" type="number" value={editForm?.experienceYears || ''} onChange={handleInputChange} /></Grid>
-                    <Grid size={12}><CustomTextField icon={<BioIcon />} label={t('profile.bio')} name="bio" value={editForm?.bio || ''} onChange={handleInputChange} multiline minRows={2} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} error={fieldErrors.specialization} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} error={fieldErrors.hospitalName} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<ExperienceIcon />} label={t('profile.experience')} name="experienceYears" type="number" value={editForm?.experienceYears || ''} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12} sm={6}><CustomTextField icon={<SchoolIcon />} label={t('profile.degrees')} name="degrees" value={editForm?.degrees || ''} onChange={handleInputChange} /></Grid>
+                    <Grid item xs={12}><CustomTextField icon={<BioIcon />} label={t('profile.bio')} name="bio" value={editForm?.bio || ''} onChange={handleInputChange} multiline minRows={3} /></Grid>
                   </>
                 )}
               </Grid>
             </Grid>
           </Grid>
         </DialogContent>
-        <DialogActions sx={{ p: 4, pt: 2, background: 'rgba(0,0,0,0.02)' }}>
-          <Button onClick={() => setOpenModal(false)} sx={{ fontWeight: 800, textTransform: 'none', px: 4 }}>{t('profile.cancel')}</Button>
-          <Button variant="contained" onClick={handleSave} disabled={saving} startIcon={saving ? <CircularProgress size={20} color="inherit" /> : <SaveIcon />} sx={{ borderRadius: 4, px: 6, py: 1.5, fontWeight: 900, textTransform: 'none', background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', boxShadow: '0 10px 25px rgba(16, 185, 129, 0.4)' }}>
-            {saving ? t('common.saving', 'Saving...') : t('profile.save')}
+        <DialogActions sx={{ p: 6, borderTop: '1px solid oklch(94% 0.02 250)' }}>
+          <Button 
+            onClick={() => setOpenModal(false)} 
+            sx={{ 
+              fontWeight: 950, 
+              color: 'oklch(50% 0.02 250)', 
+              px: 4,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                color: 'oklch(20% 0.05 250)',
+                transform: 'translateY(-2px)',
+                bgcolor: 'oklch(96% 0.01 250)'
+              }
+            }}
+          >
+            Huỷ
           </Button>
+          <Button variant="contained" onClick={handleSave} disabled={saving} sx={{ borderRadius: 4, px: 8, py: 2, bgcolor: 'oklch(20% 0.05 250)', fontWeight: 950 }}>{saving ? <CircularProgress size={24} sx={{ color: 'white' }} /> : 'Lưu thay đổi'}</Button>
         </DialogActions>
       </Dialog>
-
-      {/* URL Dialog */}
-      <Dialog open={openUrlDialog} onClose={() => setOpenUrlDialog(false)} slotProps={{ paper: { sx: { borderRadius: 4, p: 2, minWidth: 400 } } }}>
-        <DialogTitle sx={{ fontWeight: 800 }}>Sử dụng link ảnh</DialogTitle>
-        <DialogContent><TextField fullWidth autoFocus label="Dán URL ảnh vào đây" value={tempUrl} onChange={(e) => setTempUrl(e.target.value)} sx={{ mt: 2, '& .MuiOutlinedInput-root': { borderRadius: 3 } }} /></DialogContent>
-        <DialogActions><Button onClick={() => setOpenUrlDialog(false)}>Hủy</Button><Button variant="contained" onClick={() => updateAvatar(tempUrl)} sx={{ borderRadius: 3, px: 4 }}>Áp dụng</Button></DialogActions>
-      </Dialog>
-    </Container>
+    </PatientPageShell>
   );
 };
 

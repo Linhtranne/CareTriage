@@ -11,6 +11,7 @@ import {
   NotificationsNone, Menu as MenuIcon,
 } from '@mui/icons-material'
 import { useTranslation } from 'react-i18next'
+import { motion, AnimatePresence } from 'framer-motion'
 import useAuthStore from '../../store/authStore'
 import NotificationBell from './NotificationBell'
 import ChatWidget from '../chat/ChatWidget'
@@ -18,7 +19,8 @@ import ChatWidget from '../chat/ChatWidget'
 import { Brain, Search } from 'lucide-react'
 
 const DRAWER_WIDTH = 260
-const COLLAPSED_WIDTH = 68
+const COLLAPSED_WIDTH = 84 // Slightly wider for floating feel
+const ISLAND_MARGIN = 24
 
 const menuByRole = {
   PATIENT: [
@@ -53,322 +55,249 @@ export default function MainLayout() {
   const sidebarWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: '#f0fdf4' }}>
+    <Box sx={{ 
+      display: 'flex', 
+      minHeight: '100vh', 
+      bgcolor: '#f8fafc',
+      backgroundImage: 'radial-gradient(at 0% 0%, oklch(96% 0.05 160 / 0.3) 0, transparent 50%), radial-gradient(at 100% 100%, oklch(92% 0.02 250 / 0.2) 0, transparent 50%)',
+    }}>
 
-      {/* ── Sidebar ─────────────────────────────────────────────── */}
+      {/* ── Floating Sidebar Island ────────────────────────────────── */}
       <Box
+        component={motion.div}
+        initial={false}
+        animate={{ width: sidebarWidth }}
+        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         sx={{
-          width: sidebarWidth,
-          flexShrink: 0,
           position: 'fixed',
-          top: 0, left: 0,
-          height: '100vh',
+          top: ISLAND_MARGIN,
+          left: ISLAND_MARGIN,
+          bottom: ISLAND_MARGIN,
           zIndex: 1200,
-          transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-          overflow: 'hidden',
-          background: 'rgba(255, 255, 255, 0.72)',
-          backdropFilter: 'blur(24px)',
-          WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(16, 185, 129, 0.12)',
-          boxShadow: '4px 0 24px rgba(0, 0, 0, 0.06)',
+          borderRadius: '32px',
+          background: 'oklch(100% 0 0 / 0.1)',
+          backdropFilter: 'blur(50px) saturate(1.8)',
+          border: '1px solid oklch(100% 0 0 / 0.15)',
           display: 'flex',
           flexDirection: 'column',
+          boxShadow: '0 8px 32px oklch(0% 0 0 / 0.05)',
+          overflow: 'hidden',
         }}
       >
-        {/* ── Logo ────────────────────────────────────────────────── */}
+        {/* Logo Section */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            px: collapsed ? 0 : 2,
-            py: 1.5,
-            minHeight: 64,
-            borderBottom: '1px solid rgba(16, 185, 129, 0.08)',
+            justifyContent: 'center',
+            height: 80,
+            px: 2,
+            mb: 2
           }}
         >
           <Box
+            component="img"
+            src={collapsed ? "/gemini-svg.svg" : "/gemini-svg (1).svg"}
+            alt="CareTriage"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flex: collapsed ? 1 : 'none',
-              overflow: 'hidden',
+              height: 32,
+              width: 'auto',
+              maxWidth: collapsed ? 32 : 140,
+              objectFit: 'contain',
+              transition: 'all 0.3s ease',
             }}
-          >
-            <Box
-              component="img"
-              src={collapsed ? "/gemini-svg.svg" : "/gemini-svg (1).svg"}
-              alt="CareTriage"
-              sx={{
-                height: 36,
-                width: 'auto',
-                maxWidth: collapsed ? 36 : 160,
-                objectFit: 'contain',
-                objectPosition: 'left center',
-                transition: 'all 0.3s ease',
-              }}
-            />
-          </Box>
+          />
         </Box>
 
-        {/* ── User Card ───────────────────────────────────────────── */}
-        {!collapsed && (
-          <Box
-            sx={{
-              mx: 1.5,
-              my: 1.5,
-              p: 1.5,
-              borderRadius: '12px',
-              bgcolor: 'rgba(16, 185, 129, 0.06)',
-              border: '1px solid rgba(16, 185, 129, 0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.2,
-              transition: 'all 0.2s',
-            }}
-          >
-            <Avatar
-              src={user?.avatarUrl}
-              sx={{
-                width: 34, height: 34,
-                bgcolor: '#10b981',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                flexShrink: 0,
-              }}
-            >
-              {user?.fullName?.[0] || 'U'}
-            </Avatar>
-            <Box sx={{ overflow: 'hidden', flex: 1 }}>
-              <Typography
-                noWrap
-                sx={{ fontWeight: 700, fontSize: '0.82rem', color: 'text.primary', lineHeight: 1.3 }}
-              >
-                {user?.fullName}
-              </Typography>
-              <Chip
-                label={t(`roles.${user?.role}`, user?.role)}
-                size="small"
-                sx={{
-                  height: 16,
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  bgcolor: 'rgba(16,185,129,0.12)',
-                  color: '#059669',
-                  border: 'none',
-                  '& .MuiChip-label': { px: 0.8 },
-                }}
-              />
-            </Box>
-          </Box>
-        )}
-
-        {/* Collapsed avatar */}
-        {collapsed && (
-          <Tooltip title={user?.fullName} placement="right">
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 1.5 }}>
-              <Avatar
-                src={user?.avatarUrl}
-                sx={{
-                  width: 34, height: 34,
-                  bgcolor: '#10b981',
-                  fontWeight: 800,
-                  fontSize: '0.85rem',
-                  border: '2px solid rgba(16,185,129,0.2)',
-                }}
-              >
-                {user?.fullName?.[0] || 'U'}
-              </Avatar>
-            </Box>
-          </Tooltip>
-        )}
-
-        {/* ── Nav Items ───────────────────────────────────────────── */}
-        <List sx={{ px: 1, flexGrow: 1, pt: 0.5 }}>
-          {menu.map((navItem) => {
+        {/* Navigation Items */}
+        <List sx={{ px: 1.5, flexGrow: 1 }}>
+          {menu.map((navItem, index) => {
             const isActive = location.pathname === navItem.path
             return (
-              <Tooltip key={navItem.path} title={collapsed ? navItem.text : ''} placement="right" arrow>
-                <ListItemButton
-                  onClick={() => navigate(navItem.path)}
+              <ListItemButton
+                key={navItem.path}
+                component={motion.div}
+                whileHover={{ scale: 1.02, x: 4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(navItem.path)}
+                sx={{
+                  borderRadius: '16px',
+                  mb: 1,
+                  py: 1.5,
+                  px: collapsed ? 0 : 2,
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  bgcolor: isActive ? 'oklch(65% 0.15 160 / 0.1)' : 'transparent',
+                  color: isActive ? 'oklch(55% 0.18 160)' : 'oklch(40% 0.02 250)',
+                  transition: 'background-color 0.3s',
+                  '&:hover': {
+                    bgcolor: isActive ? 'oklch(65% 0.15 160 / 0.15)' : 'oklch(100% 0 0 / 0.3)',
+                  },
+                }}
+              >
+                <ListItemIcon
                   sx={{
-                    borderRadius: '10px',
-                    mb: 0.5,
-                    py: 1,
-                    px: collapsed ? 0 : 1.2,
-                    justifyContent: collapsed ? 'center' : 'flex-start',
-                    transition: 'all 0.2s ease',
-                    ...(isActive ? {
-                      bgcolor: 'rgba(16,185,129,0.12)',
-                      '& .MuiListItemIcon-root': { color: '#059669' },
-                      '&:hover': { bgcolor: 'rgba(16,185,129,0.16)' },
-                    } : {
-                      '&:hover': { bgcolor: 'rgba(16,185,129,0.06)' },
-                    }),
+                    minWidth: collapsed ? 'auto' : 40,
+                    color: 'inherit',
+                    '& svg': { fontSize: 22 },
                   }}
                 >
-                  <ListItemIcon
-                    sx={{
-                      minWidth: collapsed ? 'auto' : 36,
-                      color: isActive ? '#059669' : 'text.disabled',
-                      transition: 'color 0.2s',
-                      '& svg': { fontSize: 20 },
-                    }}
-                  >
-                    {navItem.icon}
-                  </ListItemIcon>
-                  {!collapsed && (
-                    <ListItemText
-                      primary={navItem.text}
-                      slotProps={{
-                        primary: {
-                          sx: {
-                            fontSize: '0.875rem',
-                            fontWeight: isActive ? 700 : 500,
-                            color: isActive ? '#059669' : 'text.secondary',
-                          }
+                  {navItem.icon}
+                </ListItemIcon>
+                {!collapsed && (
+                  <ListItemText
+                    primary={navItem.text}
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          fontSize: '0.9rem',
+                          fontWeight: isActive ? 700 : 600,
+                          letterSpacing: '-0.01em'
                         }
-                      }}
-                    />
-                  )}
-                </ListItemButton>
-              </Tooltip>
+                      }
+                    }}
+                  />
+                )}
+              </ListItemButton>
             )
           })}
         </List>
 
-        {/* ── Bottom ──────────────────────────────────────────────── */}
-        <Box sx={{ px: 1, pb: 1.5, pt: 1, borderTop: '1px solid rgba(16,185,129,0.08)' }}>
-          <Tooltip title={collapsed ? "Mở rộng" : "Thu nhỏ"} placement="right">
-            <ListItemButton
-              onClick={() => setCollapsed(!collapsed)}
-              sx={{
-                borderRadius: '10px', py: 1,
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                px: collapsed ? 0 : 1.2,
-                '&:hover': { bgcolor: 'rgba(16,185,129,0.06)' },
-              }}
-            >
-              <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 36, color: 'text.disabled', '& svg': { fontSize: 20 } }}>
-                <MenuIcon />
-              </ListItemIcon>
-              {!collapsed && (
-                <ListItemText
-                  primary={collapsed ? "Mở rộng" : "Thu nhỏ"}
-                  slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' } } }}
-                />
-              )}
-            </ListItemButton>
-          </Tooltip>
+        {/* Bottom Actions */}
+        <Box sx={{ p: 2, borderTop: '1px solid oklch(100% 0 0 / 0.05)' }}>
+          <IconButton
+            onClick={() => setCollapsed(!collapsed)}
+            sx={{
+              width: '100%',
+              borderRadius: '16px',
+              bgcolor: 'oklch(100% 0 0 / 0.2)',
+              color: 'oklch(40% 0.02 250)',
+              '&:hover': { bgcolor: 'oklch(100% 0 0 / 0.4)' }
+            }}
+          >
+            <MenuIcon sx={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
+          </IconButton>
         </Box>
       </Box>
 
-      {/* ── Main Content ────────────────────────────────────────── */}
+      {/* ── Main Content Container ────────────────────────────────── */}
       <Box
         sx={{
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          ml: `${sidebarWidth}px`,
+          ml: `${sidebarWidth + ISLAND_MARGIN * 2}px`,
+          mr: ISLAND_MARGIN,
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           minHeight: '100vh',
+          pt: 12, // Space for top island + breathing room
         }}
       >
-        <AppBar
-          position="sticky"
-          elevation={0}
+        {/* ── Floating Top Utility Island ───────────────────────────── */}
+        <Box
+          component={motion.div}
+          initial={{ y: -100, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ type: 'spring', delay: 0.2 }}
           sx={{
-            background: 'rgba(255, 255, 255, 0.75)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.1)',
-            color: 'text.primary',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
+            position: 'fixed',
+            top: ISLAND_MARGIN,
+            left: `${sidebarWidth + ISLAND_MARGIN * 2}px`,
+            right: ISLAND_MARGIN,
+            zIndex: 1100,
+            height: 64,
+            borderRadius: '24px',
+            background: 'oklch(100% 0 0 / 0.1)',
+            backdropFilter: 'blur(40px)',
+            border: '1px solid oklch(100% 0 0 / 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            px: 3,
+            boxShadow: '0 4px 20px oklch(0% 0 0 / 0.02)',
+            transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <Toolbar sx={{ justifyContent: 'space-between', minHeight: 60, px: { xs: 2, md: 3 } }}>
-            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.secondary', fontSize: '0.8rem' }}>
-              {menu.find(m => location.pathname.startsWith(m.path))?.text || 'Dashboard'}
-            </Typography>
+          <Typography variant="body2" sx={{ fontWeight: 700, color: 'oklch(40% 0.02 250)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            {menu.find(m => location.pathname.startsWith(m.path))?.text || 'Dashboard'}
+          </Typography>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={() => i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi')}
-                sx={{
-                  borderRadius: '8px',
-                  borderColor: 'rgba(16,185,129,0.3)',
-                  color: 'primary.main',
-                  fontWeight: 700,
-                  fontSize: '0.72rem',
-                  minWidth: 38,
-                  px: 1,
-                  '&:hover': { borderColor: 'primary.main', bgcolor: 'rgba(16,185,129,0.05)' },
-                }}
-              >
-                {i18n.language?.startsWith('vi') ? 'EN' : 'VI'}
-              </Button>
-              <NotificationBell />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Button
+              variant="text"
+              size="small"
+              onClick={() => i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi')}
+              sx={{
+                borderRadius: '12px',
+                color: 'oklch(55% 0.18 160)',
+                fontWeight: 800,
+                fontSize: '0.75rem',
+                minWidth: 44,
+                '&:hover': { bgcolor: 'oklch(100% 0 0 / 0.3)' },
+              }}
+            >
+              {i18n.language?.startsWith('vi') ? 'EN' : 'VI'}
+            </Button>
+            
+            <NotificationBell />
 
+            <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: 'center', borderColor: 'oklch(0% 0 0 / 0.05)' }} />
+
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={(e) => setAnchorEl(e.currentTarget)}>
+              <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
+                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: 'oklch(20% 0.05 250)' }}>{user?.fullName}</Typography>
+                <Typography variant="caption" sx={{ color: 'oklch(55% 0.18 160)', fontWeight: 700 }}>{t(`roles.${user?.role}`)}</Typography>
+              </Box>
               <Avatar
                 src={user?.avatarUrl}
-                onClick={(e) => setAnchorEl(e.currentTarget)}
                 sx={{
-                  width: 32, height: 32,
-                  bgcolor: 'primary.main',
+                  width: 36, height: 36,
+                  bgcolor: 'oklch(65% 0.15 160)',
                   fontWeight: 800,
-                  fontSize: '0.8rem',
-                  cursor: 'pointer',
-                  border: '2px solid rgba(16,185,129,0.2)',
-                  transition: 'all 0.2s',
-                  '&:hover': { borderColor: 'primary.main' },
+                  fontSize: '0.85rem',
+                  border: '2px solid oklch(100% 0 0 / 0.5)',
                 }}
               >
-                {user?.fullName?.[0] || 'U'}
+                {user?.fullName?.[0]}
               </Avatar>
-
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={() => setAnchorEl(null)}
-                slotProps={{
-                  paper: {
-                    sx: {
-                      mt: 1, borderRadius: '12px',
-                      boxShadow: '0 12px 32px rgba(0,0,0,0.1)',
-                      border: '1px solid rgba(16,185,129,0.1)',
-                      minWidth: 190,
-                    }
-                  }
-                }}
-              >
-                <Box sx={{ px: 2, py: 1.5 }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: '0.875rem' }}>{user?.fullName}</Typography>
-                  <Typography variant="caption" color="text.secondary">{user?.email}</Typography>
-                </Box>
-                <Divider />
-                <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile') }} sx={{ py: 1.1, fontSize: '0.875rem' }}>
-                  <ListItemIcon><Person fontSize="small" /></ListItemIcon>
-                  {t('sidebar.profile')}
-                </MenuItem>
-                <MenuItem onClick={handleLogout} sx={{ py: 1.1, color: 'error.main', fontSize: '0.875rem' }}>
-                  <ListItemIcon><Logout fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-                  {t('sidebar.logout')}
-                </MenuItem>
-              </Menu>
             </Box>
-          </Toolbar>
-        </AppBar>
+
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={() => setAnchorEl(null)}
+              slotProps={{
+                paper: {
+                  sx: {
+                    mt: 2, borderRadius: '20px',
+                    bgcolor: 'oklch(100% 0 0 / 0.8)',
+                    backdropFilter: 'blur(20px)',
+                    boxShadow: '0 12px 40px oklch(0% 0 0 / 0.1)',
+                    border: '1px solid oklch(100% 0 0 / 0.1)',
+                    minWidth: 200,
+                    p: 1
+                  }
+                }
+              }}
+            >
+              <MenuItem onClick={() => { setAnchorEl(null); navigate('/profile') }} sx={{ borderRadius: '12px', py: 1.2 }}>
+                <ListItemIcon><Person fontSize="small" /></ListItemIcon>
+                {t('sidebar.profile')}
+              </MenuItem>
+              <Divider sx={{ my: 1, opacity: 0.5 }} />
+              <MenuItem onClick={handleLogout} sx={{ borderRadius: '12px', py: 1.2, color: 'error.main' }}>
+                <ListItemIcon><Logout fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
+                {t('sidebar.logout')}
+              </MenuItem>
+            </Menu>
+          </Box>
+        </Box>
 
         <Box
           component="main"
           sx={{
             flexGrow: 1,
-            p: { xs: 2, md: 3 },
-            background: 'linear-gradient(135deg, #f0fdf4 0%, #f8fafc 60%, #f1f5f9 100%)',
-            minHeight: 'calc(100vh - 60px)',
+            py: 2,
+            transition: 'all 0.3s ease',
           }}
         >
           <Outlet />

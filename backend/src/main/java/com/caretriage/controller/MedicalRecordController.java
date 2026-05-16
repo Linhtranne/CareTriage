@@ -36,6 +36,7 @@ public class MedicalRecordController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     @Operation(summary = "Lấy chi tiết hồ sơ bệnh án")
     public ResponseEntity<ApiResponse<MedicalRecordResponse>> getRecordById(
             @PathVariable Long id,
@@ -45,6 +46,7 @@ public class MedicalRecordController {
     }
 
     @GetMapping("/patient/{patientId}")
+    @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     @Operation(summary = "Lấy lịch sử khám của bệnh nhân", description = "Bệnh nhân chỉ xem được lịch sử của chính mình")
     public ResponseEntity<ApiResponse<List<MedicalRecordResponse>>> getPatientHistory(
             @PathVariable Long patientId,

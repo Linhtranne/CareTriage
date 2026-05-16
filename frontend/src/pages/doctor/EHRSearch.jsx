@@ -14,8 +14,14 @@ import {
   MenuItem,
   Chip,
   IconButton,
-  Tooltip
+  Tooltip,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell
 } from '@mui/material';
+import PatientPageShell from '../../components/patient/PatientPageShell';
 import { DataGrid } from '@mui/x-data-grid';
 import {
   Search,
@@ -65,6 +71,40 @@ export default function EHRSearch() {
     }
   });
 
+  // Pre-styled Input components for high-end feel
+  const inputSx = {
+    width: '100%',
+    '& .MuiFilledInput-root': {
+      borderRadius: '28px',
+      bgcolor: 'oklch(100% 0 0 / 0.15)',
+      backdropFilter: 'blur(20px)',
+      border: '1px solid oklch(100% 0 0 / 0.1)',
+      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+      '&:hover': {
+        bgcolor: 'oklch(100% 0 0 / 0.25)',
+        borderColor: 'oklch(65% 0.15 160 / 0.5)',
+      },
+      '&.Mui-focused': {
+        bgcolor: 'oklch(100% 0 0 / 0.4)',
+        borderColor: 'oklch(65% 0.15 160)',
+        boxShadow: 'none',
+      },
+      '&:before, &:after': { display: 'none' },
+    },
+    '& .MuiSelect-select': {
+      minWidth: '180px',
+      py: '12px !important',
+      display: 'flex',
+      alignItems: 'center',
+    },
+    '& .MuiInputLabel-root': {
+      color: 'oklch(50% 0.02 160)',
+      fontWeight: 600,
+      ml: 1,
+      '&.Mui-focused': { color: 'oklch(65% 0.15 160)' }
+    }
+  };
+
   const onSearch = async (data) => {
     setLoading(true);
     setError('');
@@ -73,7 +113,7 @@ export default function EHRSearch() {
       const params = Object.fromEntries(
         Object.entries(data).filter(([_, v]) => v !== '')
       );
-      
+
       const response = await ehrApi.searchPatients(params);
       setResults(response.data.data);
       setSearched(true);
@@ -92,136 +132,29 @@ export default function EHRSearch() {
     setError('');
   };
 
-  const columns = [
-    { 
-      field: 'patientName', 
-      headerName: 'Bệnh nhân', 
-      width: 220,
-      renderCell: (params) => (
-        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ height: '100%' }}>
-          <Box sx={{ bgcolor: 'rgba(8,187,163,0.1)', p: 0.5, borderRadius: 2 }}>
-            <User size={18} color="#08bba3" />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '0.9rem' }}>{params.value}</Typography>
-        </Stack>
-      )
-    },
-    { 
-      field: 'email', 
-      headerName: 'Email', 
-      width: 220,
-      renderCell: (params) => (
-        <Typography variant="body2" color="text.secondary">{params.value}</Typography>
-      )
-    },
-    { 
-      field: 'totalNotes', 
-      headerName: 'Số ghi chú', 
-      width: 120,
-      align: 'center',
-      headerAlign: 'center',
-      renderCell: (params) => (
-        <Chip 
-          label={params.value} 
-          size="small" 
-          sx={{ fontWeight: 800, bgcolor: 'rgba(0,0,0,0.05)' }} 
-        />
-      )
-    },
-    {
-      field: 'matchedMedications',
-      headerName: 'Thuốc active',
-      width: 250,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} sx={{ overflow: 'hidden', height: '100%', alignItems: 'center' }}>
-          {params.value?.slice(0, 2).map((med, idx) => (
-            <Chip 
-              key={idx} 
-              label={med} 
-              size="small" 
-              variant="outlined"
-              sx={{ borderColor: '#3b82f6', color: '#1d4ed8', fontWeight: 600, fontSize: '0.75rem' }} 
-            />
-          ))}
-          {params.value?.length > 2 && (
-            <Typography variant="caption" color="text.secondary">+{params.value.length - 2}</Typography>
-          )}
-        </Stack>
-      )
-    },
-    {
-      field: 'matchedConditions',
-      headerName: 'Bệnh lý',
-      width: 200,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} sx={{ overflow: 'hidden', height: '100%', alignItems: 'center' }}>
-          {params.value?.slice(0, 2).map((cond, idx) => (
-            <Chip 
-              key={idx} 
-              label={cond} 
-              size="small" 
-              variant="outlined"
-              sx={{ borderColor: '#f59e0b', color: '#92400e', fontWeight: 600, fontSize: '0.75rem' }} 
-            />
-          ))}
-          {params.value?.length > 2 && (
-            <Typography variant="caption" color="text.secondary">+{params.value.length - 2}</Typography>
-          )}
-        </Stack>
-      )
-    },
-    {
-      field: 'matchedSymptoms',
-      headerName: 'Triệu chứng',
-      width: 200,
-      renderCell: (params) => (
-        <Stack direction="row" spacing={0.5} sx={{ overflow: 'hidden', height: '100%', alignItems: 'center' }}>
-          {params.value?.slice(0, 2).map((sym, idx) => (
-            <Chip 
-              key={idx} 
-              label={sym} 
-              size="small" 
-              variant="outlined"
-              sx={{ borderColor: '#ef4444', color: '#b91c1c', fontWeight: 600, fontSize: '0.75rem' }} 
-            />
-          ))}
-        </Stack>
-      )
-    },
-    {
-      field: 'actions',
-      headerName: 'Hành động',
-      width: 140,
-      sortable: false,
-      renderCell: (params) => (
-        <Button
-          size="small"
-          startIcon={<ExternalLink size={14} />}
-          onClick={() => navigate(`/doctor/ehr/summary/${params.row.patientId}`)}
-          sx={{ borderRadius: 2, fontWeight: 700, fontSize: '0.75rem' }}
-        >
-          Xem EHR
-        </Button>
-      )
-    }
-  ];
 
   return (
-    <Box sx={{ bgcolor: '#f0fdf4', minHeight: '100vh', py: 4 }}>
-      <Container maxWidth="xl">
-        <Box sx={{ mb: 4 }}>
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <Box sx={{ bgcolor: 'rgba(8,187,163,0.1)', p: 1, borderRadius: 3 }}>
-              <Search size={32} color="#08bba3" />
-            </Box>
-            <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a' }}>
-              Tìm kiếm bệnh nhân theo EHR
-            </Typography>
-          </Stack>
-        </Box>
+    <PatientPageShell
+      title="EHR Search"
+      description="Tìm kiếm bệnh nhân thông minh dựa trên lịch sử hồ sơ lâm sàng"
+      maxWidth="xl"
+      transparent={true}
+    >
 
         {/* Zone 1: Search Form */}
-        <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc', mb: 3 }}>
+      <Paper 
+        elevation={0}
+        sx={{ 
+          p: 4, 
+          borderRadius: 8, 
+          border: '1px solid oklch(100% 0 0 / 0.15)', 
+          bgcolor: 'oklch(100% 0 0 / 0.1)', 
+          backdropFilter: 'blur(40px)',
+          mb: 5,
+          boxShadow: 'none',
+          width: '100%'
+        }}
+      >
           <form onSubmit={handleSubmit(onSearch)}>
             <Grid container spacing={3}>
               <Grid item xs={12} sm={6} md={4}>
@@ -234,7 +167,8 @@ export default function EHRSearch() {
                       fullWidth
                       label="Triệu chứng"
                       placeholder="Ví dụ: đau đầu, ho, sốt..."
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      variant="filled"
+                      sx={inputSx}
                     />
                   )}
                 />
@@ -249,7 +183,8 @@ export default function EHRSearch() {
                       fullWidth
                       label="Thuốc đang dùng"
                       placeholder="Ví dụ: Paracetamol, Insulin..."
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      variant="filled"
+                      sx={inputSx}
                     />
                   )}
                 />
@@ -264,7 +199,8 @@ export default function EHRSearch() {
                       fullWidth
                       label="Chẩn đoán / Bệnh lý"
                       placeholder="Ví dụ: Tiểu đường, Tăng huyết áp..."
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      variant="filled"
+                      sx={inputSx}
                     />
                   )}
                 />
@@ -279,9 +215,12 @@ export default function EHRSearch() {
                       {...field}
                       fullWidth
                       label="Từ ngày"
-                      type="date"
+                      type={field.value ? "date" : "text"}
+                      onFocus={(e) => (e.target.type = 'date')}
+                      onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
+                      variant="filled"
                       InputLabelProps={{ shrink: true }}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      sx={inputSx}
                     />
                   )}
                 />
@@ -295,9 +234,12 @@ export default function EHRSearch() {
                       {...field}
                       fullWidth
                       label="Đến ngày"
-                      type="date"
+                      type={field.value ? "date" : "text"}
+                      onFocus={(e) => (e.target.type = 'date')}
+                      onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
+                      variant="filled"
                       InputLabelProps={{ shrink: true }}
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      sx={inputSx}
                     />
                   )}
                 />
@@ -312,12 +254,14 @@ export default function EHRSearch() {
                       select
                       fullWidth
                       label="Mức độ nghiêm trọng"
-                      sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
+                      variant="filled"
+                      InputLabelProps={{ shrink: true }}
+                      sx={inputSx}
                     >
                       <MenuItem value="">Tất cả</MenuItem>
-                      <MenuItem value="MILD">MILD (Nhẹ)</MenuItem>
-                      <MenuItem value="MODERATE">MODERATE (Vừa)</MenuItem>
-                      <MenuItem value="SEVERE">SEVERE (Nặng)</MenuItem>
+                      <MenuItem value="MILD" sx={{ fontWeight: 600 }}>MILD (Nhẹ)</MenuItem>
+                      <MenuItem value="MODERATE" sx={{ fontWeight: 600 }}>MODERATE (Vừa)</MenuItem>
+                      <MenuItem value="SEVERE" sx={{ fontWeight: 600 }}>SEVERE (Nặng)</MenuItem>
                     </TextField>
                   )}
                 />
@@ -333,25 +277,32 @@ export default function EHRSearch() {
                     )}
                   </Box>
                   <Stack direction="row" spacing={2}>
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<RotateCcw size={18} />} 
+                    <Button
+                      variant="text"
+                      startIcon={<RotateCcw size={18} />}
                       onClick={onReset}
-                      sx={{ borderRadius: 2.5, fontWeight: 700 }}
+                      sx={{ 
+                        borderRadius: 3, 
+                        fontWeight: 600, 
+                        color: 'oklch(50% 0.02 160)',
+                        textTransform: 'none',
+                        '&:hover': { transform: 'scale(1.05)', bgcolor: 'transparent', color: 'oklch(20% 0.05 160)' }
+                      }}
                     >
                       Xóa bộ lọc
                     </Button>
-                    <Button 
-                      variant="contained" 
-                      type="submit" 
+                    <Button
+                      variant="text"
+                      type="submit"
                       disabled={loading}
-                      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <Search size={18} />}
-                      sx={{ 
-                        borderRadius: 2.5, 
-                        fontWeight: 800, 
-                        bgcolor: '#10b981', 
-                        px: 4,
-                        '&:hover': { bgcolor: '#059669', boxShadow: '0 4px 12px rgba(8, 187, 163, 0.3)' } 
+                      startIcon={loading ? <CircularProgress size={16} color="inherit" /> : <Search size={20} />}
+                      sx={{
+                        borderRadius: 3,
+                        fontWeight: 700,
+                        color: 'oklch(55% 0.18 160)',
+                        textTransform: 'none',
+                        fontSize: '1rem',
+                        '&:hover': { transform: 'scale(1.05)', bgcolor: 'transparent', color: 'oklch(50% 0.18 160)' }
                       }}
                     >
                       {loading ? 'Đang tìm...' : 'Tìm kiếm'}
@@ -364,63 +315,126 @@ export default function EHRSearch() {
         </Paper>
 
         {/* Zone 2: Results Table */}
-        <Paper sx={{ borderRadius: 4, overflow: 'hidden', border: '1px solid #e2e8f0', bgcolor: '#fff', position: 'relative' }}>
-          {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: 'rgba(8,187,163,0.1)', '& .MuiLinearProgress-bar': { bgcolor: '#08bba3' } }} />}
-          
-          <Box sx={{ height: 600, width: '100%' }}>
-            {!searched ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', py: 10 }}>
-                <FileSearch size={80} color="#e2e8f0" strokeWidth={1} />
-                <Typography color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
-                  Nhập tiêu chí và tìm kiếm để xem kết quả
-                </Typography>
-              </Box>
-            ) : results.length === 0 ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', py: 10 }}>
-                <AlertTriangle size={80} color="#e2e8f0" strokeWidth={1} />
-                <Typography color="text.secondary" sx={{ mt: 2, fontWeight: 500 }}>
-                  Không tìm thấy bệnh nhân nào khớp với tiêu chí
-                </Typography>
-              </Box>
-            ) : (
-              <DataGrid
-                rows={results}
-                columns={columns}
-                getRowId={(row) => row.patientId}
-                pageSizeOptions={[10, 25, 50]}
-                initialState={{
-                  pagination: { paginationModel: { pageSize: 10 } },
-                }}
-                disableRowSelectionOnClick
-                sx={{
-                  border: 'none',
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8fafc',
-                    color: '#64748b',
-                    fontWeight: 700,
-                    textTransform: 'uppercase',
-                    fontSize: '0.75rem',
-                    letterSpacing: '0.05em'
-                  },
-                  '& .MuiDataGrid-cell': {
-                    borderBottom: '1px solid #f1f5f9'
-                  },
-                  '& .MuiDataGrid-footerContainer': {
-                    borderTop: '1px solid #e2e8f0',
-                    bgcolor: '#f8fafc'
-                  }
-                }}
-              />
-            )}
-          </Box>
-        </Paper>
+        <Box
+          sx={{
+            '& .MuiTable-root': {
+              borderCollapse: 'separate',
+              borderSpacing: '0 12px',
+            },
+            position: 'relative'
+          }}
+        >
+          {loading && <LinearProgress sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, bgcolor: 'transparent', '& .MuiLinearProgress-bar': { bgcolor: 'oklch(60% 0.18 160)' } }} />}
+
+          {!searched ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, py: 10 }}>
+              <FileSearch size={80} color="oklch(90% 0.02 160)" strokeWidth={1} />
+              <Typography color="oklch(50% 0.02 160)" sx={{ mt: 2, fontWeight: 600 }}>
+                Nhập tiêu chí và tìm kiếm để xem kết quả
+              </Typography>
+            </Box>
+          ) : results.length === 0 ? (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, py: 10 }}>
+              <AlertTriangle size={80} color="oklch(90% 0.02 160)" strokeWidth={1} />
+              <Typography color="oklch(50% 0.02 160)" sx={{ mt: 2, fontWeight: 600 }}>
+                Không tìm thấy bệnh nhân nào khớp với tiêu chí
+              </Typography>
+            </Box>
+          ) : (
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Bệnh nhân</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Email</TableCell>
+                  <TableCell align="center" sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Số ghi chú</TableCell>
+                  <TableCell sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Phát hiện lâm sàng</TableCell>
+                  <TableCell align="right" sx={{ fontWeight: 600, color: 'oklch(40% 0.02 160)', border: 0, pb: 1 }}>Hành động</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {results.map((row) => (
+                  <TableRow 
+                    key={row.patientId}
+                    sx={{ 
+                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      '& td': { 
+                        bgcolor: 'oklch(100% 0 0 / 0.4)', 
+                        backdropFilter: 'blur(8px)',
+                        borderTop: '1px solid oklch(92% 0.02 160)',
+                        borderBottom: '1px solid oklch(92% 0.02 160)',
+                        py: 3,
+                        '&:first-of-type': { 
+                          borderLeft: '1px solid oklch(92% 0.02 160)',
+                          borderRadius: '16px 0 0 16px' 
+                        },
+                        '&:last-of-type': { 
+                          borderRight: '1px solid oklch(92% 0.02 160)',
+                          borderRadius: '0 16px 16px 0' 
+                        }
+                      },
+                      '&:hover td': { 
+                        bgcolor: 'oklch(100% 0 0 / 0.8)',
+                        borderColor: 'oklch(65% 0.15 160)',
+                      }
+                    }}
+                  >
+                    <TableCell>
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box sx={{ bgcolor: 'oklch(96% 0.05 160)', p: 0.5, borderRadius: 2 }}>
+                          <User size={18} color="oklch(55% 0.18 160)" />
+                        </Box>
+                        <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: 'oklch(20% 0.05 160)' }}>{row.patientName}</Typography>
+                      </Stack>
+                    </TableCell>
+                    <TableCell>
+                      <Typography variant="body2" sx={{ color: 'oklch(40% 0.02 160)', fontWeight: 600 }}>{row.email}</Typography>
+                    </TableCell>
+                    <TableCell align="center">
+                      <Chip
+                        label={row.totalNotes}
+                        size="small"
+                        sx={{ fontWeight: 700, bgcolor: 'oklch(100% 0 0 / 0.1)', color: 'oklch(30% 0.05 160)' }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ maxWidth: 300 }}>
+                      <Stack direction="row" spacing={0.5} flexWrap="wrap" gap={0.5}>
+                        {row.matchedConditions?.slice(0, 2).map((c, i) => (
+                          <Chip key={i} label={c} size="small" sx={{ bgcolor: 'oklch(96% 0.05 40 / 0.4)', color: 'oklch(50% 0.15 40)', fontWeight: 600, fontSize: '0.7rem' }} />
+                        ))}
+                        {row.matchedMedications?.slice(0, 2).map((m, i) => (
+                          <Chip key={i} label={m} size="small" sx={{ bgcolor: 'oklch(96% 0.05 220 / 0.4)', color: 'oklch(50% 0.15 220)', fontWeight: 600, fontSize: '0.7rem' }} />
+                        ))}
+                      </Stack>
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<ExternalLink size={16} />}
+                        onClick={() => navigate(`/doctor/ehr/summary/${row.patientId}`)}
+                        sx={{ 
+                          borderRadius: 2, 
+                          fontWeight: 700, 
+                          textTransform: 'none',
+                          color: 'oklch(55% 0.18 160)',
+                          '&:hover': { transform: 'scale(1.05)', bgcolor: 'transparent' }
+                        }}
+                      >
+                        Xem EHR
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </Box>
 
         {error && (
           <Alert severity="error" sx={{ mt: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
-      </Container>
-    </Box>
+    </PatientPageShell>
   );
 }

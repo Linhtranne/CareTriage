@@ -15,7 +15,7 @@ const appointmentApi = {
   },
   
   cancelAppointment: (id, data) => {
-    return axiosClient.put(`/api/v1/appointments/${id}/cancel`, data);
+    return axiosClient.patch(`/api/v1/appointments/${id}/cancel`, data);
   },
   
   getAvailableSlots: (doctorId, date) => {
@@ -34,6 +34,10 @@ const appointmentApi = {
 
   getDoctorTodayAppointments: () => {
     return axiosClient.get('/api/v1/appointments/doctor/today')
+  },
+
+  getDoctorAppointments: (params) => {
+    return axiosClient.get('/api/v1/appointments/doctor', { params })
   },
 
   updateStatus: (id, data) => {
