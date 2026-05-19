@@ -1,158 +1,427 @@
-# CareTriage - Detailed Task Specifications (Merged from Backlog)
+You are the orchestrator for the CareTriage project. Please coordinate the following roles:
 
-Tài liệu này chứa đặc tả chi tiết cho các Task từ Sprint 8 trở đi, được tổng hợp từ Backlog và yêu cầu nghiệp vụ.
+@product-manager
 
----
+@project-architect
 
-## [EPIC 3] AI Triage & Ticket Management
+@backend-specialist
 
-### US-012: Triage ticket gửi đến bác sĩ
-**As a** system, **I want** to convert triage chat into a ticket, **so that** doctors can review and follow up.
+@python-patterns
 
-#### [T-052] TriageTicket entity (session, patient, dept, urgency, summary, status) [DONE]
-- **Mục tiêu:** Tạo cấu trúc dữ liệu trung tâm để chuyển kết quả tư vấn AI thành ticket cho bác sĩ.
-- **Triển khai:** (Đã hoàn thành - Xem chi tiết tại Task Report).
+@security-auditor
 
-#### [T-053] Auto-generate ticket when triage completes
-- **Mô tả:** Hệ thống tự động tạo phiếu ngay khi quá trình phân luồng hoàn tất để đảm bảo tính chính xác và kịp thời.
-- **User Flow:**
-  1. Quá trình phân luồng (Triage) hoàn tất.
-  2. Hệ thống xác định đích đến (Bộ phận xử lý).
-  3. Hệ thống tự động kích hoạt lệnh tạo phiếu.
-  4. Điền tự động thông tin: Mã phiếu (Auto-gen), Tiêu đề, Bộ phận, Ưu tiên, Trạng thái (Mới).
-  5. Ghi nhận người tạo là "Hệ thống tự động".
-- **Acceptance Criteria (AC):**
-  - **Scenario 1:** Tạo phiếu thành công khi xác định được đích đến. Xuất hiện trong danh sách "Cần xử lý" của bộ phận.
-  - **Scenario 2:** Không tạo phiếu nếu phân luồng thất bại. Chuyển vào hàng đợi "Chờ phân loại thủ công".
-  - **Scenario 3:** Đảm bảo Transaction (Rollback nếu lỗi DB) để không tạo dữ liệu rác.
-- **Business Rules:**
-  - Thời gian tạo phiếu < 3 giây sau khi kết thúc chat.
-  - Phải có nhãn "Auto-generated".
+@test-engineer
 
-#### [T-055] TriageTicketController: list, assign, review
-- **Mục tiêu:** Cung cấp API quản lý quy trình phân loại ticket dành cho nhân viên điều phối và quản lý.
-- **Implementation Steps:**
-  1. **API List:** `GET /api/v1/triage/tickets` - Lấy danh sách ticket `PENDING_TRIAGE` (Hỗ trợ phân trang, lọc priority).
-  2. **API Assign:** `POST /api/v1/triage/assign` - Gán `ticket_id` cho `assignee_id`. Chuyển trạng thái sang `IN_REVIEW`.
-  3. **API Review:** `POST /api/v1/triage/review` - Ghi nhận kết quả Approve/Reject, Category, Severity. Chuyển trạng thái `RESOLVED` hoặc `ESCALATED`.
-- **Technical Constraints:**
-  - Hiệu năng: List API < 300ms với 10,000 records.
-  - Bảo mật: Chỉ người được gán hoặc Manager mới có quyền Review.
+@devops-engineer
 
-#### [T-056] Doctor: Ticket inbox + detail page (with chat history)
-- **Mô tả:** Giao diện dành cho bác sĩ để quản lý danh sách bệnh nhân chờ và xem nội dung tư vấn trước đó.
-- **User Flow:**
-  1. Bác sĩ vào "Danh sách chờ".
-  2. Xem danh sách phiếu trạng thái "Chờ xử lý" (Sắp xếp theo thời gian chờ).
-  3. Nhấn vào phiếu để xem chi tiết bệnh nhân + Lịch sử Chat (Read-only).
-- **Data Fields:** 
-  - **Inbox:** Tên BN, Mã phiếu, Thời gian chờ, Triệu chứng sơ bộ, Độ ưu tiên.
-  - **Detail:** Nội dung chat, Hình ảnh/File đính kèm, Giờ gửi.
-- **AC:**
-  - **Scenario 1:** Hiển thị phiếu chờ xử lý của đúng khoa/phòng.
-  - **Scenario 2:** Xem đầy đủ lịch sử hội thoại trước khi nhấn tiếp nhận.
-  - **Scenario 3:** Cảnh báo màu sắc cho phiếu chờ quá 15 phút.
+@performance-optimizer
 
-#### [T-057] Patient: Ticket tracking UI
-- **Mô tả:** Bệnh nhân theo dõi trạng thái phân luồng và vị trí trong hàng đợi.
-- **User Flow:**
-  1. Truy cập qua Mobile App hoặc QR Code trên phiếu giấy.
-  2. Xem kết quả: Khoa/Phòng, Số phòng, Mức độ ưu tiên.
-  3. Theo dõi tiến trình qua thanh Status (Đang chờ -> Đang khám -> Hoàn thành).
-- **Business Rules:**
-  - Chỉ xem được phiếu của chính mình (theo SĐT/PID).
-  - Màu sắc phân loại: Đỏ (Cấp cứu), Vàng (Khẩn cấp), Xanh (Thường).
-  - Cập nhật trạng thái Real-time qua WebSocket (độ trễ < 2s).
+@clean-code
 
----
+@database-architect (if schema/vector store is needed)
 
-## [EPIC 4] Appointment & Integrated Workflow
+Objective:
+Improve task cluster T-040 through T-045 to achieve "production initial readiness" for the AI Symptom Checker & Triage system.
 
-### US-013: Liên kết Ticket với Lịch hẹn
-**As a** doctor, **I want** to create appointments directly from triage tickets, **so that** data is synchronized.
+Scope:
 
-#### [T-058] Doctor: Create appointment from ticket
-- **Mô tả:** Tạo lịch hẹn khám trực tiếp từ thông tin phiếu phân luồng để tiết kiệm thời gian nhập liệu.
-- **User Flow:**
-  1. Từ màn hình chi tiết Phiếu phân luồng, nhấn "Tạo lịch hẹn".
-  2. Hệ thống tự động điền: Họ tên, Ngày sinh, SĐT, Triệu chứng từ phiếu gốc.
-  3. Bác sĩ chọn: Ngày hẹn, Khung giờ, Chuyên khoa.
-  4. Hệ thống lưu và gắn liên kết (Link) giữa Phiếu và Lịch hẹn.
-- **AC:**
-  - **Scenario 1:** Tự động điền dữ liệu chính xác (Read-only cho thông tin hành chính).
-  - **Scenario 2:** Chặn tạo lịch hẹn vào ngày trong quá khứ.
-  - **Scenario 3:** Cảnh báo nếu phiếu đã có lịch hẹn trước đó.
+T-040: Gemini API client + medical system prompt
 
-#### [T-060] Sync status between ticket and appointment
-- **Mục tiêu:** Tự động đồng bộ trạng thái giữa hai thực thể để đảm bảo tính nhất quán dữ liệu.
-- **Logic ánh xạ (Mapping):**
-  - Phiếu 'Mới tạo' -> Lịch hẹn 'Đã đến' (Arrived).
-  - Phiếu 'Đang khám' -> Lịch hẹn 'Đang thực hiện' (In Progress).
-  - Phiếu 'Hoàn thành' -> Lịch hẹn 'Đã hoàn thành' (Finished).
-- **Implementation:** Sử dụng Event Listener/Observer, xử lý bất đồng bộ qua Message Queue.
+T-041: Conversation chain/context memory
 
----
+T-042: /api/triage/analyze
 
-## [EPIC 5] Branding & Content Management
+T-043: Prompt engineering: symptom analysis + follow-up questions
 
-### US-014: Trang chủ & Thông tin giới thiệu
-**As a** visitor, **I want** to see hospital branding and introduction, **so that** I trust the services.
+T-044: /api/triage/recommend
 
-#### [T-061] Landing page components (Hero, Services, CTA) [DONE]
-- **Thành phần:** Hero section, Lưới dịch vụ, Nút kêu gọi hành động.
-- **AC:** Hiển thị tốt trên Mobile, nội dung cấu hình qua CMS.
+T-045: Spring Boot AiClientService bridge
 
-#### [T-062] Vision & Mission page [DONE]
-- **Mô tả:** Hiển thị sứ mệnh và tầm nhìn để người dùng hiểu giá trị cốt lõi của bệnh viện.
-- **Dữ liệu:** Tiêu đề, Banner, Sứ mệnh (Rich Text), Tầm nhìn (Rich Text), Danh sách Giá trị cốt lõi (Icons).
-- **AC:** 
-  - Truy cập qua Menu Giới thiệu.
-  - Hiển thị đúng định dạng Rich Text & Alt-text cho ảnh.
-  - Tải trang < 2 giây.
+Current Context:
+Several improvements have already been made:
 
-#### [T-063] Department detail page [DONE]
-- **Mô tả:** Thông tin chi tiết về phạm vi điều trị, bác sĩ và trang thiết bị của từng khoa.
-- **Dữ liệu:** Tên khoa, Ảnh bìa, Mô tả chi tiết, Danh sách bác sĩ (Ảnh, Tên, Học hàm), Trang thiết bị.
-- **AC:**
-  - Hiển thị đầy đủ thông tin khi khoa ở trạng thái "Công khai".
-  - Xử lý thông báo "Chưa có bác sĩ" nếu dữ liệu trống.
-  - Lỗi 404 nếu URL không tồn tại.
-- **Business Rules:** Sắp xếp bác sĩ theo học hàm hoặc thủ công. Ghi nhận lượt xem (view count).
+Centralized AI service config via app/core/config.py.
 
----
+Red-flag detector has been extracted into app/services/red_flag_detector.py.
 
-## [EPIC 6] Emergency & Patient Support
+/health endpoint returns config_status, rag_enabled, and corpus_status.
 
-### US-015: Hỗ trợ khẩn cấp & Liên hệ
-**As a** user, **I want** quick access to emergency info and contact forms.
+Backend AiClientServiceImpl has basic retry/fallback mechanisms.
 
-#### [T-064] Emergency Info page (Hotlines, First-aid, GPS) [DONE]
-- **Mô tả:** Trang liên hệ và hướng dẫn cấp cứu khẩn cấp.
-- **Dữ liệu:** Hotline (tel: links), Khoảng cách (tính theo GPS), Địa chỉ, Trạng thái (Mở cửa 24/7), Hướng dẫn sơ cứu.
-- **AC:**
-  - Truy cập nhanh từ nút "Cấp cứu" nổi bật.
-  - Gọi điện ngay khi nhấn Hotline.
-  - Ưu tiên cơ sở gần nhất nếu có GPS.
-  - Hoạt động offline (dữ liệu cache) cho hướng dẫn sơ cứu.
-- **Business Rules:** Số 115 luôn đứng đầu. Thiết kế tối giản, font lớn.
+.env.example includes timeout/resilience/RAG variables.
 
-#### [T-065] Contact Form with Spam Protection [DONE]
-- **Mô tả:** Biểu mẫu gửi yêu cầu hỗ trợ hoặc tư vấn.
-- **Dữ liệu:** Họ tên, Email (Validation), SĐT, Chủ đề, Nội dung.
-- **AC:**
-  - Gửi thành công: Lưu DB + Thông báo xác nhận + Reset form.
-  - Validation: Cảnh báo đỏ cho trường thiếu hoặc sai định dạng email.
-- **Business Rules:** 
-  - Tích hợp reCAPTCHA chống spam.
-  - Gửi Email tự động cho khách và Admin.
-  - Giới hạn IP: Tối đa 3 yêu cầu/5 phút.
+Prompts have reduced direct chain-of-thought instructions.
 
----
+Remaining Blockers:
 
-## [EPIC 7] Design System
+AI service tests fail at runtime because ResearchService hard-imports Bio:
 
-#### [T-059] UI/UX Design for Ticket Inbox & Detail
-- **Mục tiêu:** Thiết kế giao diện Inbox và Detail chuyên sâu cho Bác sĩ (Figma).
-- **Yêu cầu:** 
-  - Tuân thủ WCAG 2.1 (Độ tương phản cho môi trường làm việc cường độ cao).
-  - Hỗ trợ Responsive (Web & Tablet).
+ModuleNotFoundError: No module named 'Bio'
+
+Even if RAG_ENABLED=false, the app crashes because routes.py imports ResearchService at startup.
+
+ResearchService does not respect ENABLE_WEB_RESEARCH=false; it still uses Tavily if the key is present.
+
+/api/triage/research is not guarded by an environment flag.
+
+Backend application.yml still contains default secrets:
+
+JWT secret fallback
+
+AI internal API key fallback
+
+Triage logic still relies on the free-text marker [TRIAGE_COMPLETE].
+
+Manual test test_ai.py still references result['thinking'], even though this field has been removed.
+
+RAG does not yet have a real, approved corpus, so we cannot claim full production RAG status.
+
+Production Target:
+Achieve an "initial production release" state, meaning:
+
+The app starts successfully in environments where RAG is disabled.
+
+No hardcoded/default secrets in production.
+
+No leakage of CoT (Chain-of-Thought) / PII / secrets.
+
+Deterministic red-flag emergency screening is operational.
+
+Analyze/recommend endpoints return safe, structured responses.
+
+Backend bridge has timeouts/retries/fallbacks.
+
+RAG/web research are strictly optional and do not cause runtime crashes.
+
+Core tests pass.
+
+If the standard corpus is missing, health/status must explicitly state NOT_CONFIGURED.
+
+What NOT to do (Strict Constraints):
+
+Do NOT train a text classification model in this phase.
+
+Do NOT use free web search to reply directly to patients in production.
+
+Do NOT claim production RAG if there is no approved medical corpus.
+
+Do NOT log raw symptoms/medical content in production.
+
+Do NOT log chain-of-thought reasoning.
+
+Do NOT return chain-of-thought to the frontend.
+
+Do NOT use default production secrets.
+
+Do NOT allow the model to autonomously generate departments outside the whitelist.
+
+Do NOT rewrite the entire system if localized fixes are sufficient.
+
+Approved NLP Architecture:
+Use a hybrid approach:
+
+Deterministic red-flag screening.
+
+Optional RAG over an approved corpus.
+
+Gemini LLM for conversation and structured triage.
+
+Safety post-processing.
+
+Department whitelist mapping.
+
+Backend fallback/resilience.
+
+Implementation Priorities:
+P0 — App must start and have no production fallback secrets
+1. Make ResearchService optional/lazy
+Currently, routes.py instantiates research_service = ResearchService() at import time. This causes the app to crash if RAG dependencies are missing.
+
+Requirements:
+
+If RAG_ENABLED=false:
+
+Do not hard-import Bio, Chroma, GoogleGenerativeAIEmbeddings, or TavilyClient.
+
+Do not initialize the vector DB.
+
+get_context(query) must return "".
+
+/health must return:
+
+rag_enabled=false
+
+corpus_status=NOT_CONFIGURED
+
+The application must start successfully.
+
+If RAG_ENABLED=true:
+
+Only then import/initialize RAG dependencies.
+
+If dependencies are missing or the vector DB/corpus is not ready:
+
+Do not crash the entire app if avoidable.
+
+Log the error safely.
+
+Set corpus_status=NOT_CONFIGURED or ERROR.
+
+get_context(query) must return "".
+
+Suggested Design:
+
+Create a lightweight interface/class (e.g., ResearchService vs. DisabledResearchService).
+
+Or, inside ResearchService.__init__, conditionally lazy-import dependencies only when settings["rag_enabled"] == True.
+
+routes.py must not cause the app to crash due to optional dependencies.
+
+2. Guard Web Research
+ENABLE_WEB_RESEARCH=false must be the default.
+
+/api/triage/research must:
+
+Return 404/403/503 if web research is disabled.
+
+Or return a clear message: "Web research is disabled".
+
+_perform_research should only use Tavily when:
+
+ENABLE_WEB_RESEARCH=true AND TAVILY_API_KEY exists.
+
+PubMed/web ingestion must not run by default during runtime patient interactions.
+
+3. Remove default secrets from Backend Production Config
+In backend/src/main/resources/application.yml, remove production fallbacks for:
+
+JWT_SECRET
+
+AI_SERVICE_INTERNAL_KEY
+
+Requirements:
+
+Production must fail-fast if environment variables are missing.
+
+You can keep defaults in application-dev.yml for local development, but not in the production profile.
+
+Since application.yml is currently the active prod config, be careful not to break local workflows. If needed, use profiles:
+
+application.yml (no hardcoded secrets).
+
+application-dev.yml (retains dev secrets).
+
+Production fetches strictly from env.
+
+P1 — Structured triage, safety, department whitelist
+4. Reduce dependency on [TRIAGE_COMPLETE]
+Currently, triage_service.py relies on the [TRIAGE_COMPLETE] marker.
+
+Requirements:
+
+analyze can continue using conversational text for follow-ups, but the final business logic should not rely solely on a free-text marker.
+
+/triage/recommend must call direct structured JSON generation.
+
+Create or standardize Pydantic schemas:
+
+TriageAnalyzeRequest
+
+TriageAnalyzeResponse
+
+TriageRecommendation
+
+RedFlagResult
+
+The structured result should include:
+
+reply
+
+is_complete
+
+clinical_reasoning_summary
+
+triage_result
+
+suggested_department_code
+
+suggested_department_name
+
+urgency_level
+
+confidence_score
+
+department_mapping_status
+
+fallback
+
+fallback_reason
+
+5. Department Whitelist
+Do not arbitrarily hardcode IDs if the backend DB uses different departments.
+
+Requirements:
+
+The AI service must enforce a whitelist by code/name.
+
+If the ID is unknown, return suggested_department_code and suggested_department_name.
+
+The backend will map the code/name to the DB if necessary.
+
+If confidence < 0.6:
+
+Fallback to GENERAL_INTERNAL_MEDICINE / Nội tổng quát.
+
+Set department_mapping_status=LOW_CONFIDENCE_FALLBACK.
+
+If red-flag triggered:
+
+Map to EMERGENCY / Cấp cứu.
+
+Set department_mapping_status=RED_FLAG_BYPASS.
+
+Set confidence_score=1.0.
+
+6. Prompt Safety
+Do not request chain-of-thought.
+
+Do not output <thinking> tags.
+
+Do not log CoT.
+
+No definitive diagnoses.
+
+No prescriptions.
+
+Always include a short disclaimer.
+
+Limit follow-ups to a maximum of 1–2 questions.
+
+Red flags must direct immediately to emergency care.
+
+P1 — Backend Resilience
+7. Backend AiClientServiceImpl
+Basic retry/fallback exists, but needs refinement and verification:
+
+Fetch timeouts from env:
+
+AI_CONNECT_TIMEOUT_MS
+
+AI_READ_TIMEOUT_SECONDS
+
+AI_WRITE_TIMEOUT_SECONDS
+
+Retry logic:
+
+Retry on 429, 502, 503, 504, and timeouts.
+
+Do NOT retry on 400, 401, 403, 413, 422.
+
+The fallback structure must be stable and consistent with the AI service DTO.
+
+Do not log raw medical content. Logging sessionId, status, and latency/error class is sufficient.
+
+Health checks must not block indefinitely; if using .block(), ensure it has a clear timeout or relies on the WebClient's timeout.
+
+P2 — Tests and Validation
+8. Fix Tests / Manual Scripts
+test_ai.py must no longer use result['thinking'].
+
+test_security.py must run successfully when RAG_ENABLED=false and Bio is missing.
+
+Add tests for:
+
+Red-flag bypass.
+
+Negation handling in red flags.
+
+Health check when RAG is disabled.
+
+Web research disabled endpoint behavior.
+
+Missing authentication.
+
+Invalid payload structures.
+
+AI invalid JSON fallback.
+
+Backend retry/fallback logic.
+
+9. Validation Execution
+After making modifications, run:
+
+python -m compileall ai-service/app ai-service/test_security.py
+
+python ai-service/test_security.py
+
+mvn test -f backend/pom.xml -Dtest=AiClientServiceTest
+
+If a dependency is missing due to the environment, clearly log which dependency is missing and ensure the app still starts with the feature disabled.
+
+Deliverables:
+
+Pre-implementation Report: Briefly outline remaining P0/P1/P2 tasks.
+
+Code Implementation.
+
+Update Env Examples: Ensure newly added variables are documented.
+
+Execute Validation.
+
+Final Report:
+
+Pass/fail status.
+
+The completion level of tasks T-040→T-045.
+
+What is still required before claiming full production RAG.
+
+Definition of Done:
+
+AI service starts successfully when RAG_ENABLED=false, even without Bio/Chroma/Tavily.
+
+/health correctly returns RAG disabled/not configured statuses.
+
+/triage/analyze successfully executes red-flag bypasses.
+
+/triage/research is inaccessible when ENABLE_WEB_RESEARCH=false.
+
+Backend has no default production secrets for JWT/internal AI keys.
+
+Backend AI client retry/fallback tests pass.
+
+No CoT/thinking artifacts remain in public responses.
+
+No hardcoded models/keys/secrets exist in runtime.
+
+Targeted tests pass successfully.
+
+If a concise summary is needed for immediate execution:
+
+Please push T-040→T-045 to "production initial readiness".
+
+P0 Priorities:
+
+The AI service must start when RAG_ENABLED=false even if Bio/Chroma/Tavily are missing. ResearchService must be optional/lazy; do not import optional dependencies at startup.
+
+/api/triage/research must only run when ENABLE_WEB_RESEARCH=true (disabled by default).
+
+Remove default production secrets from backend application.yml: JWT_SECRET, AI_SERVICE_INTERNAL_KEY.
+
+P1 Priorities:
+4. /triage/recommend must return structured JSON directly, reducing reliance on the [TRIAGE_COMPLETE] marker.
+5. Department whitelist by code/name; map low confidence fallbacks to GENERAL_INTERNAL_MEDICINE and red flags to EMERGENCY.
+6. Remove all CoT/thinking from prompts, logs, and responses.
+7. Backend AiClientService must have timeouts, retries, and fallbacks aligned with DTOs. Do not log raw symptoms.
+
+P2 Priorities:
+8. Update test_ai.py to remove result['thinking'].
+9. Run validations:
+
+python -m compileall ai-service/app ai-service/test_security.py
+
+python ai-service/test_security.py
+
+mvn test -f backend/pom.xml -Dtest=AiClientServiceTest
+
+Reminder: Do not claim production RAG without an approved corpus; health must return corpus_status=NOT_CONFIGURED.

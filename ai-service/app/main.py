@@ -6,6 +6,7 @@ from app.api.ehr_routes import router as ehr_router
 from app.core.config import get_settings
 from app.services.exceptions import AIError, AIQuotaExceeded, AISafetyBlocked, AIConnectionError
 import logging
+import os
 
 settings = get_settings()
 
@@ -76,4 +77,22 @@ async def global_exception_handler(request: Request, exc: Exception):
 
 @app.get("/health")
 async def health():
-    return {"status": "UP", "service": "caretriage-ai-service"}
+    # Enforce safe local RAG index checks without calling external Gemini API
+    db_path = settings.get("chroma_db_path", "./chroma_db")
+    sqlite_file = os.path.join(db_path, "chroma.sqlite3")
+    
+    # A valid Chroma collection exists if the chroma.sqlite3 file is present
+    has_index = os.path.exists(sqlite_file)
+    rag_enabled_env = settings.get("rag_enabled", False)
+    
+    # Dynamically determine RAG availability
+    is_rag_ready = bool(rag_enabled_env and has_index)
+    corpus_status = "READY" if is_rag_ready else "NOT_CONFIGURED"
+    
+    return {
+        "status": "UP",
+        "service": "caretriage-ai-service",
+        "config_status": "LOADED",
+        "rag_enabled": is_rag_ready,
+        "corpus_status": corpus_status
+    }

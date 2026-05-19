@@ -4,9 +4,6 @@ from typing import List
 import google.generativeai as genai
 
 from app.core.config import get_settings
-from langchain_community.vectorstores import Chroma
-from langchain_google_genai import GoogleGenerativeAIEmbeddings
-from Bio import Entrez
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -20,33 +17,66 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
-Entrez.email = settings["entrez_email"]
 
 class ResearchService:
     def __init__(self):
-        self.api_key = settings["gemini_api_key"]
-        self.embeddings = GoogleGenerativeAIEmbeddings(
-            model=settings["gemini_embedding_model"],
-            google_api_key=self.api_key
-        )
-        self.db_path = settings["chroma_db_path"]
-        Path(self.db_path).mkdir(parents=True, exist_ok=True)
+        self.rag_enabled = settings.get("rag_enabled", False)
+        self.vector_db = None
+        self.Entrez = None
+        self.Chroma = None
         
-        self.vector_db = Chroma(
-            persist_directory=self.db_path,
-            embedding_function=self.embeddings
-        )
-        
-        self.model = genai.GenerativeModel(settings["gemini_model_name"])
+        if not self.rag_enabled:
+            logger.info("RAG is disabled. ResearchService initialized in dummy mode.")
+            return
+
+        try:
+            # Lazy imports for optional RAG dependencies
+            from langchain_community.vectorstores import Chroma
+            from langchain_google_genai import GoogleGenerativeAIEmbeddings
+            from Bio import Entrez
+            
+            self.Entrez = Entrez
+            self.Chroma = Chroma
+            
+            self.api_key = settings["gemini_api_key"]
+            self.embeddings = GoogleGenerativeAIEmbeddings(
+                model=settings["gemini_embedding_model"],
+                google_api_key=self.api_key
+            )
+            self.db_path = settings["chroma_db_path"]
+            Path(self.db_path).mkdir(parents=True, exist_ok=True)
+            
+            self.vector_db = Chroma(
+                persist_directory=self.db_path,
+                embedding_function=self.embeddings
+            )
+            
+            self.model = genai.GenerativeModel(settings["gemini_model_name"])
+            self.Entrez.email = settings.get("entrez_email", "admin@caretriage.com")
+            logger.info("ResearchService: RAG features successfully initialized.")
+        except Exception as e:
+            logger.error(f"Error initializing optional RAG/Entrez dependencies: {e}. "
+                         f"Falling back to disabled RAG mode.")
+            self.rag_enabled = False
+            self.vector_db = None
+            self.Entrez = None
 
     def start_background_research(self, patient_id: int, query: str):
         """Start a background thread to research and cache medical info."""
+        if not self.rag_enabled:
+            logger.warning("Background research triggered but RAG is disabled. Skipping.")
+            return
+            
         thread = threading.Thread(target=self._perform_research, args=(patient_id, query))
         thread.start()
         logger.info(f"Background research started for patient {patient_id} with query: {query}")
 
     def _perform_research(self, patient_id: int, query: str):
         """Internal method to run research tasks."""
+        if not self.rag_enabled or not self.vector_db:
+            logger.warning("RAG is disabled or vector DB is uninitialized. Skipping research.")
+            return
+
         try:
             # 1. Extract medical keywords using LLM
             entities = self._extract_entities(query)
@@ -67,22 +97,24 @@ class ResearchService:
                 f"{disease} protocol"
             ]
 
-            # 3. Perform PubMed Search (for guidelines and peer-reviewed stuff)
-            pubmed_results = self._search_pubmed(f"{disease} guidelines", max_results=5)
-            all_content.extend(pubmed_results)
+            # 3. Perform PubMed Search (only if RAG Entrez is loaded)
+            if self.Entrez:
+                pubmed_results = self._search_pubmed(f"{disease} guidelines", max_results=5)
+                all_content.extend(pubmed_results)
 
-            # 4. Perform Web Search for each specialized query
-            # We use Tavily if API key is present, otherwise fallback to mock/limited search
-            tavily_key = settings["tavily_api_key"]
-            if tavily_key:
+            # 4. Perform Web Search for each specialized query (guarded by ENABLE_WEB_RESEARCH)
+            enable_web = settings.get("enable_web_research", False)
+            tavily_key = settings.get("tavily_api_key")
+            
+            if enable_web and tavily_key:
                 for q in search_queries:
                     web_results = self._search_web_tavily(q)
                     all_content.extend(web_results)
             else:
-                logger.warning("TAVILY_API_KEY not found. Skipping specialized web searches.")
+                logger.info("Web research is disabled or TAVILY_API_KEY is missing. Skipping Tavily searches.")
 
             # 5. Process and Store in Vector DB
-            if all_content:
+            if all_content and self.vector_db:
                 self.vector_db.add_texts(
                     texts=[item["content"] for item in all_content],
                     metadatas=[{"source": item["source"], "disease": disease, "patient_id": patient_id} for item in all_content]
@@ -111,6 +143,8 @@ class ResearchService:
             return []
 
     def _extract_entities(self, text: str) -> dict:
+        if not hasattr(self, 'model') or not self.model:
+            return {}
         prompt = f"Extract medical disease or primary symptom from this text. Return JSON with 'disease' key only. Text: {text}"
         response = self.model.generate_content(prompt)
         try:
@@ -120,18 +154,22 @@ class ResearchService:
 
     def _search_pubmed(self, query: str, max_results: int = 5) -> List[dict]:
         """Search PubMed for the given query."""
+        if not self.Entrez:
+            logger.warning("PubMed Entrez is not initialized.")
+            return []
+            
         logger.info(f"Searching PubMed for: {query}")
         try:
-            handle = Entrez.esearch(db="pubmed", term=query, retmax=max_results)
-            record = Entrez.read(handle)
+            handle = self.Entrez.esearch(db="pubmed", term=query, retmax=max_results)
+            record = self.Entrez.read(handle)
             handle.close()
             
             ids = record["IdList"]
             results = []
             
             for pmid in ids:
-                fetch_handle = Entrez.efetch(db="pubmed", id=pmid, retmode="xml")
-                fetch_record = Entrez.read(fetch_handle)
+                fetch_handle = self.Entrez.efetch(db="pubmed", id=pmid, retmode="xml")
+                fetch_record = self.Entrez.read(fetch_handle)
                 fetch_handle.close()
                 
                 try:
@@ -152,5 +190,11 @@ class ResearchService:
 
     def get_context(self, query: str) -> str:
         """Retrieve relevant context for RAG."""
-        results = self.vector_db.similarity_search(query, k=3)
-        return "\n---\n".join([r.page_content for r in results])
+        if not self.rag_enabled or not self.vector_db:
+            return ""
+        try:
+            results = self.vector_db.similarity_search(query, k=3)
+            return "\n---\n".join([r.page_content for r in results])
+        except Exception as e:
+            logger.error(f"Error retrieving context from vector database: {e}")
+            return ""

@@ -37,7 +37,7 @@ class EHRSearchTest {
     private PatientSymptomRepository patientSymptomRepository;
 
     @InjectMocks
-    private EHRService ehrService;
+    private com.caretriage.service.impl.EHRServiceImpl ehrService;
 
     @Test
     void searchPatients_emptyCriteria_returnsEmpty() {

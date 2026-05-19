@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.reactive.function.client.ClientRequest;
 import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFunction;
@@ -33,11 +34,15 @@ public class AiClientServiceTest {
                 .exchangeFunction(exchangeFunction)
                 .build();
         aiClientService = new AiClientServiceImpl(webClient);
+        
+        // Inject retry configuration using ReflectionTestUtils with micro-second delays for fast execution
+        ReflectionTestUtils.setField(aiClientService, "maxAttempts", 2);
+        ReflectionTestUtils.setField(aiClientService, "initialBackoffMs", 5L);
+        ReflectionTestUtils.setField(aiClientService, "maxBackoffMs", 15L);
     }
 
     @Test
     void testAnalyzeSymptoms_Success() {
-
         ClientResponse clientResponse = ClientResponse.create(HttpStatus.OK)
                 .header("Content-Type", "application/json")
                 .body("{\"reply\": \"Bạn có triệu chứng gì?\", \"is_complete\": false}")
@@ -52,52 +57,80 @@ public class AiClientServiceTest {
     }
 
     @Test
-    void testAnalyzeSymptoms_TimeoutFallback() {
-        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.error(new TimeoutException("Connection timed out")));
-
-        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau đầu", new ArrayList<>());
-
-        assertNotNull(result);
-        assertEquals(false, result.get("is_complete"));
-        assertEquals("Kết nối đến AI service quá hạn. Vui lòng thử lại.", result.get("reply"));
-    }
-
-    @Test
-    void testAnalyzeSymptoms_5xxFallback() {
-        ClientResponse clientResponse = ClientResponse.create(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("Internal Server Error")
-                .build();
-        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.just(clientResponse));
-
-        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau đầu", new ArrayList<>());
-        assertNotNull(result);
-        assertEquals("Dịch vụ AI hiện không khả dụng. Vui lòng thử lại sau.", result.get("reply"));
-    }
-
-    @Test
-    void testAnalyzeSymptoms_429Fallback() {
-        ClientResponse clientResponse = ClientResponse.create(HttpStatus.TOO_MANY_REQUESTS)
+    void testAnalyzeSymptoms_RetryAndRecover() {
+        // Mock first call failing with 429 and second call succeeding
+        ClientResponse rateLimitResponse = ClientResponse.create(HttpStatus.TOO_MANY_REQUESTS)
                 .body("Rate limit exceeded")
                 .build();
-        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.just(clientResponse));
+        ClientResponse successResponse = ClientResponse.create(HttpStatus.OK)
+                .header("Content-Type", "application/json")
+                .body("{\"reply\": \"Cảm ơn bạn, tôi đã nhận thông tin.\", \"is_complete\": false}")
+                .build();
 
-        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau đầu", new ArrayList<>());
+        when(exchangeFunction.exchange(any(ClientRequest.class)))
+                .thenReturn(Mono.just(rateLimitResponse))
+                .thenReturn(Mono.just(successResponse));
+
+        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau ngực", new ArrayList<>());
+
         assertNotNull(result);
-        assertEquals("Hệ thống AI đang quá tải (Quota/Rate Limit). Vui lòng thử lại sau.", result.get("reply"));
+        assertEquals("Cảm ơn bạn, tôi đã nhận thông tin.", result.get("reply"));
+        assertEquals(false, result.get("is_complete"));
     }
 
     @Test
-    void testAnalyzeSymptoms_InvalidSchemaFallback() {
-        ClientResponse clientResponse = ClientResponse.create(HttpStatus.OK)
-                .header("Content-Type", "application/json")
-                .body("This is not a map")
+    void testAnalyzeSymptoms_ExhaustedFallback() {
+        // Mock all calls failing with 503 Service Unavailable
+        ClientResponse serviceUnavailableResponse = ClientResponse.create(HttpStatus.SERVICE_UNAVAILABLE)
+                .body("Service Unavailable")
                 .build();
-        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.just(clientResponse));
+
+        when(exchangeFunction.exchange(any(ClientRequest.class)))
+                .thenReturn(Mono.just(serviceUnavailableResponse));
+
+        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau ngực", new ArrayList<>());
+
+        assertNotNull(result);
+        assertTrue(result.get("reply").toString().contains("Hệ thống AI hiện tại đang tạm thời không khả dụng"));
+        assertEquals(false, result.get("is_complete"));
+        
+        // Assert deep structural fallback fields
+        Map<?, ?> triageResult = (Map<?, ?>) result.get("triage_result");
+        assertNotNull(triageResult);
+        assertEquals("GENERAL_INTERNAL_MEDICINE", triageResult.get("suggested_department_code"));
+        assertEquals("Nội tổng quát", triageResult.get("suggested_department_name"));
+        assertEquals("MEDIUM", triageResult.get("urgency_level"));
+        assertEquals(true, triageResult.get("fallback"));
+        assertEquals("AI_SERVICE_UNAVAILABLE", triageResult.get("fallback_reason"));
+    }
+
+    @Test
+    void testAnalyzeSymptoms_NonTransientNoRetry() {
+        // Mock bad request 400 (non-transient), which should skip retry and go straight to fallback
+        ClientResponse badRequestResponse = ClientResponse.create(HttpStatus.BAD_REQUEST)
+                .body("Bad Request Parameter")
+                .build();
+
+        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.just(badRequestResponse));
+
+        Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Triệu chứng", new ArrayList<>());
+
+        assertNotNull(result);
+        assertTrue(result.get("reply").toString().contains("Hệ thống AI hiện tại đang tạm thời không khả dụng"));
+        
+        // Confirm only 1 interaction occurred (retries were skipped)
+        verify(exchangeFunction, times(1)).exchange(any(ClientRequest.class));
+    }
+
+    @Test
+    void testAnalyzeSymptoms_TimeoutFallback() {
+        // Mock a read timeout exception
+        when(exchangeFunction.exchange(any(ClientRequest.class))).thenReturn(Mono.error(new TimeoutException("Read timeout")));
 
         Map<String, Object> result = aiClientService.analyzeSymptoms("session1", "Đau đầu", new ArrayList<>());
 
         assertNotNull(result);
-        assertEquals("Hệ thống nhận được phản hồi không hợp lệ từ AI. Vui lòng thử lại.", result.get("reply"));
         assertEquals(false, result.get("is_complete"));
+        assertTrue(result.get("reply").toString().contains("Hệ thống AI hiện tại đang tạm thời không khả dụng"));
     }
 }

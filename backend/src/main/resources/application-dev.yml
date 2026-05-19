@@ -22,3 +22,6 @@ app:
     secret: caretriage-super-secret-key-that-is-at-least-256-bits-long-for-hs256
     expiration-ms: 86400000
     refresh-expiration-ms: 604800000
+
+  ai-service:
+    internal-api-key: Z9jzNTEwSMh4hQBsHLi0RBsW5fl995ZNOYEMHMckE4E=

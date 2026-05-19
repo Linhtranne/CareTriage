@@ -1,6 +1,7 @@
 import json
 import time
 import io
+import logging
 from typing import Optional
 
 import google.generativeai as genai
@@ -14,6 +15,7 @@ from app.models.ehr_models import (
 )
 from app.services.ner_prompt_templates import NER_SYSTEM_PROMPT, NER_EXTRACTION_PROMPT
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
 genai.configure(api_key=settings["gemini_api_key"])
 
@@ -54,7 +56,7 @@ class EHRExtractionService:
 
             entities = self._parse_entities(raw_response)
             if not entities and len(text.strip()) > 10:
-                print(f"[EHRExtractionService] Warning: No entities extracted from text of length {len(text)}")
+                logger.warning(f"No entities extracted from text of length {len(text)}")
 
             categorized = self._categorize_entities(entities)
             processing_time = (time.time() - start_time) * 1000
@@ -71,8 +73,7 @@ class EHRExtractionService:
                 processing_time_ms=round(processing_time, 2),
             )
         except Exception as e:
-            print(f"[EHRExtractionService] Error during extraction: {str(e)}")
-            # Propagate error instead of returning empty success
+            logger.error(f"Error during EHR extraction: {str(e)}")
             raise RuntimeError(f"AI Extraction failed: {str(e)}")
 
     async def extract_from_file(self, file_bytes: bytes, filename: str) -> ExtractionResult:
@@ -90,11 +91,11 @@ class EHRExtractionService:
             else:
                 raise ValueError(f"Unsupported file extension: .{ext}. Only .pdf, .docx, and .txt are supported.")
         except Exception as e:
-            print(f"[EHRExtractionService] File Parse Error ({filename}): {str(e)}")
-            raise ValueError(f"Failed to parse {ext.upper()} file: {str(e)}")
+            logger.error(f"File Parse Error for extension .{ext}: {str(e)}")
+            raise ValueError(f"Failed to parse {ext.upper()} file")
 
         if not text or not text.strip():
-            raise ValueError(f"No readable text found in file: {filename}")
+            raise ValueError("No readable text found in file")
 
         return await self.extract_from_text(text)
 
@@ -108,7 +109,7 @@ class EHRExtractionService:
                 if text.strip():
                     return text
         except Exception as e:
-            print(f"pdfplumber failed: {e}")
+            logger.warning(f"pdfplumber failed: {str(e)}")
 
         try:
             from PyPDF2 import PdfReader
@@ -117,7 +118,7 @@ class EHRExtractionService:
             text = "\n\n".join(pages)
             return text
         except Exception as e:
-            print(f"PyPDF2 failed: {e}")
+            logger.warning(f"PyPDF2 failed: {str(e)}")
             raise RuntimeError("Failed to extract text from PDF using available parsers")
 
     def _parse_docx(self, file_bytes: bytes) -> str:
@@ -128,7 +129,7 @@ class EHRExtractionService:
             paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
             return "\n".join(paragraphs)
         except Exception as e:
-            print(f"python-docx failed: {e}")
+            logger.warning(f"python-docx failed: {str(e)}")
             raise RuntimeError("Failed to extract text from DOCX file")
 
     def _parse_entities(self, raw_json: str) -> list[ExtractedEntity]:
@@ -137,7 +138,7 @@ class EHRExtractionService:
             data = json.loads(raw_json)
             entities_data = data.get("entities", []) if isinstance(data, dict) else data
             if not isinstance(entities_data, list):
-                print(f"[EHRExtractionService] Invalid JSON structure: expected list of entities")
+                logger.warning("Invalid JSON structure: expected list of entities")
                 return []
 
             entities = []
@@ -157,12 +158,12 @@ class EHRExtractionService:
                     )
                     entities.append(entity)
                 except Exception as e:
-                    print(f"Skipping malformed entity entry: {e}")
+                    logger.warning(f"Skipping malformed entity entry: {str(e)}")
                     continue
 
             return entities
         except json.JSONDecodeError as e:
-            print(f"JSON Decode Error in model output: {e}\nRaw output starts with: {raw_json[:50]}...")
+            logger.error(f"JSON Decode Error in model output: {str(e)}")
             return []
 
     def _categorize_entities(

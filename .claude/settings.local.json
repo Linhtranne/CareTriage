@@ -16,7 +16,9 @@
       "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")",
       "PowerShell(Get-Content *)",
       "PowerShell(Test-Path *)",
-      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\check_key.py\" \"D:\\\\CareTriage\\\\ai-service\\\\smoke_test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")"
+      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\check_key.py\" \"D:\\\\CareTriage\\\\ai-service\\\\smoke_test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")",
+      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")",
+      "PowerShell(python \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")"
     ]
   }
 }

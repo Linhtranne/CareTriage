@@ -23,14 +23,23 @@ public class WebClientConfig {
     @Value("${app.ai-service.internal-api-key}")
     private String internalApiKey;
 
+    @Value("${app.ai-service.connect-timeout-ms:3000}")
+    private int connectTimeoutMs;
+
+    @Value("${app.ai-service.read-timeout-seconds:30}")
+    private int readTimeoutSeconds;
+
+    @Value("${app.ai-service.write-timeout-seconds:10}")
+    private int writeTimeoutSeconds;
+
     @Bean
     public WebClient aiServiceWebClient(WebClient.Builder builder) {
         HttpClient httpClient = HttpClient.create()
-                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-                .responseTimeout(Duration.ofSeconds(30))
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, connectTimeoutMs)
+                .responseTimeout(Duration.ofSeconds(readTimeoutSeconds))
                 .doOnConnected(conn -> conn
-                        .addHandlerLast(new ReadTimeoutHandler(30))
-                        .addHandlerLast(new WriteTimeoutHandler(10)));
+                        .addHandlerLast(new ReadTimeoutHandler(readTimeoutSeconds))
+                        .addHandlerLast(new WriteTimeoutHandler(writeTimeoutSeconds)));
 
         return builder
                 .baseUrl(aiServiceUrl)

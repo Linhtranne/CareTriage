@@ -42,4 +42,6 @@ def get_settings():
         "entrez_email": require_env("ENTREZ_EMAIL"),
         "tavily_api_key": optional_env("TAVILY_API_KEY"),
         "chroma_db_path": require_env("CHROMA_DB_PATH"),
+        "enable_web_research": os.getenv("ENABLE_WEB_RESEARCH", "false").lower() == "true",
+        "rag_enabled": os.getenv("RAG_ENABLED", "false").lower() == "true",
     }

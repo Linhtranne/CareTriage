@@ -21,7 +21,10 @@ async def run_triage_test(triage_service, name, user_input, expected_goal):
     
     result = await triage_service.analyze("test_session", user_input, [])
     
-    print(f"\nAI THINKING:\n{result['thinking'] if result['thinking'] else '(No thinking tags found)'}", flush=True)
+    reasoning = result.get('clinical_reasoning_summary', '')
+    if not reasoning and result.get('triage_result'):
+        reasoning = result['triage_result'].get('clinical_reasoning_summary', '')
+    print(f"\nAI CLINICAL REASONING:\n{reasoning if reasoning else '(No reasoning found)'}", flush=True)
     print(f"\nAI REPLY:\n{result['reply']}", flush=True)
     print(f"COMPLETE: {result['is_complete']}", flush=True)
     if result['triage_result']:
