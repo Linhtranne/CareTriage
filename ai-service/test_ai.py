@@ -1,8 +1,7 @@
 import sys
 import asyncio
-import os
 import json
-from dotenv import load_dotenv
+from app.core.config import get_settings
 from app.services.triage_service import TriageService
 from app.services.prompt_templates import NER_SYSTEM_PROMPT
 import google.generativeai as genai
@@ -12,8 +11,7 @@ if sys.stdout.encoding != 'utf-8':
     import io
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# Load environment variables
-load_dotenv(override=True)
+settings = get_settings()
 
 async def run_triage_test(triage_service, name, user_input, expected_goal):
     print(f"\n" + "="*30, flush=True)
@@ -38,13 +36,12 @@ async def run_ner_test(model, name, user_input):
     print(f"EXTRACTED JSON:\n{response.text}", flush=True)
 
 async def main():
-    if not os.getenv("GEMINI_API_KEY"):
+    if not settings["gemini_api_key"]:
         print("ERROR: GEMINI_API_KEY not found in .env")
         return
 
     triage_service = TriageService()
-    model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro")
-    ner_model = genai.GenerativeModel(model_name, system_instruction=NER_SYSTEM_PROMPT)
+    ner_model = genai.GenerativeModel(settings["gemini_model_name"], system_instruction=NER_SYSTEM_PROMPT)
 
     print("\n" + "#"*60)
     print("PHAN 1: TEST CASES CHO TRIAGE AGENT (SO CHAN LAM SANG)")

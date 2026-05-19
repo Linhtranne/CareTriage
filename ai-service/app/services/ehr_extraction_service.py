@@ -1,10 +1,11 @@
-import os
 import json
 import time
 import io
 from typing import Optional
 
 import google.generativeai as genai
+
+from app.core.config import get_settings
 
 from app.models.ehr_models import (
     ExtractedEntity,
@@ -13,18 +14,14 @@ from app.models.ehr_models import (
 )
 from app.services.ner_prompt_templates import NER_SYSTEM_PROMPT, NER_EXTRACTION_PROMPT
 
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv(override=True)
-genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
+settings = get_settings()
+genai.configure(api_key=settings["gemini_api_key"])
 
 
 class EHRExtractionService:
     def __init__(self):
-        model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro")
         self.model = genai.GenerativeModel(
-            model_name=model_name,
+            model_name=settings["gemini_model_name"],
             system_instruction=NER_SYSTEM_PROMPT,
         )
 

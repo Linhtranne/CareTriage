@@ -6,6 +6,8 @@ import com.caretriage.dto.response.DoctorPublicResponse;
 import com.caretriage.dto.response.DoctorResponse;
 import com.caretriage.dto.response.PagedResponse;
 import com.caretriage.dto.response.TimeSlotResponse;
+import com.caretriage.dto.response.DoctorPatientResponse;
+import com.caretriage.dto.response.DoctorPatientDetailResponse;
 
 import java.util.List;
 
@@ -15,4 +17,6 @@ public interface DoctorService {
     PagedResponse<DoctorPublicResponse> getPublicDoctors(Long departmentId, String search, int page, int size);
     DoctorPublicResponse getDoctorById(Long id);
     List<TimeSlotResponse> getAvailableSlots(Long doctorId, java.time.LocalDate date);
+    PagedResponse<DoctorPatientResponse> getDoctorPatients(Long doctorId, String search, String relationshipSource, String ticketStatus, Boolean hasUpcomingAppointment, Boolean hasMedicalRecord, int page, int size);
+    DoctorPatientDetailResponse getDoctorPatientDetail(Long doctorId, Long patientId);
 }

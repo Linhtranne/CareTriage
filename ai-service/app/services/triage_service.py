@@ -1,30 +1,22 @@
-import os
-from dotenv import load_dotenv
 import google.generativeai as genai
 
-# Load environment variables
-load_dotenv(override=True)
+from app.core.config import get_settings
 from app.services.prompt_templates import SYSTEM_PROMPT
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY", ""))
+settings = get_settings()
+genai.configure(api_key=settings["gemini_api_key"])
 
 
 class TriageService:
     def __init__(self):
-        # Load config from environment
-        model_name = os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro")
-        temperature = float(os.getenv("GEMINI_TEMPERATURE", 0.2))
-        top_p = float(os.getenv("GEMINI_TOP_P", 0.8))
-        max_tokens = int(os.getenv("GEMINI_MAX_TOKENS", 2048))
-
         self.generation_config = {
-            "temperature": temperature,
-            "top_p": top_p,
-            "max_output_tokens": max_tokens,
+            "temperature": settings["gemini_temperature"],
+            "top_p": settings["gemini_top_p"],
+            "max_output_tokens": settings["gemini_max_tokens"],
         }
 
         self.model = genai.GenerativeModel(
-            model_name=model_name,
+            model_name=settings["gemini_model_name"],
             system_instruction=SYSTEM_PROMPT,
             generation_config=self.generation_config
         )

@@ -28,4 +28,66 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Page<User> findByRolesName(String roleName, Pageable pageable);
 
     Page<User> findByIsActive(Boolean isActive, Pageable pageable);
+
+    @Query(value = "SELECT u.id " +
+           "FROM users u " +
+           "LEFT JOIN patient_profiles p ON p.user_id = u.id " +
+           "LEFT JOIN appointments a ON a.patient_id = u.id AND a.doctor_id = :doctorId AND a.status != 'CANCELLED' " +
+           "LEFT JOIN medical_records m ON m.patient_id = u.id AND m.doctor_id = :doctorId " +
+           "LEFT JOIN triage_tickets t ON t.requester_id = u.id AND t.triage_officer_id = :doctorId " +
+           "LEFT JOIN appointments future_a ON future_a.patient_id = u.id AND future_a.doctor_id = :doctorId " +
+           "    AND future_a.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS') " +
+           "    AND future_a.appointment_date >= :today " +
+           "WHERE (a.id IS NOT NULL OR m.id IS NOT NULL OR t.id IS NOT NULL) " +
+           "AND (:search IS NULL OR :search = '' OR " +
+           "     LOWER(u.full_name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "     LOWER(u.phone) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+           "AND (:relationshipSource IS NULL OR :relationshipSource = '' OR " +
+           "     (:relationshipSource = 'APPOINTMENT' AND a.id IS NOT NULL) OR " +
+           "     (:relationshipSource = 'MEDICAL_RECORD' AND m.id IS NOT NULL) OR " +
+           "     (:relationshipSource = 'TRIAGE_TICKET' AND t.id IS NOT NULL)) " +
+           "AND (:ticketStatus IS NULL OR :ticketStatus = '' OR (t.id IS NOT NULL AND t.status = :ticketStatus)) " +
+           "AND (:hasUpcomingAppointment = false OR future_a.id IS NOT NULL) " +
+           "AND (:hasMedicalRecord = false OR m.id IS NOT NULL) " +
+           "GROUP BY u.id, u.full_name " +
+           "ORDER BY " +
+           "    GREATEST( " +
+           "        COALESCE(MAX(a.updated_at), '1970-01-01 00:00:00'), " +
+           "        COALESCE(MAX(m.created_at), '1970-01-01 00:00:00'), " +
+           "        COALESCE(MAX(t.updated_at), '1970-01-01 00:00:00') " +
+           "    ) DESC, " +
+           "    u.full_name ASC",
+           countQuery = "SELECT COUNT(DISTINCT u.id) " +
+                        "FROM users u " +
+                        "LEFT JOIN patient_profiles p ON p.user_id = u.id " +
+                        "LEFT JOIN appointments a ON a.patient_id = u.id AND a.doctor_id = :doctorId AND a.status != 'CANCELLED' " +
+                        "LEFT JOIN medical_records m ON m.patient_id = u.id AND m.doctor_id = :doctorId " +
+                        "LEFT JOIN triage_tickets t ON t.requester_id = u.id AND t.triage_officer_id = :doctorId " +
+                        "LEFT JOIN appointments future_a ON future_a.patient_id = u.id AND future_a.doctor_id = :doctorId " +
+                        "    AND future_a.status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS') " +
+                        "    AND future_a.appointment_date >= :today " +
+                        "WHERE (a.id IS NOT NULL OR m.id IS NOT NULL OR t.id IS NOT NULL) " +
+                        "AND (:search IS NULL OR :search = '' OR " +
+                        "     LOWER(u.full_name) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "     LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+                        "     LOWER(u.phone) LIKE LOWER(CONCAT('%', :search, '%'))) " +
+                        "AND (:relationshipSource IS NULL OR :relationshipSource = '' OR " +
+                        "     (:relationshipSource = 'APPOINTMENT' AND a.id IS NOT NULL) OR " +
+                        "     (:relationshipSource = 'MEDICAL_RECORD' AND m.id IS NOT NULL) OR " +
+                        "     (:relationshipSource = 'TRIAGE_TICKET' AND t.id IS NOT NULL)) " +
+                        "AND (:ticketStatus IS NULL OR :ticketStatus = '' OR (t.id IS NOT NULL AND t.status = :ticketStatus)) " +
+                        "AND (:hasUpcomingAppointment = false OR future_a.id IS NOT NULL) " +
+                        "AND (:hasMedicalRecord = false OR m.id IS NOT NULL)",
+           nativeQuery = true)
+    Page<Long> findPatientIdsByDoctorRelation(
+            @Param("doctorId") Long doctorId,
+            @Param("search") String search,
+            @Param("relationshipSource") String relationshipSource,
+            @Param("ticketStatus") String ticketStatus,
+            @Param("hasUpcomingAppointment") Boolean hasUpcomingAppointment,
+            @Param("hasMedicalRecord") Boolean hasMedicalRecord,
+            @Param("today") java.time.LocalDate today,
+            Pageable pageable);
 }
+

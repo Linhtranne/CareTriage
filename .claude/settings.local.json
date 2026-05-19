@@ -13,7 +13,10 @@
       "PowerShell(python -c \"import bcrypt; print\\(bcrypt.hashpw\\(b'Password123@', bcrypt.gensalt\\(\\)\\).decode\\(\\)\\)\")",
       "PowerShell(python -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main\")",
       "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main; print\\('OK'\\)\")",
-      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")"
+      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")",
+      "PowerShell(Get-Content *)",
+      "PowerShell(Test-Path *)",
+      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\check_key.py\" \"D:\\\\CareTriage\\\\ai-service\\\\smoke_test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")"
     ]
   }
 }

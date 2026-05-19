@@ -1,6 +1,8 @@
 from fastapi.testclient import TestClient
+from app.core.config import get_settings
 from app.main import app
 
+settings = get_settings()
 client = TestClient(app)
 
 def test_missing_auth():
@@ -15,10 +17,10 @@ def test_payload_too_large():
     # Use valid auth, but giant body
     large_body = {
         "session_id": "test",
-        "message": "a" * (16 * 1024 * 1024 + 1)
+        "message": "a" * (settings["max_body_size_bytes"] + 1)
     }
     response = client.post("/api/triage/analyze", json=large_body, headers={
-        "X-Internal-Api-Key": "caretriage-internal-secret-for-dev-only-min-32-chars-long"
+        "X-Internal-Api-Key": settings["internal_api_key"]
     })
     assert response.status_code == 413
 
@@ -28,7 +30,7 @@ def test_invalid_schema_length():
         "session_id": "test",
         "message": "a" * 5000
     }, headers={
-        "X-Internal-Api-Key": "caretriage-internal-secret-for-dev-only-min-32-chars-long"
+        "X-Internal-Api-Key": settings["internal_api_key"]
     })
     assert response.status_code == 422 # Pydantic validation error
 
@@ -37,7 +39,7 @@ def test_red_flag():
         "session_id": "test",
         "message": "Tôi bị đột quỵ và liệt nửa người"
     }, headers={
-        "X-Internal-Api-Key": "caretriage-internal-secret-for-dev-only-min-32-chars-long"
+        "X-Internal-Api-Key": settings["internal_api_key"]
     })
     assert response.status_code == 200
     data = response.json()

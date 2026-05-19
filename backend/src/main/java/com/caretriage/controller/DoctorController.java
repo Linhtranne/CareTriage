@@ -7,6 +7,11 @@ import com.caretriage.dto.response.DoctorPublicResponse;
 import com.caretriage.dto.response.DoctorResponse;
 import com.caretriage.dto.response.PagedResponse;
 import com.caretriage.dto.response.TimeSlotResponse;
+import com.caretriage.dto.response.DoctorPatientResponse;
+import com.caretriage.dto.response.DoctorPatientDetailResponse;
+import com.caretriage.entity.User;
+import com.caretriage.exception.ResourceNotFoundException;
+import com.caretriage.repository.UserRepository;
 import com.caretriage.service.DoctorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -27,6 +33,7 @@ import java.util.List;
 public class DoctorController {
 
     private final DoctorService doctorService;
+    private final UserRepository userRepository;
 
     @GetMapping
     @Operation(summary = "Lấy danh sách bác sĩ công khai", description = "Danh sách bác sĩ có hỗ trợ phân trang và lọc theo chuyên khoa")
@@ -70,5 +77,41 @@ public class DoctorController {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         List<TimeSlotResponse> slots = doctorService.getAvailableSlots(id, date);
         return ResponseEntity.ok(ApiResponse.success("Lấy khung giờ trống thành công", slots));
+    }
+
+    @GetMapping("/me/patients")
+    @PreAuthorize("hasRole('DOCTOR')")
+    @Operation(summary = "Lấy danh sách bệnh nhân của tôi (DOCTOR)", description = "Lấy danh sách bệnh nhân có mối liên hệ điều trị với bác sĩ hiện tại")
+    public ResponseEntity<ApiResponse<PagedResponse<DoctorPatientResponse>>> getMyPatients(
+            Authentication authentication,
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String relationshipSource,
+            @RequestParam(required = false) String ticketStatus,
+            @RequestParam(defaultValue = "false") Boolean hasUpcomingAppointment,
+            @RequestParam(defaultValue = "false") Boolean hasMedicalRecord,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        Long doctorId = getUserId(authentication);
+        PagedResponse<DoctorPatientResponse> response = doctorService.getDoctorPatients(
+                doctorId, search, relationshipSource, ticketStatus, hasUpcomingAppointment, hasMedicalRecord, page, size);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách bệnh nhân thành công", response));
+    }
+
+    @GetMapping("/me/patients/{patientId}")
+    @PreAuthorize("hasRole('DOCTOR')")
+    @Operation(summary = "Lấy chi tiết bệnh nhân của tôi (DOCTOR)", description = "Lấy hồ sơ chi tiết và các lượt khám của bệnh nhân thuộc phạm vi điều trị của bác sĩ")
+    public ResponseEntity<ApiResponse<DoctorPatientDetailResponse>> getMyPatientDetail(
+            Authentication authentication,
+            @PathVariable Long patientId) {
+        Long doctorId = getUserId(authentication);
+        DoctorPatientDetailResponse response = doctorService.getDoctorPatientDetail(doctorId, patientId);
+        return ResponseEntity.ok(ApiResponse.success("Lấy chi tiết bệnh nhân thành công", response));
+    }
+
+    private Long getUserId(Authentication authentication) {
+        String email = authentication.getName();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Bác sĩ không tồn tại với email: " + email));
+        return user.getId();
     }
 }

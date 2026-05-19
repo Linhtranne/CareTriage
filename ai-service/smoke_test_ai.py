@@ -1,7 +1,5 @@
-import os
 import asyncio
-from dotenv import load_dotenv
-import google.generativeai as genai
+from app.core.config import get_settings
 from app.services.triage_service import TriageService
 
 import sys
@@ -11,8 +9,7 @@ import io
 if sys.stdout.encoding != 'utf-8':
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
-# Load environment variables
-load_dotenv(override=True)
+settings = get_settings()
 
 async def smoke_test():
     print("="*50)
@@ -20,8 +17,8 @@ async def smoke_test():
     print("="*50)
 
     # 1. Check Configuration
-    api_key = os.getenv("GEMINI_API_KEY")
-    model_name = os.getenv("GEMINI_MODEL_NAME")
+    api_key = settings["gemini_api_key"]
+    model_name = settings["gemini_model_name"]
     print(f"API Key found: {'YES' if api_key else 'NO'}")
     print(f"Model Name: {model_name}")
 

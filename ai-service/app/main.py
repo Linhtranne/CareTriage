@@ -3,13 +3,11 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.api.ehr_routes import router as ehr_router
+from app.core.config import get_settings
 from app.services.exceptions import AIError, AIQuotaExceeded, AISafetyBlocked, AIConnectionError
-import os
 import logging
-from dotenv import load_dotenv
 
-# Load .env file
-load_dotenv()
+settings = get_settings()
 
 logger = logging.getLogger(__name__)
 
@@ -28,14 +26,8 @@ app.add_middleware(
     allow_headers=[],
 )
 
-MAX_BODY_SIZE = 16 * 1024 * 1024
-INTERNAL_API_KEY = os.getenv("INTERNAL_API_KEY")
-if not INTERNAL_API_KEY or len(INTERNAL_API_KEY) < 32:
-    # Allow a fallback only if running tests, otherwise fail fast
-    if "pytest" in os.environ.get("_", "") or "test" in os.getenv("ENVIRONMENT", "").lower():
-        INTERNAL_API_KEY = "caretriage-internal-secret-for-dev-only-min-32-chars-long"
-    else:
-        raise RuntimeError("CRITICAL: INTERNAL_API_KEY must be set and be at least 32 characters long.")
+MAX_BODY_SIZE = settings["max_body_size_bytes"]
+INTERNAL_API_KEY = settings["internal_api_key"]
 
 
 @app.middleware("http")

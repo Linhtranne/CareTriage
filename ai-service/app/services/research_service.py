@@ -1,11 +1,9 @@
-import os
-from dotenv import load_dotenv
+from pathlib import Path
 import threading
 from typing import List
 import google.generativeai as genai
 
-# Load environment variables
-load_dotenv(override=True)
+from app.core.config import get_settings
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from Bio import Entrez
@@ -21,25 +19,25 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Bio Entrez config (required for PubMed)
-Entrez.email = os.getenv("ENTREZ_EMAIL", "admin@caretriage.com")
+settings = get_settings()
+Entrez.email = settings["entrez_email"]
 
 class ResearchService:
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
+        self.api_key = settings["gemini_api_key"]
         self.embeddings = GoogleGenerativeAIEmbeddings(
-            model="models/text-embedding-004",
+            model=settings["gemini_embedding_model"],
             google_api_key=self.api_key
         )
-        self.db_path = os.path.join(os.getcwd(), "data", "vector_db")
-        os.makedirs(self.db_path, exist_ok=True)
+        self.db_path = settings["chroma_db_path"]
+        Path(self.db_path).mkdir(parents=True, exist_ok=True)
         
         self.vector_db = Chroma(
             persist_directory=self.db_path,
             embedding_function=self.embeddings
         )
         
-        self.model = genai.GenerativeModel(os.getenv("GEMINI_MODEL_NAME", "gemini-2.5-pro"))
+        self.model = genai.GenerativeModel(settings["gemini_model_name"])
 
     def start_background_research(self, patient_id: int, query: str):
         """Start a background thread to research and cache medical info."""
@@ -75,7 +73,7 @@ class ResearchService:
 
             # 4. Perform Web Search for each specialized query
             # We use Tavily if API key is present, otherwise fallback to mock/limited search
-            tavily_key = os.getenv("TAVILY_API_KEY")
+            tavily_key = settings["tavily_api_key"]
             if tavily_key:
                 for q in search_queries:
                     web_results = self._search_web_tavily(q)
@@ -98,7 +96,7 @@ class ResearchService:
         """Search the web using Tavily API."""
         try:
             from tavily import TavilyClient
-            tavily = TavilyClient(api_key=os.getenv("TAVILY_API_KEY"))
+            tavily = TavilyClient(api_key=settings["tavily_api_key"])
             response = tavily.search(query=query, search_depth="advanced", max_results=3)
             
             results = []

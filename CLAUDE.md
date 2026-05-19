@@ -23,6 +23,13 @@ You have access to 70+ specialized agents in `.claude/agents/`. Call them with `
 - Build: `mvn clean install -f backend/pom.xml`
 - Test: `mvn test -f backend/pom.xml`
 
+### AI Service (Python)
+- Requirements: `pip install -r ai-service/requirements.txt`
+- Activate venv: `.\venv\Scripts\activate`
+- Run: `python -m uvicorn app.main:app --reload --port 8000` (in `ai-service` directory)
+- Test: `curl http://localhost:8000/health`
+
+
 ## 📏 Core Rules
 1. **Agent Routing Checklist**: Before any code or design work, you MUST identify the correct specialist agent and announce it: `🤖 Applying knowledge of @[agent-name]...`.
 2. **Socratic Gate**: For complex requests, STOP and ASK at least 3 strategic questions before implementation.

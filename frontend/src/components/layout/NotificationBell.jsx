@@ -23,7 +23,7 @@ const getIcon = (type) => {
   switch (type) {
     case 'CHAT': return <ChatIcon sx={{ color: '#10b981' }} />;
     case 'APPOINTMENT': return <AppointmentIcon sx={{ color: '#3b82f6' }} />;
-    case 'MEDICAL_RECORD': return <RecordIcon sx={{ color: '#8b5cf6' }} />;
+    case 'MEDICAL_RECORD': return <RecordIcon sx={{ color: '#08bba3' }} />;
     case 'TRIAGE': return <TriageIcon sx={{ color: '#f59e0b' }} />;
     case 'SYSTEM': return <SystemIcon sx={{ color: '#6b7280' }} />;
     default: return <NotificationsNone />;

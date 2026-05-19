@@ -51,6 +51,15 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
     @Query("SELECT COUNT(a) FROM Appointment a WHERE a.patient.id = :patientId AND a.status = :status")
     long countByPatientIdAndStatus(@Param("patientId") Long patientId, @Param("status") Appointment.AppointmentStatus status);
 
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.doctor.id = :doctorId AND a.patient.id = :patientId AND a.status != 'CANCELLED'")
+    long countByDoctorIdAndPatientIdAndStatusNotCancelled(@Param("doctorId") Long doctorId, @Param("patientId") Long patientId);
+
+    @Query("SELECT COUNT(a) FROM Appointment a WHERE a.doctor.id = :doctorId AND a.patient.id = :patientId AND a.status = 'COMPLETED'")
+    long countByDoctorIdAndPatientIdAndStatusCompleted(@Param("doctorId") Long doctorId, @Param("patientId") Long patientId);
+
+    @Query("SELECT a FROM Appointment a WHERE a.doctor.id = :doctorId AND a.patient.id = :patientId AND a.status != 'CANCELLED' ORDER BY a.appointmentDate DESC, a.appointmentTime DESC")
+    List<Appointment> findActiveAppointmentsByDoctorAndPatient(@Param("doctorId") Long doctorId, @Param("patientId") Long patientId);
+
     @Query("SELECT a.status, COUNT(a) FROM Appointment a GROUP BY a.status")
     List<Object[]> countAppointmentsByStatus();
 
