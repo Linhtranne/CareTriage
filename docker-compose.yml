@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   mysql:
     image: mysql:8.0
@@ -18,7 +16,7 @@ services:
       retries: 5
 
   backend:
-    build: ./backend
+    build: ./code/backend/backend
     container_name: caretriage-backend
     ports:
       - "8080:8080"
@@ -36,7 +34,7 @@ services:
         condition: service_healthy
 
   ai-service:
-    build: ./ai-service
+    build: ./code/backend/ai-service
     container_name: caretriage-ai
     expose:
       - "8000"
@@ -54,7 +52,7 @@ services:
       CHROMA_DB_PATH: ${CHROMA_DB_PATH}
 
   frontend:
-    build: ./frontend
+    build: "./code/front end/frontend"
     container_name: caretriage-frontend
     ports:
       - "5173:80"
@@ -62,7 +60,7 @@ services:
       - backend
 
   admin-frontend:
-    build: ./admin-frontend
+    build: "./code/front end/admin-frontend"
     container_name: caretriage-admin
     ports:
       - "5174:80"

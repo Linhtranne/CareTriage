@@ -20,7 +20,7 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 ## EPIC 1: Authentication & User Management
 
 ### US-001: Đăng ký tài khoản
-**As a** visitor, **I want** to register an account, **so that** I can access the system.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-001-Register.md)** |   **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US001-Register.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -33,16 +33,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-007 | Implement Axios interceptor (JWT auto-attach, 401 refresh) | Frontend | P0 | 3 | Sprint 1 |
 | T-008 | Create AuthStore (Zustand) | Frontend | P0 | 2 | Sprint 1 |
 
-**Acceptance Criteria:**
-- [ ] User can register with email, password, full name, phone
-- [ ] User can login and receive JWT token
-- [ ] Token auto-refreshes before expiry
-- [ ] Invalid credentials show error message
-
 ---
 
 ### US-002: Đăng nhập / Đăng xuất
-**As a** registered user, **I want** to login/logout, **so that** I can access my dashboard securely.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-002-Login.md)** |   **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US002-Login.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -50,15 +44,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-010 | Role-based redirect after login | Frontend | P0 | 2 | Sprint 1 |
 | T-011 | Logout + token cleanup | Frontend | P1 | 1 | Sprint 1 |
 
-**Acceptance Criteria:**
-- [ ] Patient → Patient Dashboard, Doctor → Doctor Dashboard, Admin → Admin Dashboard
-- [ ] Logout clears token and redirects to login
-- [ ] Accessing protected route without auth → redirect to login
-
 ---
 
 ### US-003: Quản lý profile cá nhân
-**As a** user, **I want** to view and edit my profile, **so that** my information is up-to-date.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-003-Profile.md)** |   **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US003-Profile.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -67,15 +56,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-014 | Profile page UI (view mode + edit mode) | Frontend | P1 | 3 | Sprint 2 |
 | T-015 | Avatar upload (optional) | Frontend | P3 | 2 | Sprint 2 |
 
-**Acceptance Criteria:**
-- [ ] Patient can update: name, phone, DOB, gender, address, blood type, allergies
-- [ ] Doctor can update: name, phone, bio, specialization
-- [ ] Changes persist after page refresh
-
 ---
 
 ### US-004: Admin quản lý user
-**As an** admin, **I want** to manage all users, **so that** I can control system access.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-004-Admin-User-Management.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US004-Admin-User-Management.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -83,17 +67,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-017 | Admin User Management page (MUI DataGrid) | Frontend | P1 | 5 | Sprint 2 |
 | T-018 | Role change dialog + confirmation | Frontend | P2 | 2 | Sprint 2 |
 
-**Acceptance Criteria:**
-- [ ] Admin sees all users in table with search/filter
-- [ ] Admin can activate/deactivate accounts
-- [ ] Admin can change user roles
-
 ---
 
 ## EPIC 2: Department & Doctor Management
 
 ### US-005: Admin quản lý khoa/phòng
-**As an** admin, **I want** to manage departments, **so that** the hospital structure is organized.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-005-Admin-Department-Management.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US005-Admin-Department-Management.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -102,15 +81,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-021 | Admin Department management page | Frontend | P1 | 3 | Sprint 3 | [x] |
 | T-022 | Department form (create/edit dialog) | Frontend | P1 | 2 | Sprint 3 | [x] |
 
-**Acceptance Criteria:**
-- [ ] Admin can create department with name, description, image
-- [ ] Admin can edit/delete departments
-- [ ] Departments show on public listing
-
 ---
 
 ### US-006: Xem danh sách bác sĩ
-**As a** visitor/patient, **I want** to browse doctors by department, **so that** I can choose the right doctor.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-006-Browse-Doctors.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US006-Browse-Doctors.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -119,17 +93,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-025 | Public Doctor listing page (cards, filter, search) | Frontend | P1 | 5 | Sprint 3 | [x] |
 | T-026 | Doctor detail page (profile, schedule) | Frontend | P2 | 3 | Sprint 3 | [x] |
 
-**Acceptance Criteria:**
-- [ ] Visitors can see doctor list without login
-- [ ] Filter by department works
-- [ ] Doctor card shows: name, photo, specialization, department
-
 ---
 
 ## EPIC 3: Appointment System
 
 ### US-007: Bệnh nhân đặt lịch khám
-**As a** patient, **I want** to book an appointment, **so that** I can see a doctor.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-007-Patient-Booking.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US007-Patient-Booking.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -139,15 +108,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-030 | Booking form UI (select dept → doctor → date → time) | Frontend | P0 | 5 | Sprint 4 |
 | T-031 | My Appointments page (patient view) | Frontend | P0 | 3 | Sprint 4 |
 
-**Acceptance Criteria:**
-- [ ] Patient selects department → sees available doctors → picks date/time
-- [ ] Cannot double-book same slot
-- [ ] Appointment shows status: PENDING → CONFIRMED → COMPLETED
-
 ---
 
 ### US-008: Bác sĩ quản lý lịch hẹn
-**As a** doctor, **I want** to view and manage my appointments, **so that** I can organize my schedule.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-008-Doctor-Appointments.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US008-Doctor-Appointments.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -155,17 +119,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-033 | Doctor: Today's appointments view | Frontend | P1 | 3 | Sprint 4 |
 | T-034 | Status update buttons (confirm, start, complete) | Frontend | P1 | 2 | Sprint 4 |
 
-**Acceptance Criteria:**
-- [ ] Doctor sees today's appointments sorted by time
-- [ ] Doctor can confirm/start/complete appointments
-- [ ] Status changes reflect for patient immediately
-
 ---
 
 ## EPIC 4: Medical Records
 
 ### US-009: Bác sĩ tạo bệnh án
-**As a** doctor, **I want** to create medical records after examination, **so that** patient history is documented.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-009-Create-Medical-Record.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US009-Create-Medical-Record.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -175,17 +134,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-038 | Patient: Medical history timeline | Frontend | P1 | 3 | Sprint 5 |
 | T-039 | Record detail page (full info) | Frontend | P2 | 2 | Sprint 5 |
 
-**Acceptance Criteria:**
-- [ ] Doctor creates record linked to appointment
-- [ ] Patient views chronological medical history
-- [ ] Record includes: diagnosis, symptoms, prescription, notes
-
 ---
 
 ## EPIC 5: AI Symptom Checker & Triage
 
 ### US-010: AI phân tích triệu chứng
-**As a** patient, **I want** to describe my symptoms to AI, **so that** I get preliminary health advice.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-010-AI-Symptom-Analyzer.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US010-AI-Symptom-Analyzer.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -195,12 +149,6 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-043 | Prompt engineering: symptom analysis + follow-up questions | AI | P0 | 5 | Sprint 6 |
 | T-044 | Triage recommendation endpoint (POST /api/triage/recommend) | AI | P0 | 3 | Sprint 6 |
 | T-045 | Spring Boot AiClientService (HTTP call to Python) | Backend | P0 | 3 | Sprint 6 |
-
-**Acceptance Criteria:**
-- [ ] User sends "đau đầu, buồn nôn" → AI asks clarifying questions
-- [ ] AI asks 2-4 follow-up questions before recommending
-- [ ] Final output: suggested department, urgency level, possible conditions
-- [ ] All responses in Vietnamese
 
 ---
 

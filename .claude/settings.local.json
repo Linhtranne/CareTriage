@@ -11,14 +11,19 @@
       "PowerShell(mvn test *)",
       "PowerShell(mvn *)",
       "PowerShell(python -c \"import bcrypt; print\\(bcrypt.hashpw\\(b'Password123@', bcrypt.gensalt\\(\\)\\).decode\\(\\)\\)\")",
-      "PowerShell(python -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main\")",
-      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\ai-service'\\); import app.main; print\\('OK'\\)\")",
-      "PowerShell(& 'D:\\\\CareTriage\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")",
+      "PowerShell(python -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service'\\); import app.main\")",
+      "PowerShell(& 'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import sys; sys.path.insert\\(0, r'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service'\\); import app.main; print\\('OK'\\)\")",
+      "PowerShell(& 'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -c \"import pytest; print\\(pytest.__version__\\)\")",
       "PowerShell(Get-Content *)",
       "PowerShell(Test-Path *)",
-      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\check_key.py\" \"D:\\\\CareTriage\\\\ai-service\\\\smoke_test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_ai.py\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")",
-      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")",
-      "PowerShell(python \"D:\\\\CareTriage\\\\ai-service\\\\test_security.py\")"
+      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\check_key.py\" \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\smoke_test_ai.py\" \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\test_ai.py\" \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\test_security.py\")",
+      "PowerShell(python -m compileall \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\app\" \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\test_security.py\")",
+      "PowerShell(python \"D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\test_security.py\")",
+      "PowerShell(python -m pytest code/backend/ai-service/tests/test_ehr.py -q)",
+      "PowerShell(npm test *)",
+      "PowerShell(python -c \"import google.genai as genai; print\\('google-genai available'\\)\")",
+      "PowerShell(python -c \"from google import genai; from google.genai import types; c=genai.Client\\(api_key='x'\\); print\\(hasattr\\(c,'models'\\), hasattr\\(c,'aio'\\), hasattr\\(c,'chats'\\)\\); print\\(types.GenerateContentConfig\\)\")",
+      "PowerShell(python -c \"import google.genai, importlib.metadata as m; print\\(m.version\\('google-genai'\\)\\)\")"
     ]
   }
 }

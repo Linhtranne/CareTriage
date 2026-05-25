@@ -18,8 +18,8 @@ Hệ thống CareTriage kết hợp quản lý bệnh viện cốt lõi (HMS Cor
 | Basic Medical Records | Nurse-specific features |
 | AI Symptom Checker & Triage Chatbot | Advanced reporting |
 | Triage Ticket System | Payment gateway integration |
-| **EHR Data Extraction (NER) ⭐** | Mobile native app |
-| **Advanced Medical Search ⭐** | |
+| **EHR Data Extraction (NER)** | Mobile native app |
+| **Advanced Medical Search** | |
 | Public Pages (landing, doctors, departments) | |
 | Role-based Dashboards | |
 | **In-app Notification System** | |

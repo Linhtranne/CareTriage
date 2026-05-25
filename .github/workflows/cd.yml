@@ -20,28 +20,28 @@ jobs:
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
+          context: ./code/backend/backend
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/caretriage-backend:latest
 
       - name: Build and Push Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
+          context: "./code/front end/frontend"
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/caretriage-frontend:latest
 
       - name: Build and Push Admin Frontend
         uses: docker/build-push-action@v5
         with:
-          context: ./admin-frontend
+          context: "./code/front end/admin-frontend"
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/caretriage-admin:latest
 
       - name: Build and Push AI Service
         uses: docker/build-push-action@v5
         with:
-          context: ./ai-service
+          context: ./code/backend/ai-service
           push: true
           tags: ${{ secrets.DOCKER_USERNAME }}/caretriage-ai:latest
 

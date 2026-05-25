@@ -13,20 +13,23 @@ You have access to 70+ specialized agents in `.claude/agents/`. Call them with `
 - Install SDK: `npm install @anthropic-ai/claude-agent-sdk`
 
 ### Frontend (React + Vite)
-- Dev: `npm run dev --prefix frontend`
-- Build: `npm run build --prefix frontend`
-- Lint: `npm run lint --prefix frontend`
-- Preview: `npm run preview --prefix frontend`
+- Dev: `npm run dev --prefix "code/front end/frontend"`
+- Build: `npm run build --prefix "code/front end/frontend"`
+- Lint: `npm run lint --prefix "code/front end/frontend"`
+- Preview: `npm run preview --prefix "code/front end/frontend"`
+- Admin Dev: `npm run dev --prefix "code/front end/admin-frontend"`
+- Admin Build: `npm run build --prefix "code/front end/admin-frontend"`
+- Admin Lint: `npm run lint --prefix "code/front end/admin-frontend"`
 
 ### Backend (Java + Spring Boot)
-- Run: `mvn spring-boot:run -f backend/pom.xml`
-- Build: `mvn clean install -f backend/pom.xml`
-- Test: `mvn test -f backend/pom.xml`
+- Run: `mvn spring-boot:run -f code/backend/backend/pom.xml`
+- Build: `mvn clean install -f code/backend/backend/pom.xml`
+- Test: `mvn test -f code/backend/backend/pom.xml`
 
 ### AI Service (Python)
-- Requirements: `pip install -r ai-service/requirements.txt`
+- Requirements: `pip install -r code/backend/ai-service/requirements.txt`
 - Activate venv: `.\venv\Scripts\activate`
-- Run: `python -m uvicorn app.main:app --reload --port 8000` (in `ai-service` directory)
+- Run: `python -m uvicorn app.main:app --reload --port 8000` (in `code/backend/ai-service` directory)
 - Test: `curl http://localhost:8000/health`
 
 

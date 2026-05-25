@@ -1,0 +1,19 @@
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import { BrowserRouter } from 'react-router-dom'
+import { ThemeProvider, CssBaseline } from '@mui/material'
+import theme from './styles/theme'
+import './i18n.js'
+import App from './app'
+import './styles/global.css'
+
+createRoot(document.getElementById('root')).render(
+  <StrictMode>
+    <BrowserRouter>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <App />
+      </ThemeProvider>
+    </BrowserRouter>
+  </StrictMode>,
+)

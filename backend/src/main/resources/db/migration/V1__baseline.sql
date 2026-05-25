@@ -1,2 +1,0 @@
--- Flyway Baseline V1
--- Used to mark the starting point of Flyway management for an existing database.

@@ -31,6 +31,21 @@ Thumbs.db
 # Logs
 *.log
 logs/
+lint-report.json
 
 # Docker
 mysql_data/
+
+# AI and Project Specifics
+.agent/
+.agents/skills/impeccable/
+.pytest_cache/
+.impeccable/
+CLAUDE.md
+DESIGN.md
+docker-compose.prod.yml
+docker-compose.yml
+PRODUCT.md
+skills-lock.json
+test/test_image.png
+test/test_websocket.py
