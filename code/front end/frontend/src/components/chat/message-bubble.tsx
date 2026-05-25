@@ -114,7 +114,7 @@ const MessageBubble = ({ message, prevMessage, nextMessage, onResend }) => {
             <ReactMarkdown 
               remarkPlugins={[remarkGfm]}
               components={{
-                p: ({ ...props }) => <p style={{ margin: '0 0 8px 0', lastChild: { margin: 0 } }} {...props} />,
+                p: ({ ...props }) => <p style={{ margin: '0 0 8px 0' }} {...props} />,
                 ul: ({ ...props }) => <ul style={{ paddingLeft: '20px', marginBottom: '8px', listStyleType: 'disc' }} {...props} />,
                 ol: ({ ...props }) => <ol style={{ paddingLeft: '20px', marginBottom: '8px', listStyleType: 'decimal' }} {...props} />,
                 li: ({ ...props }) => <li style={{ marginBottom: '4px' }} {...props} />,

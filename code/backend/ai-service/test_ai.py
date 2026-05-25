@@ -1,9 +1,12 @@
 import sys
 import asyncio
 import json
-from app.core.config import get_settings
-from app.services.triage_service import TriageService
-from app.services.prompt_templates import NER_SYSTEM_PROMPT
+from app.shared.config import get_settings
+from app.application.usecases.triage_use_case import TriageUseCase
+from app.infrastructure.llm.gemini_provider import GeminiProvider
+from app.application.prompts.registry import PromptRegistry
+from app.domain.policies.safety_policy import SafetyPolicy
+from app.application.prompts.registry import PromptRegistry
 from google import genai
 from google.genai import types
 
@@ -48,7 +51,8 @@ async def main():
         print("ERROR: GEMINI_API_KEY not found in .env")
         return
 
-    triage_service = TriageService()
+    llm = GeminiProvider(system_prompt=PromptRegistry.SYSTEM_PROMPT)
+    triage_service = TriageUseCase(llm_provider=llm)
     genai_client = genai.Client(api_key=settings["gemini_api_key"])
 
     print("\n" + "#"*60)

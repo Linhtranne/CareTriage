@@ -13,8 +13,8 @@ sys.modules['Bio.Entrez'] = MagicMock()
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.models.ehr_models import EntityType
-from app.services.ehr_extraction_service import EHRExtractionService
+from app.domain.schemas import EntityType
+from app.application.usecases.ehr_extraction_use_case import EhrExtractionUseCase
 
 client = TestClient(app)
 
@@ -29,10 +29,9 @@ def test_extract_text_empty():
     assert "cannot be empty" in response.json()["detail"]
 
 @pytest.mark.asyncio
-@patch("app.services.ehr_extraction_service.EHRExtractionService._generate_json")
+@patch("app.api.ehr_routes.ehr_use_case.llm.generate_structured_data")
 async def test_extract_text_success(mock_generate):
-    mock_generate.return_value = """
-    {
+    mock_generate.return_value = {
       "entities": [
         {
           "entity_type": "MEDICATION",
@@ -45,7 +44,6 @@ async def test_extract_text_success(mock_generate):
         }
       ]
     }
-    """
 
     response = client.post("/api/ehr/extract-text", json={"text": "Paracetamol 500mg"})
     assert response.status_code == 200
@@ -62,13 +60,13 @@ def test_extract_file_invalid_extension():
     assert "not supported" in response.json()["detail"]
 
 @pytest.mark.asyncio
-@patch("app.services.ehr_extraction_service.EHRExtractionService._parse_pdf")
-@patch("app.services.ehr_extraction_service.EHRExtractionService._generate_json")
+@patch("app.api.ehr_routes.ehr_use_case._parse_pdf")
+@patch("app.api.ehr_routes.ehr_use_case.llm.generate_structured_data")
 async def test_extract_file_pdf_success(mock_generate, mock_parse_pdf):
     # Mock PDF parsing
     mock_parse_pdf.return_value = "Patient has fever."
     
-    mock_generate.return_value = '{"entities": [{"entity_type": "SYMPTOM", "entity_value": "fever", "confidence_score": 0.9}]}'
+    mock_generate.return_value = {"entities": [{"entity_type": "SYMPTOM", "entity_value": "fever", "confidence_score": 0.9}]}
 
     files = {"file": ("test.pdf", b"fake pdf content", "application/pdf")}
     response = client.post("/api/ehr/extract-file", files=files)
@@ -94,7 +92,7 @@ def test_extract_file_oversized():
     assert "too large" in response.json()["detail"]
 
 @pytest.mark.asyncio
-@patch("app.services.ehr_extraction_service.EHRExtractionService._generate_json")
+@patch("app.api.ehr_routes.ehr_use_case.llm.generate_structured_data")
 async def test_extract_text_gemini_error_safe_response(mock_generate):
     mock_generate.side_effect = RuntimeError("Internal Gemini API quota limit hit")
 
@@ -105,7 +103,7 @@ async def test_extract_text_gemini_error_safe_response(mock_generate):
     assert "Gemini" not in response.json()["detail"]
 
 @pytest.mark.asyncio
-@patch("app.services.ehr_extraction_service.EHRExtractionService._parse_pdf")
+@patch("app.api.ehr_routes.ehr_use_case._parse_pdf")
 async def test_extract_file_parse_error_safe_response(mock_parse_pdf):
     # Mock parser throwing error
     mock_parse_pdf.side_effect = ValueError("pdfplumber corrupted stream decoding")
@@ -117,19 +115,19 @@ async def test_extract_file_parse_error_safe_response(mock_parse_pdf):
     assert "corrupted" not in response.json()["detail"]
 
 def test_parse_entities_malformed_json_recovery():
-    service = EHRExtractionService()
+    mock_llm = MagicMock()
+    service = EhrExtractionUseCase(mock_llm)
     
-    # 1. Invalid JSON string
-    res1 = service._parse_entities("{invalid-json}")
+    # 1. Invalid data type
+    res1 = service._parse_entities(["not a dict"])
     assert res1 == []
 
     # 2. JSON is not dict/list structure
-    res2 = service._parse_entities('"just string"')
+    res2 = service._parse_entities("just string")
     assert res2 == []
 
-    # 3. JSON containing malformed entity missing required type/value, and a valid entity
-    malformed_json = """
-    {
+    # 3. Dict containing malformed entity missing required type/value, and a valid entity
+    malformed_dict = {
       "entities": [
         {"entity_type": "BAD_TYPE", "entity_value": "some value"},
         {"entity_value": "no type"},
@@ -143,8 +141,7 @@ def test_parse_entities_malformed_json_recovery():
         }
       ]
     }
-    """
-    res3 = service._parse_entities(malformed_json)
+    res3 = service._parse_entities(malformed_dict)
     # BAD_TYPE will fail EntityType enum validation and be skipped
     # missing fields will be skipped
     # Only valid SYMPTOM remains

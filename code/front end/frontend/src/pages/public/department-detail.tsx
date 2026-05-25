@@ -191,7 +191,7 @@ export default function DepartmentDetail() {
               {/* Contact Info */}
               <Paper sx={{ p: 4, borderRadius: 2 }}>
                 <Typography variant="h6" sx={{ fontWeight: 800, mb: 3 }}>Thông tin liên hệ khoa</Typography>
-                <List spacing={2}>
+                <List sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <ListItem disableGutters>
                     <ListItemIcon><Phone sx={{ color: 'primary.dark' }} /></ListItemIcon>
                     <ListItemText primary="Hotline khoa" secondary="1900-XXXX-01" />

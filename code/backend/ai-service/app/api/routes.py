@@ -1,90 +1,34 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, Literal, List
-import base64
-import binascii
 import logging
 
-from app.core.config import get_settings
-from app.services.triage_service import TriageService
-from app.services.research_service import ResearchService
+from app.application.usecases.triage_use_case import TriageUseCase
+from app.application.usecases.medical_research_use_case import MedicalResearchUseCase
+from app.infrastructure.llm.gemini_provider import GeminiProvider
+from app.infrastructure.rag.research_service import ResearchService
+from app.infrastructure.telemetry.factory import get_telemetry_client
+from app.shared.config import get_settings
 
 logger = logging.getLogger(__name__)
 settings = get_settings()
 
 router = APIRouter()
-triage_service = TriageService()
+llm_provider = GeminiProvider()
 research_service = ResearchService()
+research_use_case = MedicalResearchUseCase(research_service=research_service)
+telemetry_client = get_telemetry_client()
+triage_use_case = TriageUseCase(
+    llm_provider=llm_provider,
+    research_service=research_service,
+    telemetry=telemetry_client,
+)
 
-MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024
-
-class HistoryMessage(BaseModel):
-    role: Literal["user", "model", "assistant", "system"]
-    content: str = Field(min_length=1, max_length=2000)
-
-class Attachment(BaseModel):
-    type: Literal["image"]
-    mime_type: Literal["image/jpeg", "image/png"]
-    data: str = Field(min_length=1)
-
-    @field_validator("data")
-    @classmethod
-    def validate_base64_size(cls, value):
-        try:
-            decoded = base64.b64decode(value, validate=True)
-        except binascii.Error:
-            raise ValueError("Invalid base64 attachment")
-
-        if len(decoded) > MAX_ATTACHMENT_BYTES:
-            raise ValueError("Attachment exceeds 5MB limit")
-        return value
-
-class ResearchRequest(BaseModel):
-    patient_id: int
-    query: str
-
-class TriageMetadata(BaseModel):
-    age: int
-    gender: str
-    onset: str
-
-class TriageRequest(BaseModel):
-    session_id: str = Field(min_length=1, max_length=64)
-    message: str = Field(min_length=1, max_length=4000)
-    conversation_history: List[HistoryMessage] = Field(default_factory=list, max_length=30)
-    attachments: Optional[List[Attachment]] = Field(default=None, max_length=3)
-    metadata: Optional[TriageMetadata] = None
-
-class TriageResponse(BaseModel):
-    reply: str
-    is_complete: bool = False
-    intake_complete: bool = False
-    red_flag_detected: bool = False
-    triage_result: Optional[dict] = None
-
-
-
-class TriageResultDetail(BaseModel):
-    category_id: Optional[int] = None
-    category_name: str
-    suggested_department_code: str
-    suggested_department_name: str
-    urgency_level: str
-    confidence_score: float
-    possible_conditions: List[str] = []
-    suggested_actions: List[str] = []
-    department_mapping_status: str
-    fallback_reason: Optional[str] = None
-    clinical_reasoning_summary: Optional[str] = None
-    summary: Optional[str] = None
-    red_flag_detected: Optional[bool] = False
-
-class RecommendationResponse(BaseModel):
-    intake_complete: bool
-    recommendation_ready: bool
-    missing_information: List[str] = []
-    reply: Optional[str] = None
-    triage_result: Optional[TriageResultDetail] = None
+from app.api.schemas import (
+    ResearchRequest,
+    TriageRequest,
+    TriageResponse,
+    TriageResultDetail,
+    RecommendationResponse,
+)
 
 
 
@@ -92,7 +36,7 @@ class RecommendationResponse(BaseModel):
 async def analyze_symptoms(request: TriageRequest):
     """Analyze patient symptoms and generate follow-up questions or triage recommendation."""
     try:
-        context = research_service.get_context(request.message)
+        context = research_use_case.get_context(request.message)
     except Exception as e:
         logger.error(f"RAG Context Error: {str(e)}")
         context = ""
@@ -101,7 +45,7 @@ async def analyze_symptoms(request: TriageRequest):
     attachment_dicts = [att.dict() for att in request.attachments] if request.attachments else None
     metadata_dict = request.metadata.dict() if request.metadata else None
     
-    result = await triage_service.analyze(
+    result = await triage_use_case.analyze(
         session_id=request.session_id,
         message=request.message,
         history=history_dicts,
@@ -131,7 +75,7 @@ async def trigger_research(request: ResearchRequest):
     if not settings.get("enable_web_research", False):
         raise HTTPException(status_code=403, detail="Web research is disabled")
         
-    research_service.start_background_research(request.patient_id, request.query)
+    research_use_case.start_background_research(request.patient_id, request.query)
     return {"status": "Research started", "patient_id": request.patient_id}
 
 
@@ -139,14 +83,14 @@ async def trigger_research(request: ResearchRequest):
 async def get_recommendation(request: TriageRequest):
     """Generate a final triage recommendation with whitelisted category mapping and business rules."""
     try:
-        context = research_service.get_context(request.message)
+        context = research_use_case.get_context(request.message)
     except Exception as e:
         logger.error(f"RAG Context Error: {str(e)}")
         context = ""
     
     history_dicts = [msg.dict() for msg in request.conversation_history]
 
-    result = await triage_service.recommend(
+    result = await triage_use_case.recommend(
         session_id=request.session_id,
         message=request.message,
         history=history_dicts,

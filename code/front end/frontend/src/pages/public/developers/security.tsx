@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Grid, Button } from '@mui/material'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { 
   ShieldCheck, 
   Lock, 
@@ -7,13 +7,16 @@ import {
   FileKey2
 } from 'lucide-react'
 
+const MOTION_EASE_STANDARD: [number, number, number, number] = [0.16, 1, 0.3, 1]
+const MOTION_DURATION_MEDIUM = 0.8
+
 // Variants
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD } }
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -31,7 +34,7 @@ export default function Security() {
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD }}
           >
             <Grid container spacing={4} alignItems="center">
               <Grid item xs={12} md={7}>

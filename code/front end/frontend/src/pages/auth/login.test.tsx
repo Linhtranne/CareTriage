@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import Login from './Login'
+import Login from './login'
 import useAuthStore, { getHighestPriorityLandingPage } from '../../store/auth-store'
+import type { User } from '../../types'
 
 vi.mock('../../store/auth-store', async () => {
   const actual = await vi.importActual('../../store/auth-store')
@@ -18,6 +19,36 @@ vi.mock('react-i18next', () => ({
   })
 }))
 
+const useAuthStoreMock = vi.mocked(useAuthStore)
+const getHighestPriorityLandingPageMock = vi.mocked(getHighestPriorityLandingPage)
+
+type AuthStoreState = ReturnType<typeof useAuthStore.getState>
+
+const createAuthState = (overrides: Partial<AuthStoreState>): AuthStoreState => ({
+  user: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: false,
+  login: vi.fn(),
+  verify2FA: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  setCredentials: vi.fn(),
+  clearCredentials: vi.fn(),
+  updateUser: vi.fn(),
+  getRole: vi.fn(),
+  ...overrides,
+})
+
+const baseUser: User = {
+  id: 'user-1',
+  email: 'user@example.com',
+  fullName: 'Test User',
+  role: 'PATIENT',
+  roles: ['ROLE_PATIENT'],
+}
+
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -31,15 +62,15 @@ vi.mock('react-router-dom', async () => {
 describe('Login Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    const mockState = {
+    const mockState = createAuthState({
       login: vi.fn(),
       isLoading: false,
       isAuthenticated: false,
-      user: null
-    };
-    useAuthStore.mockReturnValue(mockState)
-    useAuthStore.getState = vi.fn().mockReturnValue(mockState)
-    getHighestPriorityLandingPage.mockReturnValue('/patient/dashboard')
+      user: null,
+    })
+    useAuthStoreMock.mockReturnValue(mockState)
+    useAuthStoreMock.getState = vi.fn().mockReturnValue(mockState)
+    getHighestPriorityLandingPageMock.mockReturnValue('/patient/dashboard')
   })
 
   it('renders login form', () => {
@@ -67,12 +98,12 @@ describe('Login Page', () => {
 
   it('calls login API with correct data', async () => {
     const mockLogin = vi.fn().mockResolvedValue({ success: true })
-    useAuthStore.mockReturnValue({
+    useAuthStoreMock.mockReturnValue(createAuthState({
       login: mockLogin,
       isLoading: false,
       isAuthenticated: false,
-      user: null
-    })
+      user: null,
+    }))
 
     render(
       <MemoryRouter>
@@ -88,13 +119,13 @@ describe('Login Page', () => {
   })
 
   it('redirects if already authenticated', () => {
-    useAuthStore.mockReturnValue({
+    useAuthStoreMock.mockReturnValue(createAuthState({
       login: vi.fn(),
       isLoading: false,
       isAuthenticated: true,
-      user: { roles: ['ROLE_PATIENT'] }
-    })
-    getHighestPriorityLandingPage.mockReturnValue('/patient/dashboard')
+      user: baseUser,
+    }))
+    getHighestPriorityLandingPageMock.mockReturnValue('/patient/dashboard')
 
     render(
       <MemoryRouter>

@@ -205,6 +205,7 @@ export default defineConfig([
       '**/*.test.{js,jsx,ts,tsx}',
       'src/styles/**',
       'src/constants/**',
+      'src/vite-env.d.ts',
     ],
     rules: {
       'project-rules/no-hardcoded-text': 'off',

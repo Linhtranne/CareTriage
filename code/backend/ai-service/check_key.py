@@ -1,6 +1,6 @@
 from google import genai
 
-from app.core.config import get_settings
+from app.shared.config import get_settings
 
 settings = get_settings()
 api_key = settings["gemini_api_key"]

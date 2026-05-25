@@ -53,6 +53,12 @@ function InteractiveParticles({ color = 'oklch(68% 0.145 172)' }) {
     const connectionDistance = 80
 
     class Particle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      radius: number
+
       constructor() {
         this.x = Math.random() * width
         this.y = Math.random() * height

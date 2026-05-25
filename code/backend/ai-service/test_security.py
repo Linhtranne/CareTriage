@@ -5,20 +5,25 @@ import sys
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from fastapi.testclient import TestClient
-from app.core.config import get_settings
+from app.shared.config import get_settings
 from app.main import app
-from app.services.red_flag_detector import RedFlagDetector
+from app.domain.policies.red_flag_policy import RedFlagDetector
 
 settings = get_settings()
 client = TestClient(app)
 
 def test_missing_auth():
-    response = client.post("/api/triage/analyze", json={
-        "session_id": "test",
-        "message": "hello"
-    })
-    assert response.status_code == 401
-    assert response.json() == {"message": "Unauthorized access"}
+    old_testing = os.environ.get("TESTING", "")
+    os.environ["TESTING"] = "false"
+    try:
+        response = client.post("/api/triage/analyze", json={
+            "session_id": "test",
+            "message": "hello"
+        })
+        assert response.status_code == 401
+        assert response.json() == {"message": "Unauthorized access"}
+    finally:
+        os.environ["TESTING"] = old_testing
 
 def test_payload_too_large():
     large_body = {
@@ -50,7 +55,7 @@ def test_red_flag_bypass():
     data = response.json()
     assert data["is_complete"] is True
     assert data["triage_result"]["urgency_level"] == "EMERGENCY"
-    assert data["triage_result"]["suggested_department"] == "Cấp cứu"
+    assert data["triage_result"]["suggested_department_name"] == "Cấp cứu"
     assert data["triage_result"]["department_mapping_status"] == "RED_FLAG_BYPASS"
     assert "thinking" not in data
 
@@ -62,8 +67,8 @@ def test_negated_red_flag_no_bypass():
     # 2. Negated but with second active emergency symptom: should trigger for second symptom (DYSPNEA)
     res2 = RedFlagDetector.detect_red_flags("Tôi không bị đau ngực nhưng tôi đang khó thở nặng không thở được")
     assert res2 is not None
-    assert res2["triage_result"]["suggested_department"] == "Cấp cứu"
-    assert "khó thở nặng" in res2["reply"]
+    assert res2.triage_result.suggested_department_name == "Cấp cứu"
+    assert "khó thở nặng" in res2.reply_msg
 
     # 3. Double negation check:
     res3 = RedFlagDetector.detect_red_flags("chưa từng bị co giật hay hôn mê")
@@ -94,11 +99,3 @@ def test_health_check_endpoint():
         assert data["rag_enabled"] is False
         assert data["corpus_status"] == "NOT_CONFIGURED"
 
-print("Running manual security and unit tests...")
-test_missing_auth()
-test_invalid_schema_length()
-test_red_flag_bypass()
-test_negated_red_flag_no_bypass()
-test_web_research_disabled()
-test_health_check_endpoint()
-print("All security and unit tests passed successfully!")

@@ -43,6 +43,12 @@ export default function InteractiveParticles({ mode = 'neural', color = '16, 185
     const connectionDistance = 80
 
     class Particle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      radius: number
+
       constructor() {
         this.x = Math.random() * width
         this.y = Math.random() * height

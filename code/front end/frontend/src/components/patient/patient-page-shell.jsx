@@ -1,6 +1,17 @@
 import { Box, Container, Stack, Typography } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 
+/**
+ * @param {object} props
+ * @param {string} props.title
+ * @param {string} [props.subtitle]
+ * @param {import('react').ReactNode} [props.actions]
+ * @param {import('react').ReactNode} props.children
+ * @param {import('@mui/material').ContainerProps['maxWidth']} [props.maxWidth]
+ * @param {string} [props.badge]
+ * @param {import('@mui/material').BoxProps['sx']} [props.contentSx]
+ * @param {boolean} [props.transparent]
+ */
 export default function PatientPageShell({
   title,
   subtitle,

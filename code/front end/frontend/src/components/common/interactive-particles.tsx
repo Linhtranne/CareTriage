@@ -37,6 +37,15 @@ export default function InteractiveParticles({ mode = 'neural', color = '16, 185
     const connectionDist = 150;
 
     class Particle {
+      x: number;
+      y: number;
+      size: number;
+      baseX: number;
+      baseY: number;
+      density: number;
+      vx: number;
+      vy: number;
+
       constructor() {
         this.x = Math.random() * width;
         this.y = Math.random() * height;

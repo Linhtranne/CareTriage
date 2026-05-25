@@ -3,12 +3,44 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import ProtectedRoute from './protected-route'
 import useAuthStore from '../../store/auth-store'
+import type { User } from '../../types'
 
-vi.mock('../../store/auth-store')
+vi.mock('../../store/auth-store', () => ({
+  default: vi.fn(),
+}))
+
+const useAuthStoreMock = vi.mocked(useAuthStore)
+
+type AuthStoreState = ReturnType<typeof useAuthStore.getState>
+
+const createAuthState = (overrides: Partial<AuthStoreState>): AuthStoreState => ({
+  user: null,
+  token: null,
+  refreshToken: null,
+  isAuthenticated: false,
+  isLoading: false,
+  login: vi.fn(),
+  verify2FA: vi.fn(),
+  register: vi.fn(),
+  logout: vi.fn(),
+  setCredentials: vi.fn(),
+  clearCredentials: vi.fn(),
+  updateUser: vi.fn(),
+  getRole: vi.fn(),
+  ...overrides,
+})
+
+const baseUser: User = {
+  id: 'user-1',
+  email: 'user@example.com',
+  fullName: 'Test User',
+  role: 'PATIENT',
+  roles: ['PATIENT'],
+}
 
 describe('protected-route', () => {
   it('should redirect to login if not authenticated', () => {
-    useAuthStore.mockReturnValue({ isAuthenticated: false, user: null })
+    useAuthStoreMock.mockReturnValue(createAuthState({ isAuthenticated: false, user: null }))
     
     render(
       <MemoryRouter initialEntries={['/protected']}>
@@ -26,7 +58,7 @@ describe('protected-route', () => {
   })
 
   it('should allow access if authenticated', () => {
-    useAuthStore.mockReturnValue({ isAuthenticated: true, user: { role: 'PATIENT' } })
+    useAuthStoreMock.mockReturnValue(createAuthState({ isAuthenticated: true, user: baseUser }))
 
     render(
       <MemoryRouter initialEntries={['/protected']}>
@@ -42,7 +74,7 @@ describe('protected-route', () => {
   })
 
   it('should redirect to 404 if role is unauthorized', () => {
-    useAuthStore.mockReturnValue({ isAuthenticated: true, user: { role: 'PATIENT' } })
+    useAuthStoreMock.mockReturnValue(createAuthState({ isAuthenticated: true, user: baseUser }))
 
     render(
       <MemoryRouter initialEntries={['/protected']}>

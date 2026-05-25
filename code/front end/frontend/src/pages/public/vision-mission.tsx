@@ -1,9 +1,12 @@
 import { Box, Container, Typography, Grid, Button } from '@mui/material'
 import { useTranslation } from 'react-i18next'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 
 export default function VisionMission() {
   const { t } = useTranslation()
+
+  const MOTION_EASE_STANDARD: [number, number, number, number] = [0.16, 1, 0.3, 1]
+  const MOTION_DURATION_MEDIUM = 0.8
 
   const coreValues = [
     { num: '01', title: t('about_page.value_1_title'), desc: t('about_page.value_1_desc') },
@@ -13,12 +16,12 @@ export default function VisionMission() {
   ]
 
   // Framer Motion Variants
-  const fadeUp = {
+  const fadeUp: Variants = {
     hidden: { opacity: 0, y: 40 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD } }
   }
 
-  const staggerContainer = {
+  const staggerContainer: Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -53,14 +56,14 @@ export default function VisionMission() {
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD }}
               >
                 <Box sx={{ display: 'flex', gap: 4 }}>
                   {/* The "Corridor" anchor line */}
                   <motion.div 
                     initial={{ scaleY: 0 }} 
                     animate={{ scaleY: 1 }} 
-                    transition={{ duration: 1, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                    transition={{ duration: 1, delay: 0.2, ease: MOTION_EASE_STANDARD }}
                     style={{ originY: 0 }}
                   >
                     <Box sx={{ width: 8, height: '100%', background: '#08bba3', flexShrink: 0, borderRadius: '4px' }} />

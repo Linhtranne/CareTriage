@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { Brain, Activity, Zap, ArrowRight, ShieldCheck, Terminal, Heart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import Navbar from '../../../components/public/navbar'
@@ -7,14 +7,16 @@ import Navbar from '../../../components/public/navbar'
 export default function AITriage() {
   const { t } = useTranslation()
 
-  const staggerContainer = {
+  const MOTION_EASE_STANDARD: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
+  const staggerContainer: Variants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   }
 
-  const fadeUp = {
+  const fadeUp: Variants = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: MOTION_EASE_STANDARD } }
   }
 
   return (

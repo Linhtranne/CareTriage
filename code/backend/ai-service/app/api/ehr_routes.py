@@ -1,13 +1,17 @@
 import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from app.models.ehr_models import EHRExtractRequest, EHRExtractResponse
-from app.services.ehr_extraction_service import EHRExtractionService
+from app.api.schemas import EHRExtractRequest, EHRExtractResponse
+from app.application.usecases.ehr_extraction_use_case import EhrExtractionUseCase
+from app.infrastructure.llm.gemini_provider import GeminiProvider
+from app.infrastructure.telemetry.factory import get_telemetry_client
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/ehr", tags=["EHR Extraction"])
 
-ehr_service = EHRExtractionService()
+llm_provider = GeminiProvider()
+telemetry_client = get_telemetry_client()
+ehr_use_case = EhrExtractionUseCase(llm_provider=llm_provider, telemetry=telemetry_client)
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 ALLOWED_EXTENSIONS = {"pdf", "doc", "docx", "txt"}
@@ -20,7 +24,7 @@ async def extract_from_text(request: EHRExtractRequest):
         raise HTTPException(status_code=400, detail="Clinical note text cannot be empty")
 
     try:
-        result = await ehr_service.extract_from_text(request.text)
+        result = await ehr_use_case.extract_from_text(request.text)
         return EHRExtractResponse(success=True, result=result)
     except Exception as e:
         logger.exception("EHR extraction from text failed")
@@ -53,7 +57,7 @@ async def extract_from_file(file: UploadFile = File(...)):
                 detail=f"File too large. Max size: {MAX_FILE_SIZE // (1024*1024)}MB",
             )
 
-        result = await ehr_service.extract_from_file(file_bytes, file.filename)
+        result = await ehr_use_case.extract_from_file(file_bytes, file.filename)
         return EHRExtractResponse(success=True, result=result)
     except HTTPException:
         raise

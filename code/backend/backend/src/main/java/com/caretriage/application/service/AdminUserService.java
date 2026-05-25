@@ -1,0 +1,12 @@
+package com.caretriage.application.service;
+
+import com.caretriage.application.dto.response.AdminUserResponse;
+import com.caretriage.application.dto.response.PagedResponse;
+
+public interface AdminUserService {
+    PagedResponse<AdminUserResponse> getAllUsers(int page, int size, String search, String role, Boolean isActive);
+    AdminUserResponse getUserById(Long id);
+    AdminUserResponse changeUserRole(Long userId, String roleName);
+    AdminUserResponse toggleUserActive(Long userId);
+    AdminUserResponse updateUserProfile(Long userId, AdminUserResponse request);
+}

@@ -7,6 +7,7 @@ import {
 } from '@mui/material'
 import { keyframes } from '@emotion/react'
 import useAuthStore, { getHighestPriorityLandingPage } from '../../store/auth-store'
+import type { RegisterPayload } from '../../types'
 
 // Interactive Particle Visualizer (Canvas API)
 function InteractiveParticles({ color = 'oklch(68% 0.145 172)' }) {
@@ -52,6 +53,12 @@ function InteractiveParticles({ color = 'oklch(68% 0.145 172)' }) {
     const connectionDistance = 80
 
     class Particle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      radius: number
+
       constructor() {
         this.x = Math.random() * width
         this.y = Math.random() * height
@@ -148,7 +155,16 @@ const shake = keyframes`
 `
 
 export default function Register() {
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirmPassword: '', role: 'PATIENT' })
+  type RegisterForm = RegisterPayload & { confirmPassword: string }
+
+  const [form, setForm] = useState<RegisterForm>({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    role: 'PATIENT'
+  })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isShaking, setIsShaking] = useState(false)

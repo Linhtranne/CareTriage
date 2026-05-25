@@ -3,8 +3,8 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import router
 from app.api.ehr_routes import router as ehr_router
-from app.core.config import get_settings
-from app.services.exceptions import AIError, AIQuotaExceeded, AISafetyBlocked, AIConnectionError
+from app.shared.config import get_settings
+from app.shared.errors import AIError, AIQuotaExceeded, AISafetyBlocked, AIConnectionError
 import logging
 import os
 

@@ -55,11 +55,20 @@ import {
 import { useTranslation } from 'react-i18next';
 import axiosClient from '../../services/http-client';
 import useAuthStore from '../../store/auth-store';
+import type { ApiResponse, UserProfile } from '../../types';
 import PatientPageShell from '../../components/patient/patient-page-shell';
 import CustomTextField from '../../components/common/custom-text-field';
 import InteractiveParticles from '../../components/common/interactive-particles';
 
-const ProfileInfoDisplay = ({ icon, label, value }) => {
+type ProfileFieldErrors = Partial<Record<keyof UserProfile, string>>
+
+type ProfileInfoDisplayProps = {
+  icon: React.ReactElement
+  label: string
+  value?: string | number | null
+}
+
+const ProfileInfoDisplay = ({ icon, label, value }: ProfileInfoDisplayProps) => {
   const { t } = useTranslation();
   return (
     <Box sx={{ mb: 4 }}>
@@ -84,12 +93,12 @@ const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [openModal, setOpenModal] = useState(false);
-  const [profileData, setProfileData] = useState(null);
-  const [editForm, setEditForm] = useState(null);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
-  const [fieldErrors, setFieldErrors] = useState({});
-  const [avatarAnchor, setAvatarAnchor] = useState(null);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [editForm, setEditForm] = useState<UserProfile | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ProfileFieldErrors>({});
+  const [avatarAnchor, setAvatarAnchor] = useState<HTMLElement | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const fileInputRef = useRef(null);
   
@@ -124,11 +133,11 @@ const Profile = () => {
   const fetchProfile = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axiosClient.get('/api/users/profile');
+      const response = await axiosClient.get<ApiResponse<UserProfile>>('/api/users/profile');
       if (response.data.success) {
         setProfileData(response.data.data);
         setEditForm(response.data.data);
-        setIs2FaEmailEnabled(response.data.data.twoFactorEmail || false);
+        setIs2FaEmailEnabled(Boolean(response.data.data.twoFactorEmail));
       }
     } catch (err) {
       setError(t('profile.error'));
@@ -143,25 +152,26 @@ const Profile = () => {
     fetchProfile();
   }, [fetchProfile]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+    setEditForm((prev) => (prev ? { ...prev, [name]: value } : prev));
   };
 
-  const handlePassChange = (e) => {
+  const handlePassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPassForm(prev => ({ ...prev, [name]: value }));
   };
 
   const handleOpenEdit = () => {
+    if (!profileData) return;
     setEditForm({ ...profileData });
-    setStreetAddr(profileData?.address || '');
+    setStreetAddr(profileData.address || '');
     setSelectedProv(null); setSelectedDist(null); setSelectedWard(null);
     setError(null); setSuccess(null); setFieldErrors({});
     setOpenModal(true);
   };
 
-  const handleAvatarClick = (event) => setAvatarAnchor(event.currentTarget);
+  const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => setAvatarAnchor(event.currentTarget);
   const handleAvatarClose = () => setAvatarAnchor(null);
   const handleUploadClick = () => { handleAvatarClose(); fileInputRef.current?.click(); };
   const handleUrlClick = () => { handleAvatarClose(); setOpenModal(true); };
@@ -192,7 +202,8 @@ const Profile = () => {
     }
   };
 
-  const updateAvatar = async (newUrl) => {
+  const updateAvatar = async (newUrl: string) => {
+    if (!profileData) return;
     try {
       setSaving(true);
       const response = await axiosClient.put('/api/users/profile', { 
@@ -214,7 +225,8 @@ const Profile = () => {
   };
 
   const validateForm = () => {
-    const errors = {};
+    if (!editForm) return false;
+    const errors: ProfileFieldErrors = {};
     if (!editForm.fullName?.trim()) errors.fullName = t('validation.required');
     if (!editForm.phone?.trim()) errors.phone = t('validation.required');
     else if (!/^\d{8,15}$/.test(editForm.phone.trim())) errors.phone = t('validation.invalid_phone');
@@ -231,6 +243,7 @@ const Profile = () => {
   };
 
   const handleSave = async () => {
+    if (!editForm) return;
     if (!validateForm()) return;
     try {
       setSaving(true);
@@ -270,7 +283,7 @@ const Profile = () => {
     }
   };
 
-  const handleToggle2FaEmail = async (e) => {
+  const handleToggle2FaEmail = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
     setError(null);
     if (checked) {

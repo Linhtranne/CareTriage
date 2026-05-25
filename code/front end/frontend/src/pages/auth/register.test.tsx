@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import Register from './Register'
+import Register from './register'
 import useAuthStore from '../../store/auth-store'
 
-vi.mock('../../store/auth-store')
+vi.mock('../../store/auth-store', () => ({
+  default: vi.fn()
+}))
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
     i18n: { language: 'vi' }
@@ -20,10 +22,12 @@ vi.mock('react-router-dom', async () => {
   }
 })
 
+const useAuthStoreMock = vi.mocked(useAuthStore)
+
 describe('Register Page', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    useAuthStore.mockReturnValue({
+    useAuthStoreMock.mockReturnValue({
       register: vi.fn(),
       isLoading: false,
       isAuthenticated: false,
@@ -57,7 +61,7 @@ describe('Register Page', () => {
 
   it('calls register API when form is valid', async () => {
     const mockRegister = vi.fn().mockResolvedValue({ success: true })
-    useAuthStore.mockReturnValue({
+    useAuthStoreMock.mockReturnValue({
       register: mockRegister,
       isLoading: false,
       isAuthenticated: false,

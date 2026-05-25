@@ -64,7 +64,7 @@ react-frontend/
 └── .env             # Cấu hình biến môi trường, có thể tạo thêm các biến thể như .env.local, .env.development,...
 2. Clean Architecture (Thử thách Nâng cao)
 backend-clean/
-├── src/main/java/com/ioc/internship/
+├── src/main/java/com/caretriage
 │   ├── Application.java
 │   │
 │   ├── shared/                           # Mã nguồn dùng chéo qua các tầng

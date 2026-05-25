@@ -1,18 +1,21 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import useAuthStore from '../store/auth-store'
 
+const REQUEST_TIMEOUT_MS = 15000
+const UNAUTHORIZED_STATUS = 401
+
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
 interface FailedRequest {
   resolve: (value: string | null) => void;
-  reject: (reason?: any) => void;
+  reject: (reason?: unknown) => void;
 }
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '',
-  timeout: 15000,
+  timeout: REQUEST_TIMEOUT_MS,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -28,7 +31,7 @@ axiosClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
 let isRefreshing = false
 let failedQueue: FailedRequest[] = []
 
-const processQueue = (error: any, token: string | null = null) => {
+const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue.forEach((prom) => {
     if (error) {
       prom.reject(error)
@@ -50,7 +53,7 @@ axiosClient.interceptors.response.use(
     const isAuthEndpoint = originalRequest.url?.includes('/api/auth/login') || 
                            originalRequest.url?.includes('/api/auth/register')
 
-    if (error.response?.status === 401 && !originalRequest._retry && !isAuthEndpoint) {
+    if (error.response?.status === UNAUTHORIZED_STATUS && !originalRequest._retry && !isAuthEndpoint) {
       if (isRefreshing) {
         return new Promise<string | null>(function (resolve, reject) {
           failedQueue.push({ resolve, reject })

@@ -1,6 +1,6 @@
 package com.caretriage.event;
 
-import com.caretriage.entity.TriageTicket;
+import com.caretriage.domain.entity.TriageTicket;
 
 import java.util.UUID;
 

@@ -1,5 +1,5 @@
 import { Box, Container, Typography, Grid, Button } from '@mui/material'
-import { motion } from 'framer-motion'
+import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { 
   Network, 
@@ -10,13 +10,17 @@ import {
   Server
 } from 'lucide-react'
 
+const MOTION_EASE_STANDARD: [number, number, number, number] = [0.16, 1, 0.3, 1]
+const MOTION_DURATION_FAST = 0.6
+const MOTION_DURATION_MEDIUM = 0.8
+
 // Variants
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: MOTION_DURATION_FAST, ease: MOTION_EASE_STANDARD } }
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -72,7 +76,7 @@ export default function APIDocs() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD }}
           >
             <Grid container spacing={4} justifyContent="center" textAlign="center">
               <Grid item xs={12} md={10}>
@@ -156,7 +160,7 @@ export default function APIDocs() {
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#08bba3', gap: 1 }}>
                       <motion.div
                         animate={{ x: [-5, 5, -5] }}
-                        transition={{ duration: 3, repeat: Infinity, ease: [0.16, 1, 0.3, 1] }}
+                        transition={{ duration: 3, repeat: Infinity, ease: MOTION_EASE_STANDARD }}
                       >
                         <ArrowRightLeft size={32} />
                       </motion.div>
@@ -190,7 +194,7 @@ export default function APIDocs() {
                         {/* Processing Pulse Ring */}
                         <motion.div
                           animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: [0.16, 1, 0.3, 1] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: MOTION_EASE_STANDARD }}
                           style={{
                             position: 'absolute',
                             inset: 0,

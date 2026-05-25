@@ -88,7 +88,7 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  const [tMenuData, setTMenuData] = useState(menuData)
+  const [tMenuData, setTMenuData] = useState<typeof menuData>(menuData)
 
   useEffect(() => {
     if (!i18n.language || i18n.language.startsWith('vi')) {
@@ -108,7 +108,11 @@ export default function Navbar() {
     }
 
     const performTranslation = async () => {
-      const translated = {}
+      const translated: typeof menuData = {
+        products: { title: '', items: [] },
+        solutions: { title: '', items: [] },
+        developers: { title: '', items: [] }
+      }
       for (const key of Object.keys(menuData)) {
         translated[key] = {
           title: await translateText(menuData[key].title),

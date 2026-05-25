@@ -8,17 +8,19 @@ import {
 import {
   Search, MapPin, Clock, Award, X
 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, type Variants } from 'framer-motion'
 import publicApi from '../../services/public-service'
 import { useTranslation } from 'react-i18next'
 
+const MOTION_EASE_STANDARD: [number, number, number, number] = [0.16, 1, 0.3, 1]
+
 // Variants
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: MOTION_EASE_STANDARD } }
 }
 
-const staggerContainer = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,

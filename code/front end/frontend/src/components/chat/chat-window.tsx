@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo, type FormEvent } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send, X, ChevronDown, WifiOff,
@@ -32,6 +32,7 @@ const ChatWindow = ({
   onCompleteTriage,
   onResendMessage
 }) => {
+  const loadMoreMessagesFn: (() => void) | undefined = loadMoreMessages
   const scrollRef = useRef(null);
   const inputRef = useRef(null);
   const attachmentInputRef = useRef(null);
@@ -135,7 +136,7 @@ const ChatWindow = ({
 
     if (el.scrollTop === 0 && hasMore && !isLoadingHistory) {
       prevScrollHeightRef.current = scrollRef.current?.scrollHeight || 0;
-      loadMoreMessages?.();
+      loadMoreMessagesFn?.();
     }
   };
 
@@ -143,7 +144,7 @@ const ChatWindow = ({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e?: FormEvent<HTMLFormElement>) => {
     e?.preventDefault();
     const content = inputValue.trim();
     if (!content || isTyping || !isConnected || !isSessionReady) return;

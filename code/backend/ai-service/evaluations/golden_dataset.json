@@ -1,0 +1,42 @@
+[
+  {
+    "id": "case-001",
+    "patient_message": "Tôi bị đột ngột méo miệng và liệt nửa người bên trái",
+    "history": [],
+    "expected_department": "Cấp cứu",
+    "expected_urgency": "EMERGENCY",
+    "expected_red_flag": true
+  },
+  {
+    "id": "case-002",
+    "patient_message": "Tôi bị nổi mẩn đỏ ngứa khắp người sau khi ăn hải sản",
+    "history": [],
+    "expected_department": "Da liễu",
+    "expected_urgency": "MEDIUM",
+    "expected_red_flag": false
+  },
+  {
+    "id": "case-003",
+    "patient_message": "Cháu nhà tôi 3 tuổi bị sốt cao 39 độ, ho nhiều và quấy khóc",
+    "history": [],
+    "expected_department": "Nhi khoa",
+    "expected_urgency": "HIGH",
+    "expected_red_flag": false
+  },
+  {
+    "id": "case-004",
+    "patient_message": "Tôi thỉnh thoảng bị đau dạ dày và ợ chua, uống thuốc dạ dày ở nhà không đỡ.",
+    "history": [],
+    "expected_department": "Tiêu hóa",
+    "expected_urgency": "LOW",
+    "expected_red_flag": false
+  },
+  {
+    "id": "case-005",
+    "patient_message": "Tôi bị đau tức ngực dữ dội lan ra cánh tay trái, khó thở và toát mồ hôi lạnh.",
+    "history": [],
+    "expected_department": "Cấp cứu",
+    "expected_urgency": "EMERGENCY",
+    "expected_red_flag": true
+  }
+]
