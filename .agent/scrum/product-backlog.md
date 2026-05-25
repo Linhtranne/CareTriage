@@ -153,71 +153,53 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 ---
 
 ### US-011: Chat real-time với AI
-**As a** patient, **I want** to chat with AI in real-time, **so that** the experience feels natural.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-011-Realtime-AI-Chat.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US011-Realtime-AI-Chat.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
-| T-046 | WebSocket config (STOMP over SockJS) | Backend | P0 | 3 | Sprint 7 | [x] |
-| T-047 | ChatWebSocketController (send/receive) | Backend | P0 | 5 | Sprint 7 | [x] |
-| T-048 | ChatSession, ChatMessage entities + persistence | Backend | P0 | 3 | Sprint 7 | [x] |
-| T-049 | Chat window component (message bubbles, typing indicator) | Frontend | P0 | 5 | Sprint 7 | [x] |
-| T-050 | useWebSocket hook (connect, send, receive, reconnect) | Frontend | P0 | 5 | Sprint 7 | [x] |
-| T-051 | Symptom suggestion chips (quick input) | Frontend | P2 | 2 | Sprint 7 | [x] |
+| T-046 | Setup WebSocket server (Spring Boot or FastAPI) | Backend | P0 | 5 | Sprint 7 |
+| T-047 | React Chat UI (message bubbles, typing indicator) | Frontend | P0 | 5 | Sprint 7 |
+| T-048 | Connect React WebSocket client to backend | Frontend | P0 | 3 | Sprint 7 |
+| T-049 | Save chat history to database | Backend | P1 | 3 | Sprint 7 |
+| T-050 | Error handling (reconnect, timeout) | Both | P1 | 3 | Sprint 7 |
 
-**Acceptance Criteria:**
-- [ ] Messages appear in real-time (< 500ms latency)
-- [ ] Typing indicator shows while AI is processing
-- [ ] Chat history persists across page refresh
-- [ ] Auto-reconnect on WebSocket drop
 
 ---
 
 ### US-012: Triage ticket gửi đến bác sĩ
-**As a** system, **I want** to convert triage chat into a ticket, **so that** doctors can review and follow up.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-012-Triage-Ticket.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US012-Triage-Ticket.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
 | T-052 | TriageTicket entity (session, patient, dept, urgency, summary, status) | Backend | P0 | 3 | Sprint 8 | [x] |
-| T-053 | Auto-generate ticket when triage completes | Backend | P0 | 5 | Sprint 8 | [x] |
-| T-054 | AI summary generation (summarize chat into ticket) | AI | P0 | 3 | Sprint 8 | [x] |
-| T-055 | TriageTicketController: list, assign, review | Backend | P1 | 3 | Sprint 8 | [x] |
-| T-056 | Doctor: Ticket inbox + detail page (with chat history) | Frontend | P0 | 5 | Sprint 8 | [x] |
-| T-057 | Patient: View triage result + ticket status | Frontend | P1 | 3 | Sprint 8 | [x] |
-| T-058 | Ticket → Create Appointment action | Backend + Frontend | P1 | 3 | Sprint 8 | [x] |
+| T-053 | Ticket generation logic (trigger when AI recommends) | Backend | P0 | 3 | Sprint 8 | [x] |
+| T-054 | Doctor: Triage Inbox page (list tickets by dept/urgency) | Frontend | P0 | 5 | Sprint 8 | [x] |
+| T-055 | Doctor: Accept ticket -> Create Appointment | Frontend | P1 | 3 | Sprint 8 | [x] |
 
-**Acceptance Criteria:**
-- [ ] Chat completion auto-creates ticket
-- [ ] Ticket includes: AI summary, urgency, suggested department
-- [ ] Doctor can view full chat history from ticket
-- [ ] Doctor can create appointment from ticket
+
 
 ---
 
 ## EPIC 6: Public Pages
 
 ### US-013: Trang chủ bệnh viện
-**As a** visitor, **I want** to see hospital information, **so that** I can learn about services.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-013-Landing-Page.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US013-Landing-Page.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
 | T-059 | Landing page: hero, services, CTA | Frontend | P1 | 5 | Sprint 9 |
-| T-060 | Sync status between ticket and appointment | Backend | P1 | 3 | Sprint 8 | [x] |
 | T-061 | Department detail page | Frontend | P2 | 2 | Sprint 9 |
 | T-062 | Emergency info page | Frontend | P2 | 2 | Sprint 9 |
 | T-063 | Contact form | Frontend | P3 | 2 | Sprint 9 |
 | T-064 | Responsive design pass (all public pages) | Frontend | P1 | 3 | Sprint 9 |
 
-**Acceptance Criteria:**
-- [ ] Landing page loads < 3s
-- [ ] All pages responsive on mobile
-- [ ] CTA "Kiểm tra triệu chứng" links to chat
 
 ---
 
 ## EPIC 7: Dashboards
 
 ### US-014: Dashboard theo role
-**As a** logged-in user, **I want** to see a dashboard relevant to my role, **so that** I have a quick overview.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-014-Role-Dashboards.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US014-Role-Dashboards.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -227,17 +209,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-068 | Dashboard API endpoints (stats, counts) | Backend | P1 | 3 | Sprint 10 |
 | T-069 | In-app notification bell (WebSocket) | Frontend + Backend | P2 | 5 | Sprint 10 |
 
-**Acceptance Criteria:**
-- [ ] Each role sees different dashboard
-- [ ] Stats update in real-time
-- [ ] Notification bell shows unread count
-
 ---
 
 ## EPIC 8: Infrastructure
 
 ### US-015: Docker & CI/CD
-**As a** developer, **I want** automated build and deploy, **so that** releases are reliable.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-015-Docker-CICD.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US015-Docker-CICD.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -247,18 +224,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-073 | GitHub Actions CD (deploy on main merge) | DevOps | P1 | 5 | Sprint 12 |
 | T-074 | Environment variables management | DevOps | P0 | 2 | Sprint 12 |
 
-**Acceptance Criteria:**
-- [ ] `docker-compose up` runs all services
-- [ ] PR triggers CI (build + test)
-- [ ] Merge to main triggers deploy
-- [ ] No secrets in code
-
 ---
 
 ## EPIC 9: EHR Data Extraction System 
 
 ### US-016: Upload & Nhập ghi chú lâm sàng
-**As a** doctor, **I want** to upload clinical notes (PDF/Word) or type them directly, **so that** the system can process and extract medical entities.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-016-Upload-Clinical-Notes.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US016-Upload-Clinical-Notes.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -269,17 +240,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-079 | Create EHR API routes (extract-text, extract-file) | AI | P0 | 3 | Sprint 14 |
 | T-080 | Update requirements.txt + main.py | AI | P1 | 1 | Sprint 14 |
 
-**Acceptance Criteria:**
-- [ ] Upload PDF → text extracted → entities returned as JSON
-- [ ] Upload DOCX → text extracted → entities returned
-- [ ] Direct text input → entities returned
-- [ ] Entities include: medications, symptoms, conditions, dosages, lab_tests, procedures
-- [ ] Each entity has confidence_score
-
 ---
 
 ### US-017: Database & Backend cho EHR
-**As a** system, **I want** to store extracted medical entities in structured tables, **so that** data is searchable and analyzable.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-017-EHR-Database-Backend.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US017-EHR-Database-Backend.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -293,16 +257,12 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-088 | Create EHRService (upload, extract, save flow) | Backend | P0 | 5 | Sprint 15 |
 | T-089 | Create EHRController (upload, extract, search endpoints) | Backend | P0 | 3 | Sprint 15 |
 
-**Acceptance Criteria:**
-- [ ] Doctor uploads file → AI extracts → entities saved to DB
-- [ ] Extracted entities linked to clinical_note and patient
-- [ ] Patient medications/conditions/symptoms auto-populated
-- [ ] All endpoints secured with role-based access (DOCTOR, ADMIN)
+
 
 ---
 
 ### US-018: Tìm kiếm nâng cao EHR
-**As a** doctor, **I want** to search patients by symptoms, medications, and conditions, **so that** I can find relevant cases quickly.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-018-EHR-Advanced-Search.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US018-EHR-Advanced-Search.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -310,17 +270,10 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-091 | Advanced search API: multi-criteria query | Backend | P0 | 3 | Sprint 16 |
 | T-092 | Statistics API: top medications, common conditions | Backend | P2 | 3 | Sprint 16 |
 
-**Acceptance Criteria:**
-- [ ] Search by symptom: "đau đầu" → list of matching patients
-- [ ] Search by medication: "paracetamol" → matching patients
-- [ ] Combined search: symptom X AND medication Y → results
-- [ ] Filter by date range, severity
-- [ ] Statistics endpoint returns top medications and conditions
-
 ---
 
 ### US-019: Frontend UI cho EHR
-**As a** doctor, **I want** a user interface to upload notes and view extraction results, **so that** I can interact with the EHR system.
+> 📄 **[Xem chi tiết User Story](file:///d:/CareTriage/.agent/scrum/user-stories/US-019-EHR-Frontend-UI.md)** | 🧪 **[Xem Test Cases](file:///d:/CareTriage/.agent/scrum/test-cases/TC-US019-EHR-Frontend-UI.md)**
 
 | Task ID | Task | Type | Priority | Points | Sprint |
 |---------|------|------|----------|--------|--------|
@@ -328,16 +281,9 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | T-094 | EHR Extraction Result page (entity cards, highlight in text) | Frontend | P0 | 5 | Sprint 16 |
 | T-095 | EHR Advanced Search page (multi-criteria form + results table) | Frontend | P1 | 5 | Sprint 16 |
 
-**Acceptance Criteria:**
-- [ ] Doctor can upload PDF/Word or type clinical note
-- [ ] Extraction results show entities with color-coded labels
-- [ ] Entities highlighted in original text
-- [ ] Search page with multi-criteria form
-- [ ] Results displayed in searchable/sortable DataGrid
-
 ---
 
-## 📊 Backlog Summary
+##  Backlog Summary
 
 | Epic | User Stories | Tasks | Total Points |
 |------|-------------|-------|-------------|
@@ -349,7 +295,7 @@ Import vào tool quản lý (Jira, Trello, Notion, Linear) theo format:
 | 6. Public Pages | 1 | 6 | 16 |
 | 7. Dashboards | 1 | 5 | 23 |
 | 8. Infrastructure | 1 | 5 | 20 |
-| 9. EHR Extraction ⭐ | 4 | 21 | 67 |
+| 9. EHR Extraction  | 4 | 21 | 67 |
 | **TOTAL** | **19** | **95** | **306** |
 
 **Velocity Estimate (Solo Dev):** ~18-22 points/sprint

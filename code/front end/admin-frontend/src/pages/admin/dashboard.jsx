@@ -42,7 +42,7 @@ const STATUS_META = {
   CHECKED_IN: { label: 'Đã check-in', color: '#0ea5e9' },
   IN_PROGRESS: { label: 'Đang khám', color: '#8b5cf6' },
   COMPLETED: { label: 'Hoàn tất', color: '#16a34a' },
-  CANCELLED: { label: 'Đã huỷ', color: '#ef4444' },
+  CANCELLED: { label: 'Đã huỷ', color: 'var(--color-danger)' },
   NO_SHOW: { label: 'Vắng mặt', color: '#6b7280' },
 }
 
@@ -51,7 +51,7 @@ const ROLE_META = {
   ADMIN: { label: 'Quản trị viên', color: '#2563eb' },
   CONTENT_ADMIN: { label: 'Nội dung', color: '#db2777' },
   DOCTOR: { label: 'Bác sĩ', color: '#0f766e' },
-  PATIENT: { label: 'Bệnh nhân', color: '#f59e0b' },
+  PATIENT: { label: 'Bệnh nhân', color: 'var(--color-warning)' },
 }
 
 const EMPTY_OBJECT = {}
@@ -137,7 +137,7 @@ function DashboardMetricCard({ title, value, subtitle, accent, icon, delta, delt
         borderRadius: 4,
         position: 'relative',
         overflow: 'hidden',
-        background: 'linear-gradient(180deg, rgba(255,255,255,0.92) 0%, rgba(248,250,252,0.9) 100%)',
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-50) 92%, transparent) 0%, rgba(248,250,252,0.9) 100%)',
         border: `1px solid ${alpha(accent, 0.12)}`,
         boxShadow: '0 16px 40px rgba(15, 23, 42, 0.06)',
       }}
@@ -601,7 +601,7 @@ export default function Dashboard() {
         sx={{
           p: 3,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-surface-50) 96%, transparent) 0%, rgba(248,250,252,0.92) 100%)',
           border: `1px solid ${alpha(theme.palette.primary.main, 0.08)}`,
           boxShadow: '0 18px 50px rgba(15, 23, 42, 0.06)',
         }}
@@ -702,7 +702,7 @@ export default function Dashboard() {
               p: 3,
               height: '100%',
               borderRadius: 4,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-50) 96%, transparent) 0%, rgba(248,250,252,0.92) 100%)',
               border: `1px solid ${alpha(theme.palette.primary.main, 0.06)}`,
               boxShadow: '0 18px 50px rgba(15, 23, 42, 0.05)',
             }}
@@ -765,7 +765,7 @@ export default function Dashboard() {
               p: 3,
               height: '100%',
               borderRadius: 4,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-50) 96%, transparent) 0%, rgba(248,250,252,0.92) 100%)',
               border: `1px solid ${alpha(theme.palette.primary.main, 0.06)}`,
               boxShadow: '0 18px 50px rgba(15, 23, 42, 0.05)',
             }}
@@ -834,7 +834,7 @@ export default function Dashboard() {
               p: 3,
               height: '100%',
               borderRadius: 4,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-50) 96%, transparent) 0%, rgba(248,250,252,0.92) 100%)',
               border: `1px solid ${alpha(theme.palette.primary.main, 0.06)}`,
               boxShadow: '0 18px 50px rgba(15, 23, 42, 0.05)',
             }}
@@ -901,7 +901,7 @@ export default function Dashboard() {
               p: 3,
               height: '100%',
               borderRadius: 4,
-              background: 'linear-gradient(180deg, rgba(255,255,255,0.96) 0%, rgba(248,250,252,0.92) 100%)',
+              background: 'linear-gradient(180deg, color-mix(in srgb, var(--color-surface-50) 96%, transparent) 0%, rgba(248,250,252,0.92) 100%)',
               border: `1px solid ${alpha(theme.palette.primary.main, 0.06)}`,
               boxShadow: '0 18px 50px rgba(15, 23, 42, 0.05)',
             }}
@@ -964,7 +964,7 @@ export default function Dashboard() {
         sx={{
           p: 2.5,
           borderRadius: 4,
-          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(255,255,255,0.92) 100%)',
+          background: 'linear-gradient(135deg, color-mix(in srgb, var(--color-primary-500) 8%, transparent) 0%, color-mix(in srgb, var(--color-surface-50) 92%, transparent) 100%)',
           border: `1px solid ${alpha(theme.palette.success.main, 0.18)}`,
           boxShadow: '0 18px 50px rgba(15, 23, 42, 0.04)',
         }}

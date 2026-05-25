@@ -1,39 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
-/* CareTriage Design System */
+/* CareTriage Design System - Tailwind is token-only; MUI owns component styling. */
 @theme {
+  --font-sans: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
   /* Primary - Medical Teal */
-  --color-primary-50: #effefa;
-  --color-primary-100: #c8fff1;
-  --color-primary-200: #91fee4;
-  --color-primary-300: #53f0d4;
-  --color-primary-400: #20d6bc;
-  --color-primary-500: #08bba3;
-  --color-primary-600: #039786;
-  --color-primary-700: #08796d;
-  --color-primary-800: #0b5f58;
-  --color-primary-900: #0e4f49;
+  --color-primary-50: oklch(98% 0.025 172);
+  --color-primary-100: oklch(95% 0.055 172);
+  --color-primary-200: oklch(90% 0.09 172);
+  --color-primary-300: oklch(84% 0.13 172);
+  --color-primary-400: oklch(76% 0.15 172);
+  --color-primary-500: oklch(68% 0.145 172);
+  --color-primary-600: oklch(58% 0.13 172);
+  --color-primary-700: oklch(48% 0.105 172);
+  --color-primary-800: oklch(38% 0.075 172);
+  --color-primary-900: oklch(30% 0.055 172);
 
   /* Accent - Warm Coral */
-  --color-accent-400: #fb7185;
-  --color-accent-500: #f43f5e;
-  --color-accent-600: #e11d48;
+  --color-accent-400: oklch(73% 0.16 18);
+  --color-accent-500: oklch(66% 0.18 18);
+  --color-accent-600: oklch(58% 0.18 18);
 
   /* Neutral - Slate */
-  --color-surface-50: #f8fafc;
-  --color-surface-100: #f1f5f9;
-  --color-surface-200: #e2e8f0;
-  --color-surface-700: #334155;
-  --color-surface-800: #1e293b;
-  --color-surface-900: #0f172a;
-  --color-surface-950: #020617;
+  --color-surface-50: oklch(98.5% 0.006 250);
+  --color-surface-100: oklch(96.5% 0.008 250);
+  --color-surface-200: oklch(92.5% 0.012 250);
+  --color-surface-700: oklch(38% 0.025 250);
+  --color-surface-800: oklch(28% 0.025 250);
+  --color-surface-900: oklch(20% 0.025 250);
+  --color-surface-950: oklch(14% 0.025 250);
 
   /* Semantic */
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-danger: #ef4444;
-  --color-info: #3b82f6;
+  --color-success: oklch(70% 0.15 155);
+  --color-warning: oklch(76% 0.16 75);
+  --color-danger: oklch(63% 0.19 25);
+  --color-info: oklch(63% 0.16 250);
 
   /* Spacing */
   --spacing-page: 1.5rem;
@@ -61,7 +63,7 @@ html {
 }
 
 body {
-  font-family: 'Be Vietnam Pro', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--color-surface-50);

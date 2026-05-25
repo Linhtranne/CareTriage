@@ -204,10 +204,10 @@ export default function Login() {
         <Typography variant="h1" sx={{ fontWeight: 900, fontSize: { xs: '15vw', md: '10vw' }, lineHeight: 0.8, color: '#064e3b', letterSpacing: '-0.05em', textTransform: 'uppercase' }}>
           Care
         </Typography>
-        <Typography variant="h1" sx={{ fontWeight: 900, fontSize: { xs: '15vw', md: '10vw' }, lineHeight: 0.8, color: '#059669', letterSpacing: '-0.05em', textTransform: 'uppercase' }}>
+        <Typography variant="h1" sx={{ fontWeight: 900, fontSize: { xs: '15vw', md: '10vw' }, lineHeight: 0.8, color: 'var(--color-primary-600)', letterSpacing: '-0.05em', textTransform: 'uppercase' }}>
           Triage
         </Typography>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: '#059669', mt: 2, letterSpacing: '0.2em' }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, color: 'var(--color-primary-600)', mt: 2, letterSpacing: '0.2em' }}>
           ADMIN PORTAL
         </Typography>
       </Box>
@@ -216,9 +216,9 @@ export default function Login() {
         <Card sx={{
           maxWidth: 450,
           width: '100%',
-          background: 'rgba(255, 255, 255, 0.8)',
+          background: 'color-mix(in srgb, var(--color-surface-50) 80%, transparent)',
           backdropFilter: 'blur(16px)',
-          border: '1px solid rgba(16, 185, 129, 0.2)',
+          border: '1px solid color-mix(in srgb, var(--color-primary-500) 20%, transparent)',
           borderRadius: 4,
           boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
           zIndex: 2,
@@ -249,7 +249,7 @@ export default function Login() {
                 onChange={(e) => setEmail(e.target.value)}
                 fullWidth
                 slotProps={{
-                  input: { sx: { borderRadius: 2, bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 600 } },
+                  input: { sx: { borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)', fontWeight: 600 } },
                   inputLabel: { sx: { fontWeight: 700, color: '#064e3b' } }
                 }}
               />
@@ -261,7 +261,7 @@ export default function Login() {
                 fullWidth
                 slotProps={{
                   input: {
-                    sx: { borderRadius: 2, bgcolor: 'rgba(255,255,255,0.9)', fontWeight: 600 },
+                    sx: { borderRadius: 2, bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)', fontWeight: 600 },
                     endAdornment: (
                       <InputAdornment position="end">
                         <IconButton onClick={() => setShowPassword(!showPassword)} sx={{ color: '#064e3b' }}>
@@ -282,14 +282,14 @@ export default function Login() {
                 sx={{
                   py: 1.8,
                   borderRadius: 2,
-                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  background: 'linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-600) 100%)',
                   fontWeight: 800,
                   fontSize: '1rem',
-                  boxShadow: '0 8px 20px rgba(16, 185, 129, 0.3)',
+                  boxShadow: '0 8px 20px color-mix(in srgb, var(--color-primary-500) 30%, transparent)',
                   '&:hover': {
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    background: 'linear-gradient(135deg, var(--color-primary-600) 0%, #047857 100%)',
                     transform: 'translateY(-2px)',
-                    boxShadow: '0 12px 25px rgba(16, 185, 129, 0.4)',
+                    boxShadow: '0 12px 25px color-mix(in srgb, var(--color-primary-500) 40%, transparent)',
                   }
                 }}
               >

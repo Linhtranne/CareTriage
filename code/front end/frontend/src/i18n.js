@@ -16,7 +16,8 @@ const resources = {
       nav: {
         login: 'Log In',
         register: 'Sign Up',
-        logout: 'Log Out'
+        logout: 'Log Out',
+        emergency: 'EMERGENCY'
       },
       hero: {
         title: 'Smart Medical Platform',
@@ -215,7 +216,8 @@ const resources = {
         ehr_extract: 'EHR Extraction',
         ehr_search: 'EHR Search',
         profile: 'Personal Profile',
-        logout: 'Log Out'
+        logout: 'Log Out',
+        emergency: 'EMERGENCY'
       },
       roles: {
         PATIENT: 'Patient',
@@ -228,7 +230,42 @@ const resources = {
         password_updated: 'Password updated successfully!',
         password_update_failed: 'Failed to update password.',
         passwords_not_match: 'Passwords do not match',
-        password_same_as_old: 'New password cannot be the same as old password'
+        password_same_as_old: 'New password cannot be the same as old password',
+        login_title: 'Login',
+        login_subtitle: 'CareTriage healthcare coordination system',
+        register_title: 'REGISTER',
+        register_subtitle: 'Register to start using CareTriage',
+        password: 'PASSWORD',
+        email_empty: 'Email cannot be empty',
+        email_invalid: 'Invalid email address',
+        otp_empty: 'Verification code cannot be empty',
+        otp_invalid: 'Invalid verification code',
+        password_empty: 'Password cannot be empty',
+        login_failed: 'Invalid login credentials',
+        login_btn: 'LOG IN',
+        register_btn: 'REGISTER',
+        ask_register: 'Don’t have an account?',
+        ask_login: 'Already have an account?',
+        register_now: 'REGISTER NOW',
+        two_fa_title: 'Two-Step Verification',
+        two_fa_subtitle: 'Please check your email and enter the 6-digit OTP',
+        verify_btn: 'VERIFY CODE',
+        full_name: 'FULL NAME',
+        phone: 'PHONE NUMBER',
+        role: 'ROLE',
+        confirm_password: 'CONFIRM PASSWORD',
+        name_empty: 'Full name cannot be empty',
+        phone_empty: 'Phone number cannot be empty',
+        phone_invalid: 'Invalid phone number (10 digits, e.g., 0912345678)',
+        password_mismatch: 'Confirm password does not match',
+        register_success: 'Registration successful! Redirecting...',
+        register_failed: 'Registration failed. Please try again',
+        role_patient: 'PATIENT',
+        role_doctor: 'DOCTOR',
+        email_label: 'EMAIL',
+        otp_label: 'OTP (6 DIGITS)',
+        logout_confirm: 'Confirm Logout',
+        logout_desc: 'Are you sure you want to log out?'
       },
       records: {
         title: 'Medical History',
@@ -597,7 +634,8 @@ const resources = {
       nav: {
         login: 'Đăng nhập',
         register: 'Đăng ký',
-        logout: 'Đăng xuất'
+        logout: 'Đăng xuất',
+        emergency: 'CẤP CỨU'
       },
       hero: {
         title: 'Nền Tảng Y Tế Thông Minh',
@@ -796,7 +834,8 @@ const resources = {
         ehr_extract: 'Phân tích EHR',
         ehr_search: 'Tìm kiếm EHR',
         profile: 'Hồ sơ cá nhân',
-        logout: 'Đăng xuất'
+        logout: 'Đăng xuất',
+        emergency: 'CẤP CỨU'
       },
       roles: {
         PATIENT: 'Bệnh nhân',
@@ -809,7 +848,42 @@ const resources = {
         password_updated: 'Cập nhật mật khẩu thành công!',
         password_update_failed: 'Cập nhật mật khẩu thất bại.',
         passwords_not_match: 'Mật khẩu xác nhận không khớp',
-        password_same_as_old: 'Mật khẩu mới không được trùng với mật khẩu cũ'
+        password_same_as_old: 'Mật khẩu mới không được trùng với mật khẩu cũ',
+        login_title: 'Đăng nhập',
+        login_subtitle: 'Hệ thống điều phối y tế CareTriage',
+        register_title: 'ĐĂNG KÝ',
+        register_subtitle: 'Đăng ký thông tin để bắt đầu sử dụng CareTriage',
+        password: 'MẬT KHẨU',
+        email_empty: 'Email không được để trống',
+        email_invalid: 'Email không hợp lệ',
+        otp_empty: 'Mã xác thực không được để trống',
+        otp_invalid: 'Mã xác thực không chính xác',
+        password_empty: 'Mật khẩu không được để trống',
+        login_failed: 'Thông tin đăng nhập không chính xác',
+        login_btn: 'ĐĂNG NHẬP',
+        register_btn: 'ĐĂNG KÝ',
+        ask_register: 'Chưa có tài khoản?',
+        ask_login: 'Đã có tài khoản?',
+        register_now: 'ĐĂNG KÝ NGAY',
+        two_fa_title: 'Xác thực 2 bước',
+        two_fa_subtitle: 'Vui lòng kiểm tra email của bạn và nhập mã xác thực OTP gồm 6 chữ số',
+        verify_btn: 'XÁC NHẬN MÃ',
+        full_name: 'HỌ VÀ TÊN',
+        phone: 'SỐ ĐIỆN THOẠI',
+        role: 'VAI TRÒ',
+        confirm_password: 'XÁC NHẬN MẬT KHẨU',
+        name_empty: 'Họ và tên không được để trống',
+        phone_empty: 'Số điện thoại không được để trống',
+        phone_invalid: 'Số điện thoại không hợp lệ (10 số, ví dụ: 0912345678)',
+        password_mismatch: 'Mật khẩu xác nhận không khớp',
+        register_success: 'Đăng ký thành công! Đang chuyển hướng...',
+        register_failed: 'Đăng ký thất bại. Vui lòng thử lại',
+        role_patient: 'BỆNH NHÂN',
+        role_doctor: 'BÁC SĨ',
+        email_label: 'EMAIL',
+        otp_label: 'MÃ OTP (6 CHỮ SỐ)',
+        logout_confirm: 'Xác nhận đăng xuất',
+        logout_desc: 'Bạn có chắc chắn muốn đăng xuất không?'
       },
       records: {
         title: 'Lịch sử khám bệnh',

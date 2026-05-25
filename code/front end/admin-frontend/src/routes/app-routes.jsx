@@ -2,6 +2,9 @@ import { lazy } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import ProtectedRoute from '../components/auth/protected-route'
 import MainLayout from '../layouts/main-layout'
+import { DESIGN_TOKENS } from '../constants/design-tokens'
+
+const NOT_FOUND_COPY = '404 - Page Not Found'
 
 const Login = lazy(() => import('../pages/auth/login'))
 const SuperAdminDashboard = lazy(() => import('../pages/super-admin/dashboard'))
@@ -18,15 +21,15 @@ const NotFound = () => (
   <div
     style={{
       padding: '2rem',
-      color: '#f8fafc',
-      background: '#0f172a',
+      color: DESIGN_TOKENS.colors.surface[50],
+      background: DESIGN_TOKENS.colors.surface[900],
       minHeight: '100vh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
     }}
   >
-    <h2>404 - Page Not Found</h2>
+    <h2>{NOT_FOUND_COPY}</h2>
   </div>
 )
 

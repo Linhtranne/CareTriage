@@ -83,7 +83,7 @@ const menuByRole = {
 }
 
 const roleConfig = {
-  ADMIN: { label: 'Quản trị viên', color: '#059669', bg: 'rgba(16,185,129,0.12)' },
+  ADMIN: { label: 'Quản trị viên', color: 'var(--color-primary-600)', bg: 'color-mix(in srgb, var(--color-primary-500) 12%, transparent)' },
   SUPER_ADMIN: { label: 'Super Admin', color: '#d97706', bg: 'rgba(245,158,11,0.12)' },
   CONTENT_ADMIN: { label: 'Nội dung', color: '#7c3aed', bg: 'rgba(139,92,246,0.12)' },
 }
@@ -96,7 +96,7 @@ export default function MainLayout() {
   const location = useLocation()
 
   const menu = menuByRole[user?.role] || []
-  const role = roleConfig[user?.role] || { label: user?.role, color: '#059669', bg: 'rgba(16,185,129,0.12)' }
+  const role = roleConfig[user?.role] || { label: user?.role, color: 'var(--color-primary-600)', bg: 'color-mix(in srgb, var(--color-primary-500) 12%, transparent)' }
 
   const handleLogout = () => { logout(); navigate('/login') }
   const sidebarWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH
@@ -116,10 +116,10 @@ export default function MainLayout() {
           transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden',
           // Same light glassmorphism as frontend sidebar
-          background: 'rgba(255, 255, 255, 0.72)',
+          background: 'color-mix(in srgb, var(--color-surface-50) 72%, transparent)',
           backdropFilter: 'blur(24px)',
           WebkitBackdropFilter: 'blur(24px)',
-          borderRight: '1px solid rgba(16, 185, 129, 0.12)',
+          borderRight: '1px solid color-mix(in srgb, var(--color-primary-500) 12%, transparent)',
           boxShadow: '4px 0 24px rgba(0, 0, 0, 0.06)',
           display: 'flex',
           flexDirection: 'column',
@@ -134,7 +134,7 @@ export default function MainLayout() {
             px: collapsed ? 0 : 2,
             py: 1.5,
             minHeight: 64,
-            borderBottom: '1px solid rgba(16, 185, 129, 0.08)',
+            borderBottom: '1px solid color-mix(in srgb, var(--color-primary-500) 8%, transparent)',
           }}
         >
           <Box
@@ -168,8 +168,8 @@ export default function MainLayout() {
             sx={{
               mx: 1.5, my: 1.5, p: 1.5,
               borderRadius: '12px',
-              bgcolor: 'rgba(16, 185, 129, 0.06)',
-              border: '1px solid rgba(16, 185, 129, 0.1)',
+              bgcolor: 'color-mix(in srgb, var(--color-primary-500) 6%, transparent)',
+              border: '1px solid color-mix(in srgb, var(--color-primary-500) 10%, transparent)',
               display: 'flex', alignItems: 'center', gap: 1.2,
               transition: 'all 0.2s',
             }}
@@ -178,7 +178,7 @@ export default function MainLayout() {
               src={user?.avatarUrl}
               sx={{
                 width: 34, height: 34,
-                bgcolor: '#10b981',
+                bgcolor: 'var(--color-primary-500)',
                 fontWeight: 800, fontSize: '0.85rem', flexShrink: 0,
               }}
             >
@@ -207,9 +207,9 @@ export default function MainLayout() {
               <Avatar
                 src={user?.avatarUrl}
                 sx={{
-                  width: 34, height: 34, bgcolor: '#10b981',
+                  width: 34, height: 34, bgcolor: 'var(--color-primary-500)',
                   fontWeight: 800, fontSize: '0.85rem',
-                  border: '2px solid rgba(16,185,129,0.2)',
+                  border: '2px solid color-mix(in srgb, var(--color-primary-500) 20%, transparent)',
                 }}
               >
                 {user?.fullName?.[0] || 'A'}
@@ -232,18 +232,18 @@ export default function MainLayout() {
                     justifyContent: collapsed ? 'center' : 'flex-start',
                     transition: 'all 0.2s ease',
                     ...(isActive ? {
-                      bgcolor: 'rgba(16,185,129,0.12)',
-                      '& .MuiListItemIcon-root': { color: '#059669' },
-                      '&:hover': { bgcolor: 'rgba(16,185,129,0.16)' },
+                      bgcolor: 'color-mix(in srgb, var(--color-primary-500) 12%, transparent)',
+                      '& .MuiListItemIcon-root': { color: 'var(--color-primary-600)' },
+                      '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-primary-500) 16%, transparent)' },
                     } : {
-                      '&:hover': { bgcolor: 'rgba(16,185,129,0.06)' },
+                      '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-primary-500) 6%, transparent)' },
                     }),
                   }}
                 >
                   <ListItemIcon
                     sx={{
                       minWidth: collapsed ? 'auto' : 36,
-                      color: isActive ? '#059669' : 'text.disabled',
+                      color: isActive ? 'var(--color-primary-600)' : 'text.disabled',
                       transition: 'color 0.2s',
                       '& svg': { fontSize: 20 },
                     }}
@@ -258,14 +258,14 @@ export default function MainLayout() {
                           sx: {
                             fontSize: '0.875rem',
                             fontWeight: isActive ? 700 : 500,
-                            color: isActive ? '#059669' : 'text.secondary',
+                            color: isActive ? 'var(--color-primary-600)' : 'text.secondary',
                           }
                         }
                       }}
                     />
                   )}
                   {isActive && !collapsed && (
-                    <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: '#10b981', flexShrink: 0 }} />
+                    <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'var(--color-primary-500)', flexShrink: 0 }} />
                   )}
                 </ListItemButton>
               </Tooltip>
@@ -274,7 +274,7 @@ export default function MainLayout() {
         </List>
 
         {/* ── Bottom ──────────────────────────────────────────────── */}
-        <Box sx={{ px: 1, pb: 1.5, pt: 1, borderTop: '1px solid rgba(16,185,129,0.08)' }}>
+        <Box sx={{ px: 1, pb: 1.5, pt: 1, borderTop: '1px solid color-mix(in srgb, var(--color-primary-500) 8%, transparent)' }}>
           {/* Collapse/Expand Toggle Button */}
           <Tooltip title={collapsed ? "Mở rộng" : "Thu nhỏ"} placement="right">
             <ListItemButton
@@ -283,7 +283,7 @@ export default function MainLayout() {
                 borderRadius: '10px', py: 1,
                 justifyContent: collapsed ? 'center' : 'flex-start',
                 px: collapsed ? 0 : 1.2,
-                '&:hover': { bgcolor: 'rgba(16,185,129,0.06)' },
+                '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-primary-500) 6%, transparent)' },
               }}
             >
               <ListItemIcon sx={{ minWidth: collapsed ? 'auto' : 36, color: 'text.disabled', '& svg': { fontSize: 20 } }}>
@@ -314,10 +314,10 @@ export default function MainLayout() {
           position="sticky"
           elevation={0}
           sx={{
-            background: 'rgba(255, 255, 255, 0.75)',
+            background: 'color-mix(in srgb, var(--color-surface-50) 75%, transparent)',
             backdropFilter: 'blur(20px)',
             WebkitBackdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(16, 185, 129, 0.1)',
+            borderBottom: '1px solid color-mix(in srgb, var(--color-primary-500) 10%, transparent)',
             color: 'text.primary',
             boxShadow: '0 2px 12px rgba(0,0,0,0.04)',
           }}
@@ -344,7 +344,7 @@ export default function MainLayout() {
                   bgcolor: 'primary.main',
                   fontWeight: 800, fontSize: '0.8rem',
                   cursor: 'pointer',
-                  border: '2px solid rgba(16,185,129,0.2)',
+                  border: '2px solid color-mix(in srgb, var(--color-primary-500) 20%, transparent)',
                   transition: 'all 0.2s',
                   '&:hover': { borderColor: 'primary.main' },
                 }}
@@ -361,7 +361,7 @@ export default function MainLayout() {
                     sx: {
                       mt: 1, borderRadius: '12px',
                       boxShadow: '0 12px 32px rgba(0,0,0,0.1)',
-                      border: '1px solid rgba(16,185,129,0.1)',
+                      border: '1px solid color-mix(in srgb, var(--color-primary-500) 10%, transparent)',
                       minWidth: 190,
                     }
                   }

@@ -63,7 +63,7 @@ export default function MedicalRecords() {
         </Box>
       </Box>
 
-      <Card sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid rgba(16,185,129,0.1)' }}>
+      <Card sx={{ borderRadius: 4, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', border: '1px solid color-mix(in srgb, var(--color-primary-500) 10%, transparent)' }}>
         <CardContent sx={{ p: 0 }}>
           <Box sx={{ p: 3, borderBottom: '1px solid #f1f5f9' }}>
             <TextField
@@ -99,7 +99,7 @@ export default function MedicalRecords() {
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={6} align="center" sx={{ py: 10 }}>
-                      <CircularProgress size={40} sx={{ color: '#10b981' }} />
+                      <CircularProgress size={40} sx={{ color: 'var(--color-primary-500)' }} />
                     </TableCell>
                   </TableRow>
                 ) : filteredRecords.length === 0 ? (
@@ -113,7 +113,7 @@ export default function MedicalRecords() {
                     <TableRow key={record.id} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
                       <TableCell>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Avatar sx={{ width: 32, height: 32, bgcolor: '#10b981', fontSize: '0.8rem' }}>
+                          <Avatar sx={{ width: 32, height: 32, bgcolor: 'var(--color-primary-500)', fontSize: '0.8rem' }}>
                             {record.patientName?.charAt(0)}
                           </Avatar>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>{record.patientName}</Typography>
@@ -138,7 +138,7 @@ export default function MedicalRecords() {
                         <Tooltip title="Xem chi tiết">
                           <IconButton 
                             onClick={() => navigate(`/admin/records/${record.id}`)}
-                            sx={{ color: '#10b981', '&:hover': { bgcolor: 'rgba(16,185,129,0.1)' } }}
+                            sx={{ color: 'var(--color-primary-500)', '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-primary-500) 10%, transparent)' } }}
                           >
                             <Eye size={20} />
                           </IconButton>

@@ -15,14 +15,14 @@ export default function PatientPageShell({
   const badgeLabel = badge || t('patient_shell.badge')
 
   return (
-    <Box sx={{ minHeight: '100%', bgcolor: 'white' }}>
+    <Box sx={{ minHeight: '100%', bgcolor: 'background.paper' }}>
       <Container maxWidth={maxWidth} sx={{ py: { xs: 4, md: 8 } }}>
         <Box
           sx={{
             p: transparent ? 0 : { xs: 4, md: 6 },
-            borderRadius: 8,
+            borderRadius: 2,
             border: transparent ? 'none' : '1px solid oklch(92% 0.02 250)',
-            bgcolor: transparent ? 'transparent' : 'white',
+            bgcolor: transparent ? 'transparent' : 'background.paper',
             boxShadow: transparent ? 'none' : '0 20px 40px oklch(20% 0.05 250 / 0.03)',
             mb: 6
           }}

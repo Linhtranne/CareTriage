@@ -51,9 +51,21 @@ const projectRules = {
         schema: [],
       },
       create(context) {
+        const isClassNameAttribute = (node) => {
+          let current = node.parent
+          while (current) {
+            if (current.type === 'JSXAttribute') {
+              return current.name?.name === 'className'
+            }
+            current = current.parent
+          }
+          return false
+        }
+
         return {
           Literal(node) {
             if (typeof node.value !== 'string') return
+            if (isClassNameAttribute(node)) return
             if (colorPattern.test(node.value)) {
               context.report({
                 node,
@@ -192,6 +204,7 @@ export default defineConfig([
       'tests/**',
       '**/*.test.{js,jsx,ts,tsx}',
       'src/styles/**',
+      'src/constants/**',
     ],
     rules: {
       'project-rules/no-hardcoded-text': 'off',

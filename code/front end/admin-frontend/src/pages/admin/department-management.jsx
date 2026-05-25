@@ -363,9 +363,9 @@ export default function DepartmentManagement() {
       <Card 
         sx={{ 
           mb: 4, 
-          background: 'rgba(255, 255, 255, 0.4)',
+          background: 'color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
           backdropFilter: 'blur(30px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.5)', 
+          border: '1px solid color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
           borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
         }}
@@ -381,10 +381,10 @@ export default function DepartmentManagement() {
                 flex: 1,
                 minWidth: 320,
                 '& .MuiOutlinedInput-root': {
-                  bgcolor: 'rgba(255, 255, 255, 0.5)',
+                  bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
                   borderRadius: 3,
                   transition: 'all 0.3s',
-                  '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.8)' },
+                  '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 80%, transparent)' },
                   '&.Mui-focused': { 
                     bgcolor: '#fff',
                     boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -406,10 +406,10 @@ export default function DepartmentManagement() {
               <Tooltip title="Bộ lọc">
                 <IconButton 
                   sx={{ 
-                    bgcolor: 'rgba(255, 255, 255, 0.5)', 
+                    bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
                     borderRadius: 3,
-                    border: '1px solid rgba(255, 255, 255, 0.6)',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }
+                    border: '1px solid color-mix(in srgb, var(--color-surface-50) 60%, transparent)',
+                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)' }
                   }}
                 >
                   <FilterList fontSize="small" sx={{ color: 'primary.main' }} />
@@ -419,10 +419,10 @@ export default function DepartmentManagement() {
                 <IconButton 
                   onClick={fetchDepartments}
                   sx={{ 
-                    bgcolor: 'rgba(255, 255, 255, 0.5)', 
+                    bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
                     borderRadius: 3,
-                    border: '1px solid rgba(255, 255, 255, 0.6)',
-                    '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.9)' }
+                    border: '1px solid color-mix(in srgb, var(--color-surface-50) 60%, transparent)',
+                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)' }
                   }}
                 >
                   <Refresh fontSize="small" sx={{ color: 'primary.main' }} />
@@ -438,9 +438,9 @@ export default function DepartmentManagement() {
         sx={{ 
           height: 800,
           overflow: 'hidden',
-          background: 'rgba(255, 255, 255, 0.4)',
+          background: 'color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
           backdropFilter: 'blur(30px) saturate(180%)',
-          border: '1px solid rgba(255, 255, 255, 0.5)',
+          border: '1px solid color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
           borderRadius: 4,
           boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
         }}
@@ -498,7 +498,7 @@ export default function DepartmentManagement() {
             },
             '& .MuiDataGrid-footerContainer': {
               borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-              bgcolor: 'rgba(255, 255, 255, 0.2)',
+              bgcolor: 'color-mix(in srgb, var(--color-surface-50) 20%, transparent)',
             }
           }}
         />
@@ -559,7 +559,7 @@ export default function DepartmentManagement() {
             borderTopLeftRadius: { xs: 0, sm: 6 },
             borderBottomLeftRadius: { xs: 0, sm: 6 },
             overflow: 'hidden',
-            background: 'rgba(255, 255, 255, 0.98)',
+            background: 'color-mix(in srgb, var(--color-surface-50) 98%, transparent)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 40px 80px rgba(0,0,0,0.15)',
           },
@@ -647,9 +647,9 @@ export default function DepartmentManagement() {
           paper: { 
             sx: { 
               borderRadius: 5,
-              background: 'rgba(255, 255, 255, 0.9)',
+              background: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid rgba(255, 255, 255, 0.4)',
+              border: '1px solid color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             } 
           } 

@@ -53,10 +53,15 @@ const theme = createTheme({
           boxShadow: 'none',
           '&:hover': { boxShadow: `0 4px 12px ${colors.primary[500]}33` },
         },
-        containedPrimary: {
-          background: `linear-gradient(135deg, ${colors.primary[500]} 0%, ${colors.primary[400]} 100%)`,
-        },
       },
+      variants: [
+        {
+          props: { variant: 'contained', color: 'primary' },
+          style: {
+            background: `linear-gradient(135deg, ${colors.primary[500]} 0%, ${colors.primary[400]} 100%)`,
+          },
+        },
+      ],
     },
     MuiCard: {
       styleOverrides: {

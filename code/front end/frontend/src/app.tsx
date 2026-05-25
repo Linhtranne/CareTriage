@@ -1,5 +1,4 @@
 import { Suspense } from 'react'
-import { BrowserRouter } from 'react-router-dom'
 import { Box, CircularProgress } from '@mui/material'
 import AppRoutes from './routes/app-routes'
 import { DESIGN_TOKENS } from './constants/design-tokens'
@@ -13,7 +12,7 @@ const FallbackLoader = () => (
       justifyContent: 'center',
       alignItems: 'center',
       minHeight: '100vh',
-      background: DESIGN_TOKENS.colors.surface[900],
+      background: DESIGN_TOKENS.colors.surface[50],
     }}
   >
     <CircularProgress size={LOADER_SIZE} sx={{ color: DESIGN_TOKENS.colors.semantic.success }} />
@@ -22,10 +21,8 @@ const FallbackLoader = () => (
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Suspense fallback={<FallbackLoader />}>
-        <AppRoutes />
-      </Suspense>
-    </BrowserRouter>
+    <Suspense fallback={<FallbackLoader />}>
+      <AppRoutes />
+    </Suspense>
   )
 }

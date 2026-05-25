@@ -119,9 +119,9 @@ export default function CMSManagement() {
             sx={{ 
               p: 0.5, 
               borderRadius: '16px', 
-              bgcolor: 'rgba(255, 255, 255, 0.5)',
+              bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
               backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(16, 185, 129, 0.15)',
+              border: '1px solid color-mix(in srgb, var(--color-primary-500) 15%, transparent)',
               display: 'flex',
               alignItems: 'center'
             }}
@@ -173,13 +173,13 @@ export default function CMSManagement() {
                 elevation={0}
                 sx={{ 
                   borderRadius: '24px', 
-                  border: '1px solid rgba(16, 185, 129, 0.08)',
-                  background: 'rgba(255, 255, 255, 0.7)',
+                  border: '1px solid color-mix(in srgb, var(--color-primary-500) 8%, transparent)',
+                  background: 'color-mix(in srgb, var(--color-surface-50) 70%, transparent)',
                   backdropFilter: 'blur(20px)',
                   transition: 'all 0.3s ease',
                   '&:hover': {
                     boxShadow: '0 12px 40px rgba(0,0,0,0.04)',
-                    borderColor: 'rgba(16, 185, 129, 0.2)'
+                    borderColor: 'color-mix(in srgb, var(--color-primary-500) 20%, transparent)'
                   }
                 }}
               >
@@ -187,7 +187,7 @@ export default function CMSManagement() {
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
                     <Box sx={{ 
                       p: 1, borderRadius: '12px', 
-                      bgcolor: 'rgba(16, 185, 129, 0.1)', color: 'primary.main',
+                      bgcolor: 'color-mix(in srgb, var(--color-primary-500) 10%, transparent)', color: 'primary.main',
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                       {section.icon}
@@ -219,10 +219,10 @@ export default function CMSManagement() {
                             sx={{
                               '& .MuiOutlinedInput-root': {
                                 borderRadius: '16px',
-                                bgcolor: 'rgba(255, 255, 255, 0.8)',
+                                bgcolor: 'color-mix(in srgb, var(--color-surface-50) 80%, transparent)',
                                 transition: 'all 0.2s',
                                 '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
-                                '&:hover fieldset': { borderColor: 'rgba(16, 185, 129, 0.3)' },
+                                '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-primary-500) 30%, transparent)' },
                                 '&.Mui-focused fieldset': { borderWidth: '2px', borderColor: 'primary.main' }
                               }
                             }}
@@ -256,18 +256,18 @@ export default function CMSManagement() {
             backdropFilter: 'blur(16px)',
             display: 'flex',
             gap: 2,
-            border: '1px solid rgba(255,255,255,0.1)'
+            border: '1px solid color-mix(in srgb, var(--color-surface-50) 10%, transparent)'
           }}
         >
           <Button 
             variant="text" 
             startIcon={<Refresh />} 
             onClick={() => fetchContent(lang)}
-            sx={{ color: 'rgba(255,255,255,0.7)', borderRadius: '100px', px: 3, '&:hover': { color: '#fff', bgcolor: 'rgba(255,255,255,0.05)' } }}
+            sx={{ color: 'color-mix(in srgb, var(--color-surface-50) 70%, transparent)', borderRadius: '100px', px: 3, '&:hover': { color: '#fff', bgcolor: 'color-mix(in srgb, var(--color-surface-50) 5%, transparent)' } }}
           >
             Làm mới
           </Button>
-          <Divider orientation="vertical" flexItem sx={{ bgcolor: 'rgba(255,255,255,0.1)', my: 1 }} />
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: 'color-mix(in srgb, var(--color-surface-50) 10%, transparent)', my: 1 }} />
           <Button 
             variant="contained" 
             size="large" 
@@ -277,11 +277,11 @@ export default function CMSManagement() {
             sx={{ 
               px: 6, 
               borderRadius: '100px',
-              bgcolor: '#10b981',
+              bgcolor: 'var(--color-primary-500)',
               fontWeight: 800,
-              boxShadow: '0 8px 24px rgba(16, 185, 129, 0.3)',
-              '&:hover': { bgcolor: '#059669', boxShadow: '0 12px 32px rgba(16, 185, 129, 0.4)' },
-              '&.Mui-disabled': { bgcolor: 'rgba(255,255,255,0.1)', color: 'rgba(255,255,255,0.3)' }
+              boxShadow: '0 8px 24px color-mix(in srgb, var(--color-primary-500) 30%, transparent)',
+              '&:hover': { bgcolor: 'var(--color-primary-600)', boxShadow: '0 12px 32px color-mix(in srgb, var(--color-primary-500) 40%, transparent)' },
+              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 10%, transparent)', color: 'color-mix(in srgb, var(--color-surface-50) 30%, transparent)' }
             }}
           >
             {saving ? 'Đang lưu...' : 'Lưu tất cả thay đổi'}
