@@ -1,7 +1,6 @@
 package com.caretriage.infrastructure.security;
 
 import com.caretriage.domain.entity.ClinicalNote;
-import com.caretriage.domain.entity.User;
 import com.caretriage.domain.repository.ClinicalNoteRepository;
 import com.caretriage.domain.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

@@ -31,3 +31,17 @@ vi.mock('@mui/icons-material', () => ({
   Visibility: () => 'VisibilityIcon',
   VisibilityOff: () => 'VisibilityOffIcon',
 }));
+
+// Mock react-i18next for translation translation strings
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key) => key,
+    i18n: {
+      changeLanguage: () => new Promise(() => {}),
+    },
+  }),
+  initReactI18next: {
+    type: '3rdParty',
+    init: () => {},
+  },
+}));

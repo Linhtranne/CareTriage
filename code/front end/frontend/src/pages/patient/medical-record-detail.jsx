@@ -150,7 +150,7 @@ const MedicalRecordDetail = () => {
         </Stack>
 
         <Grid container spacing={8}>
-          <Grid item xs={12} lg={4}>
+          <Grid size={{ xs: 12, lg: 4 }}>
             <Stack spacing={4}>
               <Box sx={{ p: 4, borderRadius: 6, bgcolor: 'oklch(98% 0.01 250)', border: '1px solid oklch(94% 0.02 250)' }}>
                 <Typography variant="caption" sx={{ fontWeight: 900, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.1em', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
@@ -189,7 +189,7 @@ const MedicalRecordDetail = () => {
             </Stack>
           </Grid>
 
-          <Grid item xs={12} lg={8}>
+          <Grid size={{ xs: 12, lg: 8 }}>
             <Stack spacing={6}>
               <Box>
                 <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>

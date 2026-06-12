@@ -1,27 +1,52 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Type, Optional
+from typing import TYPE_CHECKING, AsyncIterator, List, Optional, Type
+
 from pydantic import BaseModel
+
+if TYPE_CHECKING:
+    from app.domain.schemas import (
+        ClinicalContext,
+        ClinicalContextInput,
+        EvidenceChunk,
+        RetrievalQuery,
+        RetrievalResult,
+    )
+
 
 class ILlmProvider(ABC):
     @abstractmethod
     async def generate_text(
-        self, 
-        system_prompt: str, 
-        user_prompt: str, 
-        history: Optional[List[str]] = None, 
-        context: Optional[str] = None, 
-        attachments: Optional[List[dict]] = None
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        history: Optional[List[str]] = None,
+        context: Optional[str] = None,
+        attachments: Optional[List[dict]] = None,
+        session_id: str = "system",
     ) -> str:
         """Generate a text response from the LLM."""
         pass
 
+    async def generate_text_stream(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        history: Optional[List[str]] = None,
+        context: Optional[str] = None,
+        attachments: Optional[List[dict]] = None,
+        session_id: str = "system",
+    ) -> AsyncIterator[str]:
+        """Stream text response chunks from the LLM."""
+        yield ""
+
     @abstractmethod
     async def generate_structured_data(
-        self, 
-        system_prompt: str, 
-        user_prompt: str, 
-        output_schema: Type[BaseModel], 
-        context: Optional[str] = None
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        output_schema: Type[BaseModel],
+        context: Optional[str] = None,
+        session_id: str = "system",
     ) -> dict:
         """Generate a structured JSON output matching the provided Pydantic schema."""
         pass
@@ -29,15 +54,57 @@ class ILlmProvider(ABC):
 
 class IRetriever(ABC):
     @abstractmethod
-    def get_context(self, query: str) -> str:
+    def get_context(self, query: str, session_id: str = "system") -> str:
         """Retrieve context for a given query."""
         pass
 
 
 class IResearchService(IRetriever):
     @abstractmethod
-    def start_background_research(self, patient_id: int, query: str) -> None:
-        """Start background research and cache medical context for a patient."""
+    def start_background_research(self, query: str, session_id: str = "system") -> None:
+        """Start background research and cache non-PHI medical context."""
+        pass
+
+
+class IReranker(ABC):
+    @abstractmethod
+    def rerank(self, query: str, documents: List[str]) -> List[str]:
+        """Rerank retrieved documents."""
+        pass
+
+
+class IContextCompressor(ABC):
+    @abstractmethod
+    def compress_context(self, query: str, documents: List[str]) -> str:
+        """Compress context documents to fit within context window constraints."""
+        pass
+
+
+class IMedicalKnowledgeStore(ABC):
+    @abstractmethod
+    def search(self, query: "RetrievalQuery") -> List["EvidenceChunk"]:
+        """Return structured candidates without formatting prompt text."""
+        pass
+
+
+class IMedicalRetriever(ABC):
+    @abstractmethod
+    def retrieve(self, query: "RetrievalQuery") -> "RetrievalResult":
+        """Retrieve, rank, and compress medical evidence."""
+        pass
+
+
+class IKeywordScorer(ABC):
+    @abstractmethod
+    def score(self, query: str, content: str) -> float:
+        """Return a deterministic normalized keyword score."""
+        pass
+
+
+class IRankFusion(ABC):
+    @abstractmethod
+    def fuse(self, candidates: List["EvidenceChunk"]) -> List["EvidenceChunk"]:
+        """Return candidates in a deterministic fused order."""
         pass
 
 
@@ -55,7 +122,13 @@ class ITelemetryClient(ABC):
         pass
 
     @abstractmethod
-    def track_rag_context_retrieved(self, session_id: str, document_count: int):
+    def track_rag_context_retrieved(
+        self,
+        session_id: str,
+        document_count: int,
+        retrieval_latency_ms: float = 0.0,
+        context_char_count: int = 0,
+    ):
         pass
 
     @abstractmethod
@@ -63,7 +136,9 @@ class ITelemetryClient(ABC):
         pass
 
     @abstractmethod
-    def track_llm_call_completed(self, session_id: str, model: str, latency_ms: float, tokens: int = 0):
+    def track_llm_call_completed(
+        self, session_id: str, model: str, latency_ms: float, tokens: int = 0
+    ):
         pass
 
     @abstractmethod
@@ -76,4 +151,11 @@ class ITelemetryClient(ABC):
 
     @abstractmethod
     def track_fallback_applied(self, session_id: str, reason: str):
+        pass
+
+
+class IClinicalContextBuilder(ABC):
+    @abstractmethod
+    def build(self, context_input: "ClinicalContextInput") -> "ClinicalContext":
+        """Build deterministic clinical context from inputs without using LLM."""
         pass

@@ -7,7 +7,7 @@ import './i18n.js'
 import App from './app'
 import './styles/global.css'
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider theme={theme}>

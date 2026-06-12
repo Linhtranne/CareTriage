@@ -1,4 +1,5 @@
-from app.application.evaluations import EvalCase, TriageEvalRunner
+from app.application.evaluations import TriageEvalRunner
+from app.domain.evaluation_models import EvalCase
 
 
 def test_triage_eval_runner_passes_matching_output():
@@ -7,7 +8,7 @@ def test_triage_eval_runner_passes_matching_output():
         input_text="chest pain",
         expected_department_code="EMERGENCY",
         expected_urgency_level="EMERGENCY",
-        should_red_flag=True,
+        expected_red_flag=True,
     )
     output = {
         "red_flag_detected": True,
@@ -29,7 +30,7 @@ def test_triage_eval_runner_reports_mismatches():
         input_text="unclear symptoms",
         expected_department_code="GENERAL_INTERNAL_MEDICINE",
         expected_urgency_level="MEDIUM",
-        should_red_flag=False,
+        expected_red_flag=False,
     )
     output = {
         "red_flag_detected": True,

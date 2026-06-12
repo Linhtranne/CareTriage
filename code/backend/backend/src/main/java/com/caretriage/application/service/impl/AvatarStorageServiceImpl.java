@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import com.caretriage.shared.exception.BusinessException;
 
 @Service
 @RequiredArgsConstructor
@@ -17,12 +19,12 @@ public class AvatarStorageServiceImpl implements AvatarStorageService {
     @Override
     public String uploadAvatar(Long userId, MultipartFile file) {
         try {
-            if (file.isEmpty()) throw new RuntimeException("File is empty");
+            if (file.isEmpty()) throw new BusinessException("File is empty");
             
             // Basic validation for avatars too
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
-                throw new RuntimeException("Only images allowed");
+                throw new BusinessException("Only images allowed");
             }
 
             String originalName = file.getOriginalFilename();
@@ -33,7 +35,7 @@ public class AvatarStorageServiceImpl implements AvatarStorageService {
 
             return firebaseStorageService.uploadFile("avatars", userId.toString(), file.getBytes(), contentType, extension);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read avatar bytes", e);
+            throw new UncheckedIOException("Failed to read avatar bytes", e);
         }
     }
 

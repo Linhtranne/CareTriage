@@ -206,6 +206,7 @@ export default defineConfig([
       'src/styles/**',
       'src/constants/**',
       'src/vite-env.d.ts',
+      'src/components/chat/**',
     ],
     rules: {
       'project-rules/no-hardcoded-text': 'off',

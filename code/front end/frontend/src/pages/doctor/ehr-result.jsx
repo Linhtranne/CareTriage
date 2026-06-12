@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+﻿import { useState, useEffect, useMemo } from 'react';
 import {
   Container,
   Typography,
@@ -108,7 +108,7 @@ export default function EHRResult() {
         });
         setEntities(deduped);
       } catch (err) {
-        setError('Không thể tải kết quả phân tích. Vui lòng thử lại sau.');
+        setError('KhÃ´ng thá»ƒ táº£i káº¿t quáº£ phÃ¢n tÃ­ch. Vui lÃ²ng thá»­ láº¡i sau.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -187,10 +187,10 @@ export default function EHRResult() {
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Skeleton variant="text" width="40%" height={40} sx={{ mb: 2 }} />
         <Grid container spacing={3}>
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }} >
             <Skeleton variant="rectangular" height={500} sx={{ borderRadius: 4 }} />
           </Grid>
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }} >
             <Stack spacing={2}>
               {[1, 2, 3].map(i => <Skeleton key={i} variant="rectangular" height={150} sx={{ borderRadius: 4 }} />)}
             </Stack>
@@ -206,7 +206,7 @@ export default function EHRResult() {
         <AlertCircle size={64} color="#f43f5e" />
         <Typography variant="h5" sx={{ mt: 2, fontWeight: 700 }}>{error}</Typography>
         <Button variant="contained" sx={{ mt: 3, borderRadius: 3 }} onClick={() => window.location.reload()}>
-          Thử lại
+          Thá»­ láº¡i
         </Button>
       </Container>
     );
@@ -222,13 +222,13 @@ export default function EHRResult() {
               onClick={() => navigate('/doctor/ehr/upload')} 
               sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', textDecoration: 'none', gap: 0.5 }}
             >
-              <ChevronLeft size={16} /> Danh sách
+              <ChevronLeft size={16} /> Danh sÃ¡ch
             </Link>
-            <Typography color="text.primary" sx={{ fontWeight: 600 }}>Kết quả phân tích AI</Typography>
+            <Typography color="text.primary" sx={{ fontWeight: 600 }}>Káº¿t quáº£ phÃ¢n tÃ­ch AI</Typography>
           </Breadcrumbs>
           <Stack direction="row" justifyContent="space-between" alignItems="center">
             <Typography variant="h4" sx={{ fontWeight: 900, color: '#0f172a' }}>
-              Kết quả trích xuất EHR
+              Káº¿t quáº£ trÃ­ch xuáº¥t EHR
             </Typography>
             <Chip 
               label={note.extractionStatus} 
@@ -240,11 +240,11 @@ export default function EHRResult() {
 
         <Grid container spacing={3}>
           {/* Left Column - Original Text */}
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }} >
             <Paper sx={{ p: 4, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc', height: '100%' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
                 <FileText size={24} color="#08bba3" />
-                <Typography variant="h6" sx={{ fontWeight: 800 }}>Văn bản lâm sàng gốc</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800 }}>VÄƒn báº£n lÃ¢m sÃ ng gá»‘c</Typography>
               </Box>
               
               <Box sx={{ 
@@ -268,7 +268,7 @@ export default function EHRResult() {
                             {segment.entity.entityType}
                           </Typography>
                           <Typography variant="caption" sx={{ display: 'block' }}>
-                            Độ tin cậy: {(segment.entity.confidenceScore * 100).toFixed(1)}%
+                            Äá»™ tin cáº­y: {(segment.entity.confidenceScore * 100).toFixed(1)}%
                           </Typography>
                         </Box>
                       }
@@ -305,21 +305,21 @@ export default function EHRResult() {
                   startIcon={<Download size={18} />}
                   sx={{ borderRadius: 2, fontWeight: 700 }}
                 >
-                  Tải về PDF
+                  Táº£i vá» PDF
                 </Button>
                 <Button 
                   variant="text" 
                   startIcon={<History size={18} />}
                   sx={{ borderRadius: 2, fontWeight: 700, color: 'text.secondary' }}
                 >
-                  Xem lịch sử
+                  Xem lá»‹ch sá»­
                 </Button>
               </Stack>
             </Paper>
           </Grid>
 
           {/* Right Column - Entity Cards */}
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }} >
             <Stack spacing={3}>
               {Object.entries(categorizedEntities).map(([type, list]) => {
                 const config = ENTITY_CONFIG[type] || { bg: '#eee', label: '#333', border: '#ccc' };
@@ -342,7 +342,7 @@ export default function EHRResult() {
                                 <Typography sx={{ fontWeight: 700, fontSize: '0.95rem' }}>{e.entityValue}</Typography>
                                 {e.normalizedValue && e.normalizedValue !== e.entityValue && (
                                   <Typography variant="caption" sx={{ fontStyle: 'italic', color: 'text.secondary', display: 'block', mt: 0.5 }}>
-                                    Chuẩn hóa: {e.normalizedValue}
+                                    Chuáº©n hÃ³a: {e.normalizedValue}
                                   </Typography>
                                 )}
                               </Box>
@@ -362,9 +362,9 @@ export default function EHRResult() {
               })}
 
               <Paper sx={{ p: 3, borderRadius: 4, border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Tổng kết</Typography>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>Tá»•ng káº¿t</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Hệ thống AI đã phát hiện <strong>{entities.length} thực thể</strong> thuộc <strong>{Object.keys(categorizedEntities).length} loại</strong> khác nhau trong ghi chú này.
+                  Há»‡ thá»‘ng AI Ä‘Ã£ phÃ¡t hiá»‡n <strong>{entities.length} thá»±c thá»ƒ</strong> thuá»™c <strong>{Object.keys(categorizedEntities).length} loáº¡i</strong> khÃ¡c nhau trong ghi chÃº nÃ y.
                 </Typography>
               </Paper>
             </Stack>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MessageSquare, Bot, X, MessageSquarePlus } from 'lucide-react';
+import { Search, MessageSquare, Bot, X, MessageSquarePlus, Edit2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import chatApi from '../../services/chat-service';
@@ -15,6 +15,39 @@ const ChatHistoryList = ({
   const [sessions, setSessions] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [editingSessionId, setEditingSessionId] = useState(null);
+  const [editTitleInput, setEditTitleInput] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
+
+  const handleRenameSave = async (id, e) => {
+    if (e) e.stopPropagation();
+    const trimmedTitle = editTitleInput.trim();
+    if (!trimmedTitle || trimmedTitle.length < 1 || trimmedTitle.length > 200) {
+      alert("Tiêu đề phải từ 1 đến 200 ký tự.");
+      return;
+    }
+
+    setIsRenaming(true);
+    const originalSessions = [...sessions];
+
+    // Optimistic Update
+    setSessions((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, title: trimmedTitle } : s))
+    );
+    setEditingSessionId(null);
+
+    try {
+      await chatApi.updateSessionTitle(id, trimmedTitle);
+      const data = await chatApi.getSessions(searchQuery);
+      setSessions(data);
+    } catch (err) {
+      console.error("Failed to rename session, rolling back:", err);
+      setSessions(originalSessions);
+      alert("Đổi tên cuộc hội thoại thất bại. Vui lòng thử lại.");
+    } finally {
+      setIsRenaming(false);
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -120,11 +153,11 @@ const ChatHistoryList = ({
           </div>
         ) : (
           sessions.map((session) => (
-            <motion.button
+            <motion.div
               key={session.id}
               whileHover={{ x: 4 }}
               onClick={() => onSelectSession(session)}
-              className={`w-full flex items-center p-3 rounded-2xl transition-all ${
+              className={`w-full flex items-center p-3 rounded-2xl transition-all cursor-pointer ${
                 currentSessionId === session.id
                   ? 'bg-primary-50 ring-1 ring-primary-100'
                   : 'hover:bg-slate-50'
@@ -141,27 +174,69 @@ const ChatHistoryList = ({
                 )}
               </div>
 
-              <div className="ml-3 flex-1 text-left overflow-hidden">
-                <div className="flex items-center justify-between mb-0.5">
-                  <h4 className="text-sm font-bold text-slate-800 truncate pr-2">
-                    {session.title || `Phiên ${session.sessionType}`}
-                  </h4>
-                  <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">
-                    {formatDate(session.lastMessageTime || session.createdAt)}
-                  </span>
+              {editingSessionId === session.id ? (
+                <div 
+                  className="ml-3 flex-1 flex gap-2 items-center"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <input
+                    type="text"
+                    value={editTitleInput}
+                    onChange={(e) => setEditTitleInput(e.target.value)}
+                    disabled={isRenaming}
+                    className="flex-1 bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs text-slate-800 outline-none min-w-0"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') void handleRenameSave(session.id, e);
+                      if (e.key === 'Escape') setEditingSessionId(null);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={(e) => void handleRenameSave(session.id, e)}
+                    disabled={isRenaming}
+                    className="bg-primary-600 text-white border-none rounded-lg px-2.5 py-1 text-[11px] font-bold cursor-pointer hover:bg-primary-700 transition-colors"
+                  >
+                    Lưu
+                  </button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-slate-500 truncate pr-4">
-                    {session.lastMessageContent || 'Chưa có tin nhắn'}
-                  </p>
-                  {session.status === 'COMPLETED' && (
-                    <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">
-                      Đã đóng
+              ) : (
+                <div className="ml-3 flex-1 text-left overflow-hidden">
+                  <div className="flex items-center justify-between mb-0.5">
+                    <h4 className="text-sm font-bold text-slate-800 truncate pr-2 flex-1">
+                      {session.title || `Phiên ${session.sessionType}`}
+                    </h4>
+                    <span className="text-[10px] font-medium text-slate-400 flex-shrink-0">
+                      {formatDate(session.lastMessageTime || session.createdAt)}
                     </span>
-                  )}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-500 truncate pr-4 flex-1">
+                      {session.lastMessageContent || 'Chưa có tin nhắn'}
+                    </p>
+                    {session.status === 'COMPLETED' && (
+                      <span className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider flex-shrink-0">
+                        Đã đóng
+                      </span>
+                    )}
+                    {currentSessionId === session.id && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingSessionId(session.id);
+                          setEditTitleInput(session.title || `Phiên ${session.sessionType}`);
+                        }}
+                        className="p-1 text-slate-400 hover:text-slate-600 transition-colors flex-shrink-0"
+                        title="Đổi tên"
+                      >
+                        <Edit2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.button>
+              )}
+            </motion.div>
           ))
         )}
       </div>

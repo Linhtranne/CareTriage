@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
+﻿import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
 import { motion, type Variants } from 'framer-motion'
 import { Brain, Activity, Zap, ArrowRight, ShieldCheck, Terminal, Heart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -50,7 +50,7 @@ export default function AITriage() {
 
         <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={8} alignItems="center">
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, lg: 7 }} >
               <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
                 <motion.div variants={fadeUp}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -121,7 +121,7 @@ export default function AITriage() {
       <Box sx={{ py: { xs: 12, md: 20 }, px: 3, background: 'background.default' }}>
         <Container maxWidth="xl">
           <Grid container spacing={4}>
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, height: '100%', borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
@@ -141,7 +141,7 @@ export default function AITriage() {
                 </Box>
                 <Grid container spacing={3}>
                   {[t('ai_triage_page.feat_class_tag1'), t('ai_triage_page.feat_class_tag2'), t('ai_triage_page.feat_class_tag3')].map((tag) => (
-                    <Grid item key={tag}>
+                    <Grid size={{  }} key={tag}>
                       <Box sx={{ px: 3, py: 1, borderRadius: '100px', border: '1px solid #e2e8f0', color: 'text.primary', fontWeight: 700, fontSize: '0.875rem' }}>
                         {tag}
                       </Box>
@@ -151,7 +151,7 @@ export default function AITriage() {
               </Paper>
             </Grid>
 
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 6 }, height: '100%', borderRadius: '40px',
                 background: 'primary.900', color: 'background.paper',
@@ -174,14 +174,14 @@ export default function AITriage() {
               </Paper>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
                 transition: 'all 0.4s ease', '&:hover': { transform: 'translateY(-10px)', borderColor: '#08bba3' }
               }}>
                 <Grid container spacing={8} alignItems="center">
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Box sx={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(8, 187, 163, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#08bba3', mb: 4 }}>
                       <Zap size={32} />
                     </Box>
@@ -192,7 +192,7 @@ export default function AITriage() {
                       {t('ai_triage_page.feat_deep_desc')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Box sx={{ p: 4, background: 'text.primary', borderRadius: '24px', border: '1px solid #1e293b', boxShadow: '0 20px 40px rgba(0,0,0,0.2)' }}>
                       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
                         <Box sx={{ width: 12, height: 12, borderRadius: '50%', background: '#ff5f57' }} />
@@ -212,7 +212,7 @@ export default function AITriage() {
                             transition={{ duration: 2, ease: "linear" }}
                             style={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
                           >
-                            <code style={{ color: '#08bba3' }}>{'{'} "symptoms": "Đau ngực, khó thở" {'}'}</code>
+                            <code style={{ color: '#08bba3' }}>{'{'} "symptoms": "Äau ngá»±c, khÃ³ thá»Ÿ" {'}'}</code>
                           </motion.div>
                           <motion.div
                             initial={{ opacity: 0 }}

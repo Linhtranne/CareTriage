@@ -16,9 +16,11 @@ import ChatWidget from '../components/chat/chat-widget'
 
 import { Brain, Search } from 'lucide-react'
 
-const DRAWER_WIDTH = 260
-const COLLAPSED_WIDTH = 84 // Slightly wider for floating feel
-const ISLAND_MARGIN = 24
+import { LAYOUT } from '../constants/layout-constants'
+
+const DRAWER_WIDTH = LAYOUT.shell.drawerWidth
+const COLLAPSED_WIDTH = LAYOUT.shell.collapsedWidth
+const ISLAND_MARGIN = LAYOUT.shell.islandMargin
 
 const menuByRole = {
   PATIENT: [
@@ -52,13 +54,14 @@ export default function MainLayout() {
 
   const handleLogout = () => { logout(); navigate('/login') }
   const sidebarWidth = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH
+  const isTriageRoute = location.pathname === '/patient/triage'
 
   return (
     <Box sx={{ 
       display: 'flex', 
       minHeight: '100vh', 
-      bgcolor: 'background.default',
-      backgroundImage: 'radial-gradient(at 0% 0%, oklch(96% 0.05 160 / 0.3) 0, transparent 50%), radial-gradient(at 100% 100%, oklch(92% 0.02 250 / 0.2) 0, transparent 50%)',
+      bgcolor: 'var(--color-surface-50)',
+      backgroundImage: 'var(--app-shell-background)',
     }}>
 
       {/* ── Floating Sidebar Island ────────────────────────────────── */}
@@ -74,12 +77,12 @@ export default function MainLayout() {
           bottom: ISLAND_MARGIN,
           zIndex: 1200,
           borderRadius: '32px',
-          background: 'oklch(100% 0 0 / 0.1)',
+          background: 'var(--app-glass-surface)',
           backdropFilter: 'blur(50px) saturate(1.8)',
-          border: '1px solid oklch(100% 0 0 / 0.15)',
+          border: '1px solid var(--app-glass-border)',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 8px 32px oklch(0% 0 0 / 0.05)',
+          boxShadow: 'var(--app-glass-shadow)',
           overflow: 'hidden',
         }}
       >
@@ -99,9 +102,9 @@ export default function MainLayout() {
             src={collapsed ? "/gemini-svg.svg" : "/gemini-svg (1).svg"}
             alt="CareTriage"
             sx={{
-              height: 32,
+              height: LAYOUT.shell.logoMaxHeight,
               width: 'auto',
-              maxWidth: collapsed ? 32 : 140,
+              maxWidth: collapsed ? LAYOUT.shell.logoMaxHeight : LAYOUT.shell.logoMaxWidth,
               objectFit: 'contain',
               transition: 'all 0.3s ease',
             }}
@@ -125,17 +128,17 @@ export default function MainLayout() {
                   py: 1.5,
                   px: collapsed ? 0 : 2,
                   justifyContent: collapsed ? 'center' : 'flex-start',
-                  bgcolor: isActive ? 'oklch(65% 0.15 160 / 0.1)' : 'transparent',
-                  color: isActive ? 'oklch(55% 0.18 160)' : 'oklch(40% 0.02 250)',
+                  bgcolor: isActive ? 'var(--app-active-nav-surface)' : 'var(--color-clear)',
+                  color: isActive ? 'var(--color-primary-600)' : 'var(--app-muted-nav-text)',
                   transition: 'background-color 0.3s',
                   '&:hover': {
-                    bgcolor: isActive ? 'oklch(65% 0.15 160 / 0.15)' : 'oklch(100% 0 0 / 0.3)',
+                    bgcolor: isActive ? 'var(--app-active-nav-surface-hover)' : 'var(--app-glass-surface)',
                   },
                 }}
               >
                 <ListItemIcon
                   sx={{
-                    minWidth: collapsed ? 'auto' : 40,
+                    minWidth: collapsed ? 'auto' : LAYOUT.shell.navIconMinWidth,
                     color: 'inherit',
                     '& svg': { fontSize: 22 },
                   }}
@@ -149,7 +152,7 @@ export default function MainLayout() {
                       primary: {
                         sx: {
                           fontSize: '0.9rem',
-                          fontWeight: isActive ? 700 : 600,
+                          fontWeight: isActive ? 'bold' : '600',
                           letterSpacing: '-0.01em'
                         }
                       }
@@ -162,15 +165,15 @@ export default function MainLayout() {
         </List>
 
         {/* Bottom Actions */}
-        <Box sx={{ p: 2, borderTop: '1px solid oklch(100% 0 0 / 0.05)' }}>
+        <Box sx={{ p: 2, borderTop: '1px solid var(--app-glass-border)' }}>
           <IconButton
             onClick={() => setCollapsed(!collapsed)}
             sx={{
               width: '100%',
               borderRadius: '16px',
-              bgcolor: 'oklch(100% 0 0 / 0.2)',
-              color: 'oklch(40% 0.02 250)',
-              '&:hover': { bgcolor: 'oklch(100% 0 0 / 0.4)' }
+              bgcolor: 'var(--app-glass-surface-muted)',
+              color: 'var(--app-muted-nav-text)',
+              '&:hover': { bgcolor: 'var(--app-glass-surface-hover)' }
             }}
           >
             <MenuIcon sx={{ transform: collapsed ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }} />
@@ -185,10 +188,10 @@ export default function MainLayout() {
           display: 'flex',
           flexDirection: 'column',
           ml: `${sidebarWidth + ISLAND_MARGIN * 2}px`,
-          mr: ISLAND_MARGIN,
+          mr: `${LAYOUT.shell.contentRightMargin}px`,
           transition: 'margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           minHeight: '100vh',
-          pt: 12, // Space for top island + breathing room
+          pt: isTriageRoute ? LAYOUT.shell.triageContentTopPadding : LAYOUT.shell.contentTopPadding,
         }}
       >
         {/* ── Floating Top Utility Island ───────────────────────────── */}
@@ -201,22 +204,22 @@ export default function MainLayout() {
             position: 'fixed',
             top: ISLAND_MARGIN,
             left: `${sidebarWidth + ISLAND_MARGIN * 2}px`,
-            right: ISLAND_MARGIN,
+            right: LAYOUT.shell.contentRightMargin,
             zIndex: 1100,
             height: 64,
             borderRadius: '24px',
-            background: 'oklch(100% 0 0 / 0.1)',
+            background: 'var(--app-glass-surface)',
             backdropFilter: 'blur(40px)',
-            border: '1px solid oklch(100% 0 0 / 0.1)',
+            border: '1px solid var(--app-glass-border)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'space-between',
             px: 3,
-            boxShadow: '0 4px 20px oklch(0% 0 0 / 0.02)',
+            boxShadow: 'var(--app-glass-shadow)',
             transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <Typography variant="body2" sx={{ fontWeight: 700, color: 'oklch(40% 0.02 250)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <Typography variant="body2" sx={{ fontWeight: 'bold', color: 'var(--app-muted-nav-text)', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             {menu.find(m => location.pathname.startsWith(m.path))?.text || 'Dashboard'}
           </Typography>
 
@@ -227,11 +230,11 @@ export default function MainLayout() {
               onClick={() => i18n.changeLanguage(i18n.language === 'vi' ? 'en' : 'vi')}
               sx={{
                 borderRadius: '12px',
-                color: 'oklch(55% 0.18 160)',
-                fontWeight: 800,
+                color: 'var(--color-primary-600)',
+                fontWeight: 'bold',
                 fontSize: '0.75rem',
                 minWidth: 44,
-                '&:hover': { bgcolor: 'oklch(100% 0 0 / 0.3)' },
+                '&:hover': { bgcolor: 'var(--app-glass-surface)' },
               }}
             >
               {i18n.language?.startsWith('vi') ? 'EN' : 'VI'}
@@ -239,21 +242,21 @@ export default function MainLayout() {
             
             <NotificationBell />
 
-            <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: 'center', borderColor: 'oklch(0% 0 0 / 0.05)' }} />
+            <Divider orientation="vertical" flexItem sx={{ height: 24, alignSelf: 'center', borderColor: 'var(--app-glass-border)' }} />
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, cursor: 'pointer' }} onClick={(e) => setAnchorEl(e.currentTarget)}>
               <Box sx={{ textAlign: 'right', display: { xs: 'none', sm: 'block' } }}>
-                <Typography sx={{ fontWeight: 700, fontSize: '0.85rem', color: 'oklch(20% 0.05 250)' }}>{user?.fullName}</Typography>
-                <Typography variant="caption" sx={{ color: 'oklch(55% 0.18 160)', fontWeight: 700 }}>{t(`roles.${user?.role ? user.role.replace('ROLE_', '').toUpperCase() : ''}`)}</Typography>
+                <Typography sx={{ fontWeight: 'bold', fontSize: '0.85rem', color: 'var(--color-surface-800)' }}>{user?.fullName}</Typography>
+                <Typography variant="caption" sx={{ color: 'var(--color-primary-600)', fontWeight: 'bold' }}>{t(`roles.${user?.role ? user.role.replace('ROLE_', '').toUpperCase() : ''}`)}</Typography>
               </Box>
               <Avatar
                 src={user?.avatarUrl}
                 sx={{
                   width: 36, height: 36,
-                  bgcolor: 'oklch(65% 0.15 160)',
-                  fontWeight: 800,
+                  bgcolor: 'var(--color-primary-500)',
+                  fontWeight: 'bold',
                   fontSize: '0.85rem',
-                  border: '2px solid oklch(100% 0 0 / 0.5)',
+                  border: '2px solid var(--app-glass-border)',
                 }}
               >
                 {user?.fullName?.[0]}
@@ -268,10 +271,10 @@ export default function MainLayout() {
                 paper: {
                   sx: {
                     mt: 2, borderRadius: '20px',
-                    bgcolor: 'oklch(100% 0 0 / 0.8)',
+                    bgcolor: 'var(--app-glass-surface)',
                     backdropFilter: 'blur(20px)',
-                    boxShadow: '0 12px 40px oklch(0% 0 0 / 0.1)',
-                    border: '1px solid oklch(100% 0 0 / 0.1)',
+                    boxShadow: 'var(--app-glass-shadow)',
+                    border: '1px solid var(--app-glass-border)',
                     minWidth: 200,
                     p: 1
                   }
@@ -295,14 +298,20 @@ export default function MainLayout() {
           component="main"
           sx={{
             flexGrow: 1,
-            py: 2,
+            py: isTriageRoute ? 0 : 2,
             transition: 'all 0.3s ease',
           }}
         >
           <Outlet />
         </Box>
       </Box>
-      <ChatWidget />
+      
+      {/* LEGACY CHAT WIDGET QUARANTINE:
+          Do not mount in Phase 1 clinical flows (/patient and /doctor)
+          which now use dedicated Agent-First Liquid Glass shells. */}
+      {!location.pathname.startsWith('/patient') && !location.pathname.startsWith('/doctor') && (
+        <ChatWidget />
+      )}
     </Box>
   )
 }

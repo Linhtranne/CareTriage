@@ -1,5 +1,7 @@
 import re
-from typing import Optional, Dict, Any, List
+import unicodedata
+from typing import Dict, List, Optional
+
 from app.domain.schemas import PolicyResult, TriageResultDetail
 
 # Standard negation terms in Vietnamese
@@ -12,7 +14,7 @@ NEGATION_TERMS = {
     "chưa có",
     "đâu có",
     "chả",
-    "chẳng"
+    "chẳng",
 }
 
 # Red-flag categories and regex pattern groups
@@ -26,7 +28,7 @@ RED_FLAG_PATTERNS: Dict[str, List[str]] = {
         r"mất thị lực đột ngột",
         r"đau đầu dữ dội đột ngột",
         r"fast dương tính",
-        r"fast positive"
+        r"fast positive",
     ],
     "CHEST_PAIN": [
         r"đau ngực dữ dội",
@@ -34,7 +36,7 @@ RED_FLAG_PATTERNS: Dict[str, List[str]] = {
         r"tức ngực\s+kèm\s+(khó thở|vã mồ hôi|buồn nôn)",
         r"tức ngực\s+và\s+(khó thở|vã mồ hôi|buồn nôn)",
         r"nghi nhồi máu cơ tim",
-        r"nhồi máu cơ tim"
+        r"nhồi máu cơ tim",
     ],
     "DYSPNEA": [
         r"khó thở nặng",
@@ -42,19 +44,14 @@ RED_FLAG_PATTERNS: Dict[str, List[str]] = {
         r"không thở được",
         r"thở rít",
         r"thở khò khè",
-        r"spo2\s+(dưới|<)\s*(9[0-4]|8[0-9])"
+        r"spo2\s+(dưới|<)\s*(9[0-4]|8[0-9])",
     ],
-    "SEIZURE": [
-        r"co giật",
-        r"mất ý thức",
-        r"lú lẫn đột ngột",
-        r"hôn mê"
-    ],
+    "SEIZURE": [r"co giật", r"mất ý thức", r"lú lẫn đột ngột", r"hôn mê"],
     "TRAUMA": [
         r"chảy máu không cầm",
         r"tai nạn nghiêm trọng",
         r"chấn thương đầu",
-        r"gãy xương hở"
+        r"gãy xương hở",
     ],
     "ANAPHYLAXIS": [
         r"khó thở sau ăn",
@@ -62,29 +59,42 @@ RED_FLAG_PATTERNS: Dict[str, List[str]] = {
         r"khó thở sau ong đốt",
         r"sưng\s+(môi|lưỡi|họng)",
         r"mề đay\s+kèm\s+khó thở",
-        r"mề đay\s+và\s+khó thở"
+        r"mề đay\s+và\s+khó thở",
     ],
     "PREGNANCY": [
         r"có thai\s+ra máu nhiều",
         r"mang thai\s+ra máu nhiều",
         r"đau bụng dữ dội khi mang thai",
         r"đau bụng dữ dội khi có thai",
-        r"đau đầu dữ dội\s+phù\s+nhìn mờ"
+        r"đau đầu dữ dội\s+phù\s+nhìn mờ",
     ],
     "MENTAL_HEALTH": [
         r"muốn tự tử",
         r"muốn tự sát",
         r"ý định tự tử",
         r"tự làm hại bản thân",
-        r"muốn làm hại người khác"
+        r"muốn làm hại người khác",
     ],
-    "PEDIATRIC": [
-        r"bỏ bú",
-        r"li bì",
-        r"sốt cao\s+co giật",
-        r"rút lõm lồng ngực"
-    ]
+    "PEDIATRIC": [r"bỏ bú", r"li bì", r"sốt cao\s+co giật", r"rút lõm lồng ngực"],
 }
+
+NORMALIZED_RED_FLAG_PATTERNS: Dict[str, List[str]] = {
+    "CHEST_PAIN": [
+        r"dau\s+(tuc\s+)?nguc\s+(du\s+doi\s+)?lan\s+(ra\s+)?(canh\s+)?tay\s+trai",
+        r"dau\s+(tuc\s+)?nguc.*kho\s+tho.*(toat|va)\s+mo\s+hoi",
+    ],
+    "STROKE": [
+        r"meo\s+mieng.*(liet|yeu)\s+nua\s+nguoi",
+        r"dot\s+ngot.*(meo\s+mieng|liet|yeu)",
+    ],
+}
+
+
+def normalize_vietnamese_text(text: str) -> str:
+    normalized = unicodedata.normalize(
+        "NFKD", text.lower().replace("đ", "d").replace("Đ", "D")
+    )
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
 
 
 class RedFlagDetector:
@@ -108,17 +118,17 @@ class RedFlagDetector:
         for word in words:
             if word in NEGATION_TERMS:
                 return True
-                
+
         # Check two-word combinations
         for i in range(len(words) - 1):
-            two_word = f"{words[i]} {words[i+1]}"
+            two_word = f"{words[i]} {words[i + 1]}"
             if two_word in NEGATION_TERMS:
                 return True
 
         return False
 
     @classmethod
-    def detect_red_flags(cls, text: str) -> Optional[PolicyResult]:
+    def detect_red_flags(cls, text: str) -> Optional[PolicyResult]:  # noqa: C901
         """
         Analyze clinical text for emergency red-flags, splitting by logical clauses
         to apply phrase-window negation parsing.
@@ -129,7 +139,9 @@ class RedFlagDetector:
         # Clean text and split by punctuation and contrastive conjunctions ONLY
         # (We do NOT split by coordinating conjunctions like và, hoặc, hay as they distribute negations)
         cleaned_text = text.lower()
-        clauses = re.split(r"[,.;!?]|\bbut\b|\bnhưng\b|\bsong\b|\btuy nhiên\b", cleaned_text)
+        clauses = re.split(
+            r"[,.;!?]|\bbut\b|\bnhưng\b|\bsong\b|\btuy nhiên\b", cleaned_text
+        )
 
         matched_categories = []
 
@@ -148,11 +160,22 @@ class RedFlagDetector:
                             break
 
         if not matched_categories:
+            normalized_text = normalize_vietnamese_text(text)
+            for category, patterns in NORMALIZED_RED_FLAG_PATTERNS.items():
+                for pattern in patterns:
+                    norm_match = re.search(pattern, normalized_text)
+                    if norm_match:
+                        matched_categories.append((category, norm_match.group(0)))
+                        break
+                if matched_categories:
+                    break
+
+        if not matched_categories:
             return None
 
         # Format primary emergency findings
         primary_category, matched_symptom = matched_categories[0]
-        
+
         reply_msg = (
             "Các dấu hiệu bạn mô tả (bao gồm triệu chứng có nguy cơ đe dọa sức khỏe: "
             f"'{matched_symptom}') có thể liên quan đến tình trạng cấp cứu nguy kịch. "
@@ -168,11 +191,16 @@ class RedFlagDetector:
                 suggested_department_code="EMERGENCY",
                 suggested_department_name="Cấp cứu",
                 urgency_level="EMERGENCY",
-                possible_conditions=[f"Nghi ngờ tình trạng khẩn cấp thuộc nhóm {primary_category}"],
-                suggested_actions=["Gọi 115 ngay lập tức", "Di chuyển đến khoa Cấp cứu gần nhất"],
+                possible_conditions=[
+                    f"Nghi ngờ tình trạng khẩn cấp thuộc nhóm {primary_category}"
+                ],
+                suggested_actions=[
+                    "Gọi 115 ngay lập tức",
+                    "Di chuyển đến khoa Cấp cứu gần nhất",
+                ],
                 confidence_score=1.0,
                 summary=f"Phát hiện triệu chứng cấp cứu thuộc nhóm {primary_category} ({matched_symptom}) qua bộ lọc cờ đỏ.",
-                infection_control=False,
-                department_mapping_status="RED_FLAG_BYPASS"
-            )
+                red_flag_detected=True,
+                department_mapping_status="RED_FLAG_BYPASS",
+            ),
         )

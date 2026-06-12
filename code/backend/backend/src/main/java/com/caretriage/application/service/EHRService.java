@@ -1,8 +1,6 @@
 package com.caretriage.application.service;
 
 import com.caretriage.application.dto.EHRDto;
-import com.caretriage.domain.entity.ClinicalNote;
-import com.caretriage.domain.entity.User;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;

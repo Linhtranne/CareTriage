@@ -18,8 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-
-import java.time.LocalDateTime;
 import java.util.Set;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -30,7 +28,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-public class MedicalRecordControllerIntegrationTest {
+class MedicalRecordControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -46,10 +44,7 @@ public class MedicalRecordControllerIntegrationTest {
 
     @Autowired
     private AppointmentRepository appointmentRepository;
-
-    @Autowired
-    private MedicalRecordRepository medicalRecordRepository;
-
+    
     @Autowired
     private PasswordEncoder passwordEncoder;
 

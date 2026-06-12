@@ -245,7 +245,7 @@ export default function MyAppointments() {
         ) : appointments.length > 0 ? (
           <Grid container spacing={4}>
             {appointments.map((appt) => (
-              <Grid item xs={12} lg={6} key={appt.id}>
+              <Grid size={{ xs: 12, lg: 6 }} key={appt.id}>
                 <Box
                   onClick={(e) => handleOpenDetail(appt, e.currentTarget)}
                   sx={{
@@ -297,7 +297,7 @@ export default function MyAppointments() {
                     mb: 3
                   }}>
                     <Grid container spacing={3}>
-                      <Grid item xs={6}>
+                      <Grid size={6}>
                         <Stack direction="row" spacing={1.5} alignItems="center">
                           <CalendarDays size={20} color="oklch(65% 0.15 160)" />
                           <Typography variant="h6" sx={{ fontWeight: 850, color: 'oklch(20% 0.05 250)', fontSize: '1rem' }}>
@@ -305,7 +305,7 @@ export default function MyAppointments() {
                           </Typography>
                         </Stack>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid size={6}>
                         <Stack direction="row" spacing={1.5} alignItems="center">
                           <Clock size={20} color="oklch(65% 0.15 160)" />
                           <Typography variant="h6" sx={{ fontWeight: 850, color: 'oklch(20% 0.05 250)', fontSize: '1rem' }}>
@@ -425,7 +425,7 @@ export default function MyAppointments() {
           </Box>
 
           <Grid container spacing={4} sx={{ mb: 6 }}>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Stack spacing={3}>
                 <Stack direction="row" spacing={2} alignItems="center">
                   <Box sx={{ p: 2, borderRadius: 4, bgcolor: 'oklch(96% 0.01 160)', color: 'oklch(65% 0.15 160)' }}>
@@ -455,7 +455,7 @@ export default function MyAppointments() {
                 </Stack>
               </Stack>
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Stack direction="row" spacing={2} alignItems="flex-start">
                 <Box sx={{ p: 2, borderRadius: 4, bgcolor: 'oklch(96% 0.01 250)', color: 'oklch(20% 0.05 250)' }}>
                   <MapPin size={28} />

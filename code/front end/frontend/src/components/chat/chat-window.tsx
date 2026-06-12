@@ -25,11 +25,11 @@ const ChatWindow = ({
   isSessionReady = false,
   isSessionLoading = false,
   isUploadingAttachment = false,
+  canUploadAttachment = false,
   isOpen = false,
   isConnected = false,
   isAiOnline = false,
   status = 'IDLE',
-  onCompleteTriage,
   onResendMessage
 }) => {
   const loadMoreMessagesFn: (() => void) | undefined = loadMoreMessages
@@ -40,36 +40,6 @@ const ChatWindow = ({
   const [inputValue, setInputValue] = useState('');
   const [showScrollBtn, setShowScrollBtn] = useState(false);
 
-  // Reconnection and soft update state variables
-  const [isCompletingTriage, setIsCompletingTriage] = useState(false);
-  const [missingInfo, setMissingInfo] = useState(null);
-  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
-  const [createdTicket, setCreatedTicket] = useState(null);
-
-  const userMessageCount = useMemo(() => {
-    return messages.filter(m => m.senderType === 'USER').length;
-  }, [messages]);
-
-  const handleCompleteTriage = async (forceSubmit = false) => {
-    if (!onCompleteTriage) return;
-    setIsCompletingTriage(true);
-    setMissingInfo(null);
-    try {
-      const data = await onCompleteTriage(forceSubmit);
-      if (data) {
-        if (data.recommendation_ready === false && !forceSubmit) {
-          setMissingInfo(data.missing_information || []);
-        } else if (data.ticket) {
-          setCreatedTicket(data.ticket);
-          setShowSuccessOverlay(true);
-        }
-      }
-    } catch (err) {
-      console.error('[ChatWindow] Failed to complete triage:', err);
-    } finally {
-      setIsCompletingTriage(false);
-    }
-  };
 
   // Triage Logic
   const triageResult = useMemo(() => {
@@ -96,7 +66,7 @@ const ChatWindow = ({
         suggested_department: deptMatch ? deptMatch[1].trim() : 'Nội tổng quát',
         urgency_level: urgencyMatch ? (urgencyMatch[1].includes('CẤP CỨU') ? 'EMERGENCY' : 'MEDIUM') : 'MEDIUM',
         summary: 'Dựa trên thông tin sơ chẩn vừa thực hiện.',
-        is_complete: true
+        intake_complete: true
       };
     }
     
@@ -104,7 +74,7 @@ const ChatWindow = ({
   }, [messages]);
 
   const isEmergency = triageResult?.urgency_level === 'EMERGENCY';
-  const isComplete = triageResult?.is_complete || triageResult?.urgency_level !== undefined;
+  const isComplete = triageResult?.intake_complete || triageResult?.urgency_level !== undefined;
 
   // ... (auto scroll logic remains same)
   useEffect(() => {
@@ -169,14 +139,14 @@ const ChatWindow = ({
   };
 
   const handleAttachmentClick = () => {
-    if (!isSessionReady || isTyping || isUploadingAttachment) return;
+    if (!canUploadAttachment || isTyping || isUploadingAttachment) return;
     attachmentInputRef.current?.click();
   };
 
   const handleAttachmentChange = async (e) => {
     const file = e.target.files?.[0];
     e.target.value = '';
-    if (!file || !onUploadAttachment || !isSessionReady) return;
+    if (!file || !onUploadAttachment || !canUploadAttachment) return;
 
     try {
       await onUploadAttachment(file);
@@ -384,66 +354,6 @@ const ChatWindow = ({
             )}
           </AnimatePresence>
 
-          {/* ─── CTA & Missing Info Panels ─── */}
-          {userMessageCount >= 2 && !isEmergency && !isCompletingTriage && !missingInfo && !showSuccessOverlay && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex-shrink-0 px-4 py-2.5 bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border-t border-b border-emerald-100/50 flex items-center justify-between gap-3 backdrop-blur-sm"
-            >
-              <div className="flex items-center gap-2">
-                <Sparkles size={15} className="text-emerald-600 animate-pulse" />
-                <span className="text-[12px] font-bold text-emerald-800">
-                  Đủ thông tin sơ chẩn
-                </span>
-              </div>
-              <button
-                onClick={() => handleCompleteTriage(false)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-[11px] font-extrabold shadow-[0_4px_12px_color-mix(in srgb, var(--color-primary-500) 20%, transparent)] hover:scale-[1.03] active:scale-95 transition-all duration-200"
-              >
-                Nhận khuyến nghị & Gửi bác sĩ
-              </button>
-            </motion.div>
-          )}
-
-          {missingInfo && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="flex-shrink-0 px-4 py-3 bg-amber-50/90 border-t border-b border-amber-100/80 flex flex-col gap-2.5"
-            >
-              <div className="flex gap-2 items-start">
-                <span className="text-amber-500 text-[18px] leading-none">⚠️</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-bold text-amber-900 leading-tight">
-                    Cần bổ sung thông tin
-                  </p>
-                  <p className="text-[11px] text-amber-700/90 mt-1 leading-relaxed">
-                    AI cần làm rõ một số chi tiết để phân tích chính xác nhất:
-                  </p>
-                  <ul className="list-disc pl-4 mt-1.5 text-[11px] text-amber-800 font-medium space-y-0.5">
-                    {missingInfo.map((info, idx) => (
-                      <li key={idx}>{info}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              <div className="flex items-center justify-end gap-2 mt-1">
-                <button
-                  onClick={() => handleCompleteTriage(true)}
-                  className="px-2.5 py-1.5 rounded-lg border border-amber-200 text-amber-800 hover:bg-amber-100/50 text-[10px] font-extrabold transition-all"
-                >
-                  Gửi bác sĩ ngay (Bỏ qua)
-                </button>
-                <button
-                  onClick={() => setMissingInfo(null)}
-                  className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-extrabold transition-all shadow-sm"
-                >
-                  Tiếp tục trò chuyện
-                </button>
-              </div>
-            </motion.div>
-          )}
 
           {/* ─── Quick Replies ─── */}
           {messages.length < 5 && messages.length > 0 && (
@@ -479,7 +389,7 @@ const ChatWindow = ({
               <div className="pb-[4px]">
                 <button
                   onClick={handleAttachmentClick}
-                  disabled={!isSessionReady || isTyping || isUploadingAttachment}
+                  disabled={!canUploadAttachment || isTyping || isUploadingAttachment}
                   className="w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 bg-slate-100 text-slate-500 hover:bg-slate-200 active:scale-95 disabled:opacity-40"
                   title="Tải tài liệu lên"
                 >
@@ -530,7 +440,7 @@ const ChatWindow = ({
             {/* Send Button */}
             <div className="pb-[4px]">
               <button
-                onClick={handleSubmit}
+                onClick={() => handleSubmit()}
                 disabled={!inputValue.trim() || isTyping || !isConnected || !isSessionReady}
                 className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   inputValue.trim() && !isTyping && isConnected && isSessionReady
@@ -542,108 +452,10 @@ const ChatWindow = ({
               </button>
             </div>
           </div>
-
-          {/* ─── Loading / Completing Overlay ─── */}
-          <AnimatePresence>
-            {isCompletingTriage && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-white/90 backdrop-blur-md z-50 flex flex-col items-center justify-center p-6 text-center"
-              >
-                <div className="relative mb-6">
-                  <div className="w-16 h-16 rounded-full bg-emerald-50 flex items-center justify-center border border-emerald-100">
-                    <Loader2 size={32} className="text-emerald-500 animate-spin" />
-                  </div>
-                </div>
-                <h4 className="font-extrabold text-slate-800 text-base mb-2">CareTriage AI đang phân tích</h4>
-                <p className="text-xs text-slate-500 max-w-[260px] leading-relaxed">
-                  Đang tổng hợp bệnh sử từ hội thoại và lập hồ sơ lâm sàng gửi đến các bác sĩ chuyên khoa...
-                </p>
-                <div className="w-48 bg-slate-100 h-1.5 rounded-full overflow-hidden mt-6">
-                  <motion.div
-                    initial={{ width: "0%" }}
-                    animate={{ width: "95%" }}
-                    transition={{ duration: 2.5, ease: "easeInOut" }}
-                    className="bg-gradient-to-r from-emerald-400 to-teal-500 h-full rounded-full"
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* ─── Success Creation / Update Overlay ─── */}
-          <AnimatePresence>
-            {showSuccessOverlay && createdTicket && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 bg-gradient-to-b from-white via-white to-emerald-50/20 z-[60] flex flex-col items-center justify-center p-6 text-center"
-              >
-                <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                  transition={{ type: 'spring', damping: 20 }}
-                  className="flex flex-col items-center w-full"
-                >
-                  <div className="w-16 h-16 rounded-full bg-emerald-500 text-white flex items-center justify-center mb-6 shadow-lg shadow-emerald-100">
-                    <Send size={28} className="translate-x-[2px]" />
-                  </div>
-                  <h4 className="font-extrabold text-slate-800 text-lg mb-2">Gửi hồ sơ thành công!</h4>
-                  <p className="text-[13px] text-slate-500 max-w-[280px] leading-relaxed mb-6">
-                    Hồ sơ lâm sàng số <span className="font-bold text-slate-700">{createdTicket.ticketNumber}</span> đã được lưu vết và điều hướng đến bộ phận chuyên môn.
-                  </p>
-
-                  <div className="w-full max-w-[280px] bg-white rounded-xl border border-slate-100 p-4 shadow-sm mb-8 text-left space-y-2">
-                    <div className="flex justify-between text-[12px]">
-                      <span className="text-slate-400">Trạng thái:</span>
-                      <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md">
-                        {createdTicket.status === 'NEW' ? 'Chờ tiếp nhận' : createdTicket.status}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-[12px]">
-                      <span className="text-slate-400">Độ khẩn cấp:</span>
-                      <span className="font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-md">
-                        {createdTicket.priority}
-                      </span>
-                    </div>
-                    <div className="text-[12px] border-t border-slate-50 pt-2">
-                      <span className="text-slate-400 block mb-1">Mô tả:</span>
-                      <span className="text-slate-600 font-medium line-clamp-2 leading-tight">
-                        {createdTicket.description || createdTicket.title}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-2.5 w-full max-w-[240px]">
-                    <button
-                      onClick={() => {
-                        setShowSuccessOverlay(false);
-                        window.location.href = '/patient/triage-tickets';
-                      }}
-                      className="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-bold text-[13px] shadow-[0_4px_16px_color-mix(in srgb, var(--color-primary-500) 25%, transparent)] transition-all duration-200"
-                    >
-                      Xem phiếu tư vấn
-                    </button>
-                    <button
-                      onClick={() => setShowSuccessOverlay(false)}
-                      className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 font-bold text-[13px] transition-all"
-                    >
-                      Đóng
-                    </button>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </motion.div>
       )}
     </AnimatePresence>
   );
 };
-
 
 export default ChatWindow;

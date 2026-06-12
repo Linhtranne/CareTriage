@@ -524,7 +524,7 @@ export default function EHRUpload() {
 
               <Box sx={{ borderTop: 1, borderColor: 'oklch(100% 0 0 / 0.1)', bgcolor: 'transparent', p: 4 }}>
                 <Grid container spacing={4} alignItems="stretch">
-                  <Grid item xs={12} md={3.5}>
+                  <Grid size={{ xs: 12, md: 3.5 }} >
                     <Controller
                       name="patientId"
                       control={control}
@@ -533,7 +533,7 @@ export default function EHRUpload() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={3.5}>
+                  <Grid size={{ xs: 12, md: 3.5 }} >
                     <Controller
                       name="noteType"
                       control={control}
@@ -544,7 +544,7 @@ export default function EHRUpload() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={5}>
+                  <Grid size={{ xs: 12, md: 5 }} >
                     <Box sx={{
                       bgcolor: 'oklch(65% 0.15 160 / 0.08)',
                       p: 2.5,

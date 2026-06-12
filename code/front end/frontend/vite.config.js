@@ -2,8 +2,11 @@ import { defineConfig } from 'vite'
 import { configDefaults } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import os from 'node:os'
+import path from 'node:path'
 
 export default defineConfig({
+  cacheDir: path.join(os.tmpdir(), 'caretriage-frontend-vite'),
   plugins: [react(), tailwindcss()],
   define: {
     global: 'window',
@@ -16,7 +19,7 @@ export default defineConfig({
         target: 'http://localhost:8080',
         changeOrigin: true,
       },
-      '/ws': {
+      '/ws-chat': {
         target: 'http://localhost:8080',
         ws: true,
       },

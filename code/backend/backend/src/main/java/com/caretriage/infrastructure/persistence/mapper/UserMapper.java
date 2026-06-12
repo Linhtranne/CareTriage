@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
-    public static final UserMapper INSTANCE = new UserMapper(RoleMapper.INSTANCE);
+    public static final UserMapper INSTANCE = new UserMapper(new RoleMapper());
 
     private final RoleMapper roleMapper;
 

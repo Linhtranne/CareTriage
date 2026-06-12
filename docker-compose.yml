@@ -5,6 +5,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: caretriage
+      MYSQL_USER: linhtranne
+      MYSQL_PASSWORD: "123456"
     ports:
       - "3307:3306"
     volumes:

@@ -8,9 +8,12 @@ import com.caretriage.domain.entity.User;
 import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.infrastructure.security.JwtTokenProvider;
 import com.caretriage.application.service.TwoFactorService;
+import com.caretriage.shared.exception.BusinessException;
+import com.caretriage.shared.exception.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,22 +29,22 @@ public class TwoFactorController {
     public ResponseEntity<ApiResponse<AuthResponse>> verify(@Valid @RequestBody TwoFactorRequest request,
                                                             @RequestHeader("Authorization") String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new BadCredentialsException("Missing or invalid Authorization header");
         }
         
         String tempToken = authHeader.substring(7);
         if (!jwtTokenProvider.validateToken(tempToken)) {
-            throw new RuntimeException("Invalid or expired temporary token");
+            throw new BadCredentialsException("Invalid or expired temporary token");
         }
         
         String email = jwtTokenProvider.getEmailFromToken(tempToken);
         
         if (!twoFactorService.verifyOtp(email, request.getOtp())) {
-            throw new RuntimeException("OTP không hợp lệ hoặc đã hết hạn");
+            throw new BusinessException("OTP không hợp lệ hoặc đã hết hạn");
         }
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Generate real tokens
         String token = jwtTokenProvider.generateTokenFromEmail(email);
@@ -87,7 +90,7 @@ public class TwoFactorController {
         User user = userRepository.findByEmail(email).orElseThrow();
 
         if (!twoFactorService.verifyOtp(email, request.getOtp())) {
-            throw new RuntimeException("OTP không hợp lệ hoặc đã hết hạn");
+            throw new BusinessException("OTP không hợp lệ hoặc đã hết hạn");
         }
 
         user.setTwoFactorEmail(true);
@@ -110,7 +113,7 @@ public class TwoFactorController {
 
     private String extractEmailFromHeader(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            throw new RuntimeException("Missing or invalid Authorization header");
+            throw new BadCredentialsException("Missing or invalid Authorization header");
         }
         String token = authHeader.substring(7);
         return jwtTokenProvider.getEmailFromToken(token);

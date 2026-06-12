@@ -16,25 +16,32 @@ import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.domain.repository.TriageTicketRepository;
 import com.caretriage.domain.repository.TicketCategoryRepository;
 import com.caretriage.domain.repository.AppointmentRepository;
+import com.caretriage.domain.repository.ChatTurnRepository;
 import com.caretriage.application.service.ChatService;
 import com.caretriage.application.service.NotificationService;
-import com.caretriage.domain.entity.Notification.NotificationType;
+import com.caretriage.domain.entity.ChatTurn;
+import com.caretriage.application.ai.service.TriageAiRuntimeRouter;
+import com.caretriage.application.dto.AiSseFinalPayload;
+import com.caretriage.application.dto.ChatTurnStartResult;
+import com.caretriage.application.dto.PersistedEventPayload;
+import com.caretriage.infrastructure.config.ChatProperties;
+import com.caretriage.shared.exception.ContractViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.MediaType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.MediaType;
 import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
 
+import com.caretriage.application.ai.service.DocumentExtractionService;
 import com.caretriage.application.service.AiClientService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
@@ -42,6 +49,12 @@ import java.util.stream.Collectors;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Locale;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
+import org.hibernate.exception.ConstraintViolationException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.SignalType;
 
 @Slf4j
 @Service
@@ -53,28 +66,21 @@ public class ChatServiceImpl implements ChatService {
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
     private final AiClientService aiClientService;
+    private final TriageAiRuntimeRouter triageAiRuntimeRouter;
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
     private final TriageTicketRepository triageTicketRepository;
     private final TicketCategoryRepository ticketCategoryRepository;
     private final ChatAttachmentRepository chatAttachmentRepository;
-    private final WebClient.Builder webClientBuilder;
+    private final DocumentExtractionService documentExtractionService;
     private final NotificationService notificationService;
     private final AppointmentRepository appointmentRepository;
     private final org.springframework.data.redis.core.RedisTemplate<String, Object> redisTemplate;
-
-    @Value("${app.ai-service.url}")
-    private String aiServiceUrl;
-
-    private ChatMessageDTO saveMessageToRedis(Long sessionId, ChatMessage message) {
-        message.setCreatedAt(java.time.LocalDateTime.now());
-        ChatMessageDTO dto = convertToDTO(message);
-        // Temporary ID for frontend rendering
-        dto.setId(System.currentTimeMillis()); 
-        redisTemplate.opsForList().rightPush("chat:session:" + sessionId, dto);
-        redisTemplate.expire("chat:session:" + sessionId, java.time.Duration.ofHours(24));
-        return dto;
-    }
+    private final ChatTurnRepository chatTurnRepository;
+    private final ChatTurnFinalizer chatTurnFinalizer;
+    private final ChatTurnReconciliationService chatTurnReconciliationService;
+    private final ChatProperties chatProperties;
+    private final ChatAttachmentPersistenceService chatAttachmentPersistenceService;
 
     @Override
     @Transactional
@@ -89,7 +95,7 @@ public class ChatServiceImpl implements ChatService {
 
         // Business Rule: Read-only for completed sessions
         if (session.getStatus() == ChatSession.SessionStatus.COMPLETED) {
-            throw new IllegalStateException("Phiên tư vấn này đã kết thúc do lịch hẹn khám đã được tạo. Bạn không thể gửi thêm tin nhắn.");
+            throw new IllegalStateException("Phi\u00ean t\u01b0 v\u1ea5n n\u00e0y \u0111\u00e3 k\u1ebft th\u00fac do l\u1ecbch h\u1eb9n kh\u00e1m \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o. B\u1ea1n kh\u00f4ng th\u1ec3 g\u1eedi th\u00eam tin nh\u1eafn.");
         }
 
         ChatMessage message = ChatMessage.builder()
@@ -98,203 +104,425 @@ public class ChatServiceImpl implements ChatService {
                 .senderType(ChatMessage.SenderType.USER)
                 .metadata(messageDTO.getMetadata())
                 .build();
-
-        // Dùng Redis thay cho MySQL để tối ưu
-        ChatMessageDTO savedMessageDTO = saveMessageToRedis(session.getId(), message);
-        
-        return savedMessageDTO;
+        return convertToDTO(chatMessageRepository.save(message));
     }
 
     @Override
-    @Transactional
     public ChatAttachmentDTO uploadAttachment(Long userId, Long sessionId, MultipartFile file) {
         ChatSession session = chatSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new ResourceNotFoundException("ChatSession not found"));
+                .orElseThrow(() -> new com.caretriage.shared.exception.ResourceNotFoundException("ChatSession not found"));
 
         if (!session.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized access to chat session");
+            throw new org.springframework.security.access.AccessDeniedException("Unauthorized access to chat session");
         }
 
         if (session.getStatus() == ChatSession.SessionStatus.COMPLETED) {
-            throw new IllegalStateException("Phiên tư vấn này đã kết thúc do lịch hẹn khám đã được tạo. Bạn không thể gửi thêm tài liệu.");
+            throw new IllegalStateException("Phi\u00ean t\u01b0 v\u1ea5n n\u00e0y \u0111\u00e3 k\u1ebft th\u00fac do l\u1ecbch h\u1eb9n kh\u00e1m \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o. B\u1ea1n kh\u00f4ng th\u1ec3 g\u1eedi th\u00eam t\u00e0i li\u1ec7u.");
         }
 
-        // Ràng buộc tối đa 3 tài liệu đính kèm
+        // R\u00e0ng bu\u1ed9c t\u1ed1i \u0111a 3 t\u00e0i li\u1ec7u \u0111\u00ednh k\u00e8m
         List<ChatAttachment> existingAttachments = chatAttachmentRepository.findByChatSessionIdOrderByCreatedAtAsc(sessionId);
         if (existingAttachments.size() >= 3) {
-            throw new RuntimeException("Bạn đã đạt giới hạn tối đa 3 tài liệu đính kèm cho phiên tư vấn này.");
+            throw new IllegalArgumentException("B\u1ea1n \u0111\u00e3 \u0111\u1ea1t gi\u1edbi h\u1ea1n t\u1ed1i \u0111a 3 t\u00e0i li\u1ec7u \u0111\u00ednh k\u00e8m cho phi\u00ean t\u01b0 v\u1ea5n n\u00e0y.");
         }
 
         if (file == null || file.isEmpty()) {
-            throw new RuntimeException("File upload is empty");
+            throw new IllegalArgumentException("File upload is empty");
         }
 
         String originalFilename = Optional.ofNullable(file.getOriginalFilename())
                 .filter(name -> !name.isBlank())
                 .orElse("attachment");
+                
+        if (originalFilename.contains("..") || originalFilename.contains("/") || originalFilename.contains("\\")) {
+            throw new IllegalArgumentException("Invalid filename");
+        }
+
         String mimeType = normalizeMimeType(file.getContentType(), originalFilename);
 
         if (!isSupportedAttachment(mimeType, originalFilename)) {
-            throw new RuntimeException("Định dạng tài liệu không được hỗ trợ. Chỉ hỗ trợ tải các tệp PDF, DOCX, TXT hoặc Hình ảnh (JPEG, PNG, WEBP).");
+            throw new com.caretriage.shared.exception.UnsupportedFileTypeException("\u0110\u1ecbnh d\u1ea1ng t\u00e0i li\u1ec7u kh\u00f4ng \u0111\u01b0\u1ee3c h\u1ed7 tr\u1ee3. Ch\u1ec9 h\u1ed7 tr\u1ee3 t\u1ea3i c\u00e1c t\u1ec7p PDF, DOCX, TXT.");
         }
 
         byte[] fileBytes;
         try {
             fileBytes = file.getBytes();
         } catch (Exception e) {
-            throw new RuntimeException("Cannot read uploaded file", e);
+            throw new IllegalArgumentException("Cannot read uploaded file", e);
         }
 
         if (fileBytes.length > MAX_ATTACHMENT_SIZE_BYTES) {
-            throw new RuntimeException("Dung lượng tài liệu vượt quá giới hạn cho phép (tối đa 10MB).");
+            throw new com.caretriage.shared.exception.FileTooLargeException("Dung l\u01b0\u1ee3ng t\u00e0i li\u1ec7u v\u01b0\u1ee3t qu\u00e1 gi\u1edbi h\u1ea1n cho ph\u00e9p (t\u1ed1i \u0111a 10MB).");
         }
 
-        ChatAttachment attachment = ChatAttachment.builder()
-                .chatSession(session)
-                .originalFilename(originalFilename)
-                .mimeType(mimeType)
-                .fileSize((long) fileBytes.length)
-                .fileContent(fileBytes)
-                .extractionStatus(ChatAttachment.ExtractionStatus.PROCESSING)
-                .build();
-        attachment = chatAttachmentRepository.save(attachment);
+        // Phase 1: Create PROCESSING attachment
+        ChatAttachment attachment = chatAttachmentPersistenceService.createProcessingAttachment(sessionId, originalFilename, mimeType, fileBytes.length);
 
-        String systemMessageText;
+        ChatMessage savedSystemMessage;
         try {
-            Map<String, Object> aiResponse = extractAttachmentContext(fileBytes, originalFilename, mimeType);
-            Map<String, Object> result = asStringObjectMap(aiResponse.get("result"));
-            attachment.setExtractedText(result.get("raw_text") != null ? String.valueOf(result.get("raw_text")) : null);
-            attachment.setExtractionStatus(ChatAttachment.ExtractionStatus.COMPLETED);
-            attachment.setExtractionSource("LLM_MULTIMODAL");
-            try {
-                if (result.get("entities") != null) {
-                    attachment.setExtractedEntitiesJson(objectMapper.writeValueAsString(result.get("entities")));
+            // Phase 2: Extract text/entities outside transaction
+            DocumentExtractionService.ExtractionOutput output = documentExtractionService.extractFromFile(fileBytes, originalFilename, mimeType);
+            String entitiesJson = null;
+            if (output.entities() != null && !output.entities().isEmpty()) {
+                try {
+                    entitiesJson = objectMapper.writeValueAsString(output.entities());
+                } catch (Exception ex) {
+                    log.error("Failed to serialize extracted entities for attachment {}", attachment.getId());
+                    throw new com.caretriage.shared.exception.AttachmentPersistenceException("Entity serialization failed", ex);
                 }
-            } catch (Exception ex) {
-                log.warn("Failed to serialize extracted entities for attachment: {}", ex.getMessage());
             }
-            systemMessageText = "Đã tải lên tài liệu: " + originalFilename;
+            
+            // Phase 3: Update COMPLETED attachment
+            savedSystemMessage = chatAttachmentPersistenceService.completeAttachment(attachment.getId(), sessionId, output.rawText(), entitiesJson);
         } catch (Exception e) {
-            log.error("Error extracting attachment for session {}: {}", sessionId, e.getMessage(), e);
-            attachment.setExtractionStatus(ChatAttachment.ExtractionStatus.FAILED);
-            attachment.setExtractionSource("LLM_MULTIMODAL");
-            attachment.setExtractionErrorMessage(e.getMessage());
-            systemMessageText = "Đã tải lên tài liệu: " + originalFilename + " nhưng hệ thống chưa phân tích được nội dung.";
+            // Failure Phase
+            String errorCode = "SYSTEM_ERROR";
+            if (e instanceof com.caretriage.shared.exception.DocumentParsingException ||
+                e instanceof com.caretriage.shared.exception.UnsupportedFileTypeException ||
+                e instanceof com.caretriage.shared.exception.FileTooLargeException) {
+                errorCode = "DOCUMENT_PARSE_FAILED";
+            } else if (e instanceof com.caretriage.shared.exception.MedicalEntityExtractionException) {
+                errorCode = "ENTITY_EXTRACTION_FAILED";
+            } else if (e instanceof com.caretriage.shared.exception.AttachmentPersistenceException) {
+                errorCode = "ATTACHMENT_SERIALIZATION_FAILED";
+            }
+            
+            try {
+                chatAttachmentPersistenceService.failAttachment(attachment.getId(), sessionId, errorCode);
+            } catch (Exception failEx) {
+                log.error("Failed to mark attachment {} as FAILED with code {} - Exception: {}", attachment.getId(), errorCode, failEx.getClass().getSimpleName());
+                e.addSuppressed(failEx);
+            }
+            
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException(e);
         }
-
-        attachment = chatAttachmentRepository.save(attachment);
-
-        ChatMessage systemMessage = ChatMessage.builder()
-                .chatSession(session)
-                .content(systemMessageText)
-                .senderType(ChatMessage.SenderType.SYSTEM)
-                .metadata(buildAttachmentMetadata(attachment))
-                .build();
-        ChatMessage savedSystemMessage = chatMessageRepository.save(systemMessage);
-
-        session.setLastMessageContent(savedSystemMessage.getContent());
-        session.setLastMessageTime(savedSystemMessage.getCreatedAt());
-        chatSessionRepository.save(session);
 
         ChatMessageDTO savedSystemMessageDTO = convertToDTO(savedSystemMessage);
         messagingTemplate.convertAndSend("/topic/chat/" + sessionId, savedSystemMessageDTO);
 
-        return convertToAttachmentDTO(attachment);
+        return convertToAttachmentDTO(chatAttachmentRepository.findById(attachment.getId()).orElseThrow());
     }
 
-    @Async
     @Override
     @Transactional
-    public void processAiResponse(Long sessionId, String userMessage) {
-        String destination = "/topic/chat/" + sessionId;
-        try {
-            ChatSession session = chatSessionRepository.findById(sessionId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
-
-            // Chỉ xử lý AI cho session TRIAGE
-            if (session.getSessionType() != ChatSession.SessionType.TRIAGE) {
-                return;
-            }
-
-            // 1. Gửi trạng thái "AI is typing..."
-            Map<String, Object> typingStatus = new HashMap<>();
-            typingStatus.put("type", "TYPING");
-            typingStatus.put("senderType", "AI");
-            messagingTemplate.convertAndSend(destination, typingStatus);
-
-            // 2. Chuẩn bị lịch sử hội thoại cho AI
-            List<ChatMessage> historyMessages = chatMessageRepository.findByChatSessionIdOrderByCreatedAtAsc(sessionId);
-            List<Map<String, String>> history = historyMessages.stream()
-                    .map(m -> {
-                        Map<String, String> entry = new HashMap<>();
-                        entry.put("role", m.getSenderType() == ChatMessage.SenderType.USER ? "user" : "model");
-                        entry.put("content", m.getContent());
-                        return entry;
-                    })
-                    .collect(Collectors.toList());
-
-            List<Map<String, String>> attachmentHistory = chatAttachmentRepository
-                    .findByChatSessionIdAndExtractionStatusOrderByCreatedAtAsc(sessionId, ChatAttachment.ExtractionStatus.COMPLETED)
-                    .stream()
-                    .map(this::toAttachmentHistoryEntry)
-                    .collect(Collectors.toList());
-            if (!attachmentHistory.isEmpty()) {
-                history.addAll(0, attachmentHistory);
-            }
-
-            // 3. Gọi AI Service
-            Map<String, Object> aiResponse = aiClientService.analyzeSymptoms(sessionId.toString(), userMessage, history);
-            String aiContent = (String) aiResponse.get("reply");
-
-            // 4. Lưu phản hồi của AI
-            ChatMessage aiMessage = ChatMessage.builder()
-                    .chatSession(session)
-                    .content(aiContent)
-                    .senderType(ChatMessage.SenderType.AI)
-                    .metadata(objectMapper.writeValueAsString(aiResponse))
-                    .build();
-
-            // Dùng Redis để lưu tin nhắn AI
-            ChatMessageDTO savedAiMessageDTO = saveMessageToRedis(session.getId(), aiMessage);
-
-            // Smoke test: Trigger notification for user when AI responds
-            notificationService.createNotification(
-                session.getUser().getId(),
-                "Tin nhắn mới từ AI",
-                aiContent.length() > 50 ? aiContent.substring(0, 47) + "..." : aiContent,
-                NotificationType.CHAT,
-                session.getId(),
-                "CHAT_SESSION"
-            );
-
-            if (Boolean.TRUE.equals(aiResponse.get("is_complete"))) {
-                createTriageTicketIfNeeded(session, aiResponse, historyMessages);
-            }
-            Runnable broadcast = () -> {
-                messagingTemplate.convertAndSend(destination, savedAiMessageDTO);
-                log.info("AI response broadcasted to {}", destination);
-            };
-
-            if (TransactionSynchronizationManager.isSynchronizationActive()) {
-                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                    @Override
-                    public void afterCommit() {
-                        broadcast.run();
-                    }
-                });
-            } else {
-                broadcast.run();
-            }
-
-        } catch (Exception e) {
-            log.error("Error processing AI response for session {}: {}", sessionId, e.getMessage(), e);
-            // Gửi thông báo lỗi qua WebSocket để frontend tắt typing indicator
-            Map<String, Object> errorMsg = new HashMap<>();
-            errorMsg.put("type", "ERROR");
-            errorMsg.put("senderType", "SYSTEM");
-            errorMsg.put("content", "Xin lỗi, hệ thống AI đang gặp sự cố. Vui lòng thử lại.");
-            messagingTemplate.convertAndSend(destination, errorMsg);
+    public ChatTurnStartResult inspectOrStartFirstTurn(
+            Long userId,
+            String turnId,
+            String userMessage,
+            ChatSession.SessionType type,
+            String title) {
+        Optional<ChatTurn> existing = chatTurnRepository.findByUserIdAndTurnId(userId, turnId);
+        if (existing.isPresent()) {
+            return resolveExistingTurn(existing.get());
         }
+
+        ChatSession session = createSessionWithoutGreeting(
+                userId,
+                type == null ? ChatSession.SessionType.TRIAGE : type,
+                normalizeTitle(title == null ? userMessage : title));
+        ChatMessage userMessageEntity = ChatMessage.builder()
+                .chatSession(session)
+                .senderType(ChatMessage.SenderType.USER)
+                .content(userMessage)
+                .turnId(turnId)
+                .build();
+        chatMessageRepository.save(userMessageEntity);
+
+        ChatTurn turn = ChatTurn.builder()
+                .chatSession(session)
+                .user(session.getUser())
+                .turnId(turnId)
+                .status(ChatTurn.TurnStatus.STARTED)
+                .ticketStatus(ChatTurn.TicketStatus.PENDING)
+                .attemptCount(1)
+                .build();
+        return new ChatTurnStartResult(
+                chatTurnRepository.saveAndFlush(turn),
+                ChatTurnStartResult.StartStatus.NEW_OR_RETRY_FAILED,
+                null);
+    }
+
+    @Override
+    @Transactional
+    public ChatTurnStartResult inspectOrStartTurn(
+            Long userId,
+            Long sessionId,
+            String turnId,
+            String userMessage) {
+        Optional<ChatTurn> existing = chatTurnRepository.findByUserIdAndTurnId(userId, turnId);
+        if (existing.isPresent()) {
+            if (!existing.get().getChatSession().getId().equals(sessionId)) {
+                throw new IllegalArgumentException("Turn belongs to a different session");
+            }
+            return resolveExistingTurn(existing.get());
+        }
+
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("ChatSession not found"));
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Unauthorized access to chat session");
+        }
+        if (session.getStatus() == ChatSession.SessionStatus.COMPLETED) {
+            throw new IllegalStateException("Phi\u00ean t\u01b0 v\u1ea5n \u0111\u00e3 k\u1ebft th\u00fac.");
+        }
+
+        chatMessageRepository.save(ChatMessage.builder()
+                .chatSession(session)
+                .senderType(ChatMessage.SenderType.USER)
+                .content(userMessage)
+                .turnId(turnId)
+                .build());
+        ChatTurn turn = ChatTurn.builder()
+                .chatSession(session)
+                .user(session.getUser())
+                .turnId(turnId)
+                .status(ChatTurn.TurnStatus.STARTED)
+                .ticketStatus(ChatTurn.TicketStatus.PENDING)
+                .attemptCount(1)
+                .build();
+        return new ChatTurnStartResult(
+                chatTurnRepository.saveAndFlush(turn),
+                ChatTurnStartResult.StartStatus.NEW_OR_RETRY_FAILED,
+                null);
+    }
+
+    private ChatTurnStartResult resolveExistingTurn(ChatTurn turn) {
+        if (turn.getStatus() == ChatTurn.TurnStatus.COMPLETED) {
+            if (turn.getTicketStatus() == ChatTurn.TicketStatus.PENDING) {
+                ChatTurnStartResult.StartStatus status = chatTurnRepository.isPendingTicketStale(turn.getId())
+                        ? ChatTurnStartResult.StartStatus.STALE_PENDING
+                        : ChatTurnStartResult.StartStatus.TICKET_FINALIZING;
+                return new ChatTurnStartResult(turn, status, null);
+            }
+            return new ChatTurnStartResult(
+                    turn,
+                    ChatTurnStartResult.StartStatus.COMPLETED_REPLAY,
+                    turn.getPersistedPayload());
+        }
+        if (turn.getStatus() == ChatTurn.TurnStatus.FAILED) {
+            int updated = chatTurnRepository.retryTurnConditional(
+                    turn.getId(),
+                    ChatTurn.TurnStatus.FAILED,
+                    ChatTurn.TurnStatus.STARTED);
+            if (updated > 0) {
+                return new ChatTurnStartResult(
+                        chatTurnRepository.findById(turn.getId()).orElseThrow(),
+                        ChatTurnStartResult.StartStatus.NEW_OR_RETRY_FAILED,
+                        null);
+            }
+        }
+        if (turn.getStatus() == ChatTurn.TurnStatus.STARTED
+                || turn.getStatus() == ChatTurn.TurnStatus.STREAMING) {
+            ChatTurn recovered = recoverStaleActiveTurn(turn);
+            if (recovered != null) {
+                return new ChatTurnStartResult(
+                        recovered,
+                        ChatTurnStartResult.StartStatus.NEW_OR_RETRY_FAILED,
+                        null);
+            }
+        }
+        return new ChatTurnStartResult(turn, ChatTurnStartResult.StartStatus.RUNNING_CONFLICT, null);
+    }
+
+    private ChatTurn recoverStaleActiveTurn(ChatTurn turn) {
+        java.time.LocalDateTime staleBefore = java.time.LocalDateTime.now()
+                .minus(chatProperties.getActiveTurnStaleTimeout());
+        if (turn.getUpdatedAt() == null || turn.getUpdatedAt().isAfter(staleBefore)) {
+            return null;
+        }
+        int updated = chatTurnRepository.recoverStaleActiveTurn(
+                turn.getId(),
+                List.of(ChatTurn.TurnStatus.STARTED, ChatTurn.TurnStatus.STREAMING),
+                ChatTurn.TurnStatus.STARTED,
+                staleBefore);
+        return updated == 0 ? null : chatTurnRepository.findById(turn.getId()).orElseThrow();
+    }
+
+    @Override
+    public Flux<Map<String, Object>> streamAiResponse(
+            Long userId,
+            Long sessionId,
+            String turnId,
+            String userMessage) {
+        return Flux.defer(() -> {
+            AtomicBoolean terminal = new AtomicBoolean(false);
+            List<Map<String, String>> history = chatMessageRepository
+                    .findHistoryExcludingTurn(sessionId, turnId)
+                    .stream()
+                    .map(message -> Map.of(
+                            "role", message.getSenderType() == ChatMessage.SenderType.USER ? "user" : "model",
+                            "content", message.getContent()))
+                    .collect(Collectors.toList());
+            ChatTurn turn = chatTurnRepository.findByChatSessionIdAndTurnId(sessionId, turnId)
+                    .orElseThrow(() -> new ResourceNotFoundException("ChatTurn not found"));
+
+            Flux<Map<String, Object>> aiStream = triageAiRuntimeRouter
+                    .streamAnalyzeSymptoms(sessionId, turnId, userMessage, history)
+                    .doOnSubscribe(ignored -> chatTurnFinalizer.updateTurnToStreaming(turn.getId()))
+                    .concatMap(event -> processAiEvent(sessionId, turnId, turn, terminal, event))
+                    .timeout(chatProperties.getInactivityTimeout());
+            Flux<Map<String, Object>> deadline = Flux.<Map<String, Object>>error(
+                            new TimeoutException("WHOLE_TURN_TIMEOUT"))
+                    .delaySubscription(chatProperties.getWholeTurnTimeout());
+
+            return Flux.merge(aiStream, deadline)
+                    .takeUntil(this::isTerminalEvent)
+                    .onErrorResume(error -> handleStreamError(turn, turnId, terminal, error))
+                    .doFinally(signal -> {
+                        if (signal == SignalType.CANCEL && !terminal.get()) {
+                            log.info("Client disconnected for turn {}; state will be recovered if stale", turn.getId());
+                        }
+                    });
+        });
+    }
+
+    private Flux<Map<String, Object>> processAiEvent(
+            Long sessionId,
+            String turnId,
+            ChatTurn turn,
+            AtomicBoolean terminal,
+            Map<String, Object> event) {
+        if (terminal.get()) {
+            return Flux.empty();
+        }
+        String eventName = String.valueOf(event.getOrDefault("event", "message"));
+        if ("final".equals(eventName)) {
+            return finalizeTurn(sessionId, turnId, turn, event)
+                    .doOnNext(emitted -> {
+                        if (isTerminalEvent(emitted)) {
+                            terminal.set(true);
+                        }
+                    });
+        }
+        if ("error".equals(eventName)) {
+            terminal.set(true);
+            chatTurnFinalizer.markTurnFailed(
+                    turn.getId(),
+                    String.valueOf(event.getOrDefault("code", "INTERNAL_STREAM_ERROR")));
+        }
+        return Flux.just(event);
+    }
+
+    private Flux<Map<String, Object>> finalizeTurn(
+            Long sessionId,
+            String turnId,
+            ChatTurn turn,
+            Map<String, Object> finalEvent) {
+        ChatTurnFinalizer.FinalizeResult result = null;
+        AiSseFinalPayload payload = null;
+        try {
+            payload = objectMapper.convertValue(finalEvent, AiSseFinalPayload.class);
+            payload.validateForTurn(turnId);
+            result = chatTurnFinalizer.persistAiAndCompleteTurn(turn.getId(), payload);
+
+            PersistedEventPayload persisted;
+            if (result.initialTicketStatus() == ChatTurn.TicketStatus.PENDING) {
+                ChatTurnReconciliationService.ReconcileResult reconciliation =
+                        chatTurnReconciliationService.reconcile(turn.getId(), sessionId);
+                persisted = reconciliation.payload();
+                if (persisted == null) {
+                    ChatTurn updated = chatTurnRepository.findById(turn.getId()).orElseThrow();
+                    persisted = PersistedEventPayload.fromJson(updated.getPersistedPayload());
+                }
+            } else {
+                persisted = new PersistedEventPayload(
+                        turnId,
+                        result.aiMessageId(),
+                        ChatTurn.TicketStatus.NOT_NEEDED.name(),
+                        null,
+                        null,
+                        null,
+                        payload.redFlagDetected());
+                chatTurnFinalizer.recordPersistedPayload(
+                        turn.getId(),
+                        ChatTurn.TicketStatus.NOT_NEEDED,
+                        null,
+                        persisted);
+            }
+            if (persisted == null) {
+                throw new IllegalStateException("Persisted payload is missing");
+            }
+            Map<String, Object> persistedEvent = new HashMap<>();
+            persistedEvent.put("event", "persisted");
+            persistedEvent.put("turn_id", turnId);
+            persistedEvent.put("ticket_status", persisted.ticketStatus());
+            persistedEvent.put("ticket_id", persisted.ticketId());
+            persistedEvent.put("specialty_code", persisted.specialtyCode());
+            persistedEvent.put("specialty_name", persisted.specialtyName());
+            persistedEvent.put("red_flag_detected", persisted.redFlagDetected());
+            persistedEvent.put("ai_message_id", persisted.aiMessageId());
+            return Flux.just(finalEvent, persistedEvent);
+        } catch (Exception error) {
+            if (result != null || chatTurnRepository.findById(turn.getId())
+                    .map(existing -> existing.getStatus() == ChatTurn.TurnStatus.COMPLETED)
+                    .orElse(false)) {
+                String aiMessageId = result == null
+                        ? chatMessageRepository.findAiMessageIdBySessionIdAndTurnId(sessionId, turnId).orElse(null)
+                        : result.aiMessageId();
+                chatTurnFinalizer.markReconcileFailed(
+                        turn.getId(),
+                        classifyTicketFailure(error),
+                        aiMessageId,
+                        payload != null && payload.redFlagDetected(),
+                        normalizeErrorCode(error));
+            } else {
+                chatTurnFinalizer.markTurnFailed(turn.getId(), "FINALIZATION_FAILED");
+            }
+            return Flux.just(errorEvent(turnId, "FINALIZATION_FAILED", error.getMessage()));
+        }
+    }
+
+    private Flux<Map<String, Object>> handleStreamError(
+            ChatTurn turn,
+            String turnId,
+            AtomicBoolean terminal,
+            Throwable error) {
+        if (!terminal.compareAndSet(false, true)) {
+            return Flux.empty();
+        }
+        String code = isTimeout(error) ? "STREAM_TIMEOUT" : "INTERNAL_STREAM_ERROR";
+        chatTurnFinalizer.markTurnFailed(turn.getId(), code);
+        return Flux.just(errorEvent(turnId, code, error.getMessage()));
+    }
+
+    private Map<String, Object> errorEvent(String turnId, String code, String message) {
+        Map<String, Object> event = new HashMap<>();
+        event.put("event", "error");
+        event.put("turn_id", turnId);
+        event.put("code", code);
+        event.put("message", message == null ? code : message);
+        return event;
+    }
+
+    private boolean isTerminalEvent(Map<String, Object> event) {
+        String name = String.valueOf(event.getOrDefault("event", ""));
+        return "persisted".equals(name) || "error".equals(name);
+    }
+
+    private boolean isTimeout(Throwable error) {
+        for (Throwable current = error; current != null; current = current.getCause()) {
+            if (current instanceof TimeoutException
+                    || current.getClass().getSimpleName().contains("Timeout")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ChatTurn.TicketStatus classifyTicketFailure(Exception error) {
+        return error instanceof org.springframework.dao.TransientDataAccessException
+                ? ChatTurn.TicketStatus.FAILED_RETRYABLE
+                : ChatTurn.TicketStatus.FAILED_PERMANENT;
+    }
+
+    private String normalizeErrorCode(Exception error) {
+        if (error instanceof ContractViolationException) {
+            return "CONTRACT_VIOLATION";
+        }
+        return isTimeout(error) ? "TIMEOUT" : "FINALIZATION_FAILED";
     }
 
 
@@ -309,17 +537,38 @@ public class ChatServiceImpl implements ChatService {
         // 2. Get from Redis (Hot Storage)
         List<Object> redisMsgs = redisTemplate.opsForList().range("chat:session:" + sessionId, 0, -1);
         if (redisMsgs != null) {
+            java.util.Set<String> seen = history.stream()
+                    .map(this::historyKey)
+                    .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
             for (Object obj : redisMsgs) {
                 try {
                     ChatMessageDTO dto = objectMapper.convertValue(obj, ChatMessageDTO.class);
-                    history.add(dto);
+                    if (seen.add(historyKey(dto))) {
+                        history.add(dto);
+                    }
                 } catch (Exception e) {
                     log.warn("Failed to parse message from Redis", e);
                 }
             }
         }
-        
+        history.sort(java.util.Comparator.comparing(
+                ChatMessageDTO::getCreatedAt,
+                java.util.Comparator.nullsLast(java.util.Comparator.naturalOrder())));
         return history;
+    }
+
+    private String historyKey(ChatMessageDTO message) {
+        if (message.getLegacyRedisId() != null) {
+            return "legacy:" + message.getLegacyRedisId();
+        }
+        if (message.getId() != null) {
+            return "db:" + message.getId();
+        }
+        return String.join("|",
+                String.valueOf(message.getSessionId()),
+                String.valueOf(message.getTurnId()),
+                String.valueOf(message.getSenderType()),
+                String.valueOf(message.getContent()));
     }
 
     @Override
@@ -340,6 +589,27 @@ public class ChatServiceImpl implements ChatService {
     @Override
     @Transactional
     public ChatSession createSession(Long userId, ChatSession.SessionType type, String title) {
+        ChatSession savedSession = createSessionWithoutGreeting(userId, type, title);
+
+        if (type == ChatSession.SessionType.TRIAGE) {
+            String greeting = "Ch\u00e0o b\u1ea1n! T\u00f4i l\u00e0 tr\u1ee3 l\u00fd AI c\u1ee7a CareTriage. T\u00f4i c\u00f3 th\u1ec3 gi\u00fap b\u1ea1n s\u01a1 ch\u1ea9n c\u00e1c tri\u1ec7u ch\u1ee9ng s\u1ee9c kh\u1ecfe ngay b\u00e2y gi\u1edd. B\u1ea1n \u0111ang g\u1eb7p v\u1ea5n \u0111\u1ec1 g\u00ec ho\u1eb7c mu\u1ed1n t\u01b0 v\u1ea5n v\u1ec1 tri\u1ec7u ch\u1ee9ng n\u00e0o?";
+            ChatMessage systemGreeting = ChatMessage.builder()
+                    .chatSession(savedSession)
+                    .content(greeting)
+                    .senderType(ChatMessage.SenderType.AI)
+                    .build();
+            chatMessageRepository.save(systemGreeting);
+            savedSession.setLastMessageContent(greeting);
+            savedSession.setLastMessageTime(java.time.LocalDateTime.now());
+            chatSessionRepository.save(savedSession);
+        }
+        return savedSession;
+    }
+
+    private ChatSession createSessionWithoutGreeting(
+            Long userId,
+            ChatSession.SessionType type,
+            String title) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
@@ -349,28 +619,15 @@ public class ChatServiceImpl implements ChatService {
                 .title(title)
                 .status(ChatSession.SessionStatus.ACTIVE)
                 .build();
+        return chatSessionRepository.save(session);
+    }
 
-        ChatSession savedSession = chatSessionRepository.save(session);
-
-        // Scenario 1: Gửi lời chào tự động nếu là phiên Triage
-        if (type == ChatSession.SessionType.TRIAGE) {
-            String greeting = "Chào bạn! Tôi là trợ lý AI của CareTriage. Tôi có thể giúp bạn sơ chẩn các triệu chứng sức khỏe ngay bây giờ. Bạn đang gặp vấn đề gì hoặc muốn tư vấn về triệu chứng nào?";
-            
-            ChatMessage systemGreeting = ChatMessage.builder()
-                    .chatSession(savedSession)
-                    .content(greeting)
-                    .senderType(ChatMessage.SenderType.AI)
-                    .build();
-            
-            chatMessageRepository.save(systemGreeting);
-            
-            // Cập nhật last message cho greeting
-            savedSession.setLastMessageContent(greeting);
-            savedSession.setLastMessageTime(java.time.LocalDateTime.now());
-            chatSessionRepository.save(savedSession);
+    private String normalizeTitle(String rawTitle) {
+        String normalized = rawTitle == null ? "" : rawTitle.replaceAll("\\s+", " ").trim();
+        if (normalized.isEmpty()) {
+            return "T\u01b0 v\u1ea5n s\u1ee9c kh\u1ecfe";
         }
-
-        return savedSession;
+        return normalized.length() <= 60 ? normalized : normalized.substring(0, 60);
     }
 
     @Override
@@ -391,30 +648,11 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     @Transactional
-    public void updateSessionTitle(Long sessionId, String title) {
+    public ChatSession updateSessionTitle(Long sessionId, String title) {
         ChatSession session = chatSessionRepository.findById(sessionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
         session.setTitle(title);
-        chatSessionRepository.save(session);
-    }
-
-    private Map<String, Object> extractAttachmentContext(byte[] fileBytes, String originalFilename, String mimeType) {
-        MultipartBodyBuilder builder = new MultipartBodyBuilder();
-        builder.part("file", new ByteArrayResource(fileBytes) {
-            @Override
-            public String getFilename() {
-                return originalFilename;
-            }
-        }).contentType(MediaType.parseMediaType(mimeType));
-
-        Object response = webClientBuilder.build()
-                .post()
-                .uri(aiServiceUrl + "/api/ehr/extract-file")
-                .body(BodyInserters.fromMultipartData(builder.build()))
-                .retrieve()
-                .bodyToMono(Object.class)
-                .block();
-        return asStringObjectMap(response);
+        return chatSessionRepository.save(session);
     }
 
     private String normalizeMimeType(String mimeType, String originalFilename) {
@@ -425,27 +663,17 @@ public class ChatServiceImpl implements ChatService {
         String lower = originalFilename == null ? "" : originalFilename.toLowerCase();
         if (lower.endsWith(".pdf")) return "application/pdf";
         if (lower.endsWith(".docx")) return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        if (lower.endsWith(".png")) return "image/png";
-        if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) return "image/jpeg";
-        if (lower.endsWith(".webp")) return "image/webp";
-        if (lower.endsWith(".gif")) return "image/gif";
         if (lower.endsWith(".txt")) return "text/plain";
         return "application/octet-stream";
     }
 
     private boolean isSupportedAttachment(String mimeType, String originalFilename) {
         String lower = originalFilename == null ? "" : originalFilename.toLowerCase();
-        return mimeType.startsWith("image/")
-                || "application/pdf".equals(mimeType)
+        return "application/pdf".equals(mimeType)
                 || "application/vnd.openxmlformats-officedocument.wordprocessingml.document".equals(mimeType)
                 || "text/plain".equals(mimeType)
                 || lower.endsWith(".pdf")
                 || lower.endsWith(".docx")
-                || lower.endsWith(".png")
-                || lower.endsWith(".jpg")
-                || lower.endsWith(".jpeg")
-                || lower.endsWith(".webp")
-                || lower.endsWith(".gif")
                 || lower.endsWith(".txt");
     }
 
@@ -469,8 +697,8 @@ public class ChatServiceImpl implements ChatService {
             extractedText = extractedText.substring(0, 4000) + "...";
         }
 
-        return "Tài liệu đính kèm: " + attachment.getOriginalFilename()
-                + "\nNội dung trích xuất:\n" + extractedText;
+        return "T\u00e0i li\u1ec7u \u0111\u00ednh k\u00e8m: " + attachment.getOriginalFilename()
+                + "\nN\u1ed9i dung tr\u00edch xu\u1ea5t:\n" + extractedText;
     }
 
     private Map<String, String> toAttachmentHistoryEntry(ChatAttachment attachment) {
@@ -520,84 +748,6 @@ public class ChatServiceImpl implements ChatService {
                 .build();
     }
 
-    @Override
-    @Transactional
-    public Map<String, Object> completeTriage(Long userId, Long sessionId, Boolean forceSubmit) {
-        ChatSession session = chatSessionRepository.findById(sessionId)
-                .orElseThrow(() -> new ResourceNotFoundException("ChatSession not found"));
-
-        if (!session.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized access to chat session");
-        }
-
-        // Get chat history
-        List<ChatMessage> historyMessages = chatMessageRepository.findByChatSessionIdOrderByCreatedAtAsc(sessionId);
-        List<Map<String, String>> history = historyMessages.stream()
-                .map(m -> {
-                    Map<String, String> entry = new HashMap<>();
-                    entry.put("role", m.getSenderType() == ChatMessage.SenderType.USER ? "user" : "model");
-                    entry.put("content", m.getContent());
-                    return entry;
-                })
-                .collect(Collectors.toList());
-
-        List<Map<String, String>> attachmentHistory = chatAttachmentRepository
-                .findByChatSessionIdAndExtractionStatusOrderByCreatedAtAsc(sessionId, ChatAttachment.ExtractionStatus.COMPLETED)
-                .stream()
-                .map(this::toAttachmentHistoryEntry)
-                .collect(Collectors.toList());
-        if (!attachmentHistory.isEmpty()) {
-            history.addAll(0, attachmentHistory);
-        }
-
-        // Pass last user message to recommend
-        String lastUserMessage = historyMessages.stream()
-                .filter(m -> m.getSenderType() == ChatMessage.SenderType.USER)
-                .map(ChatMessage::getContent)
-                .reduce((first, second) -> second)
-                .orElse("Nhận khuyến nghị sơ chẩn sức khỏe.");
-
-        // Call AI Service /recommend
-        Map<String, Object> aiResponse = aiClientService.getRecommendation(sessionId.toString(), lastUserMessage, history);
-
-        Boolean recommendationReady = Boolean.TRUE.equals(aiResponse.get("recommendation_ready"));
-        Boolean intakeComplete = Boolean.TRUE.equals(aiResponse.get("intake_complete"));
-
-        Map<String, Object> result = new HashMap<>();
-        result.put("recommendation_ready", recommendationReady);
-        result.put("intake_complete", intakeComplete);
-        result.put("missing_information", aiResponse.getOrDefault("missing_information", List.of()));
-        result.put("reply", aiResponse.get("reply"));
-
-        // If forceSubmit is true or recommendationReady is true, create/update ticket
-        if (Boolean.TRUE.equals(recommendationReady) || Boolean.TRUE.equals(forceSubmit)) {
-            // Save AI recommendation message into the chat session
-            ChatMessage aiRecMessage = ChatMessage.builder()
-                    .chatSession(session)
-                    .content(String.valueOf(aiResponse.get("reply")))
-                    .senderType(ChatMessage.SenderType.AI)
-                    .metadata(serializeJson(aiResponse))
-                    .build();
-            chatMessageRepository.save(aiRecMessage);
-
-            // Create or update TriageTicket
-            TriageTicket ticket = createOrUpdateTriageTicket(session, aiResponse, historyMessages);
-            
-            // Convert ticket to simplified map response
-            Map<String, Object> ticketInfo = new HashMap<>();
-            ticketInfo.put("ticketNumber", ticket.getTicketNumber());
-            ticketInfo.put("status", ticket.getStatus().name());
-            ticketInfo.put("priority", ticket.getPriority().name());
-            ticketInfo.put("severity", ticket.getSeverity().name());
-            ticketInfo.put("title", ticket.getTitle());
-            ticketInfo.put("description", ticket.getDescription());
-            
-            result.put("ticket", ticketInfo);
-        }
-
-        return result;
-    }
-
     private String serializeJson(Object obj) {
         try {
             return objectMapper.writeValueAsString(obj);
@@ -616,12 +766,12 @@ public class ChatServiceImpl implements ChatService {
                 : buildConversationSummary(historyMessages);
 
         String urgency = String.valueOf(triageResult.getOrDefault("urgency_level", "MEDIUM"));
-        String suggestedDepartment = String.valueOf(triageResult.getOrDefault("suggested_department", "Nội tổng quát"));
+        String suggestedDepartment = String.valueOf(triageResult.getOrDefault("suggested_department", "N\u1ed9i t\u1ed5ng qu\u00e1t"));
 
         TriageTicket.Priority priority = mapPriority(urgency);
         TriageTicket.Severity severity = mapSeverity(urgency);
 
-        // Tự động kiểm tra xem có tài liệu nào bị lỗi phân tích OCR hay không để đánh dấu khẩn cấp
+        // T\u1ef1 \u0111\u1ed9ng ki\u1ec3m tra xem c\u00f3 t\u00e0i li\u1ec7u n\u00e0o b\u1ecb l\u1ed7i ph\u00e2n t\u00edch OCR hay kh\u00f4ng \u0111\u1ec3 \u0111\u00e1nh d\u1ea5u kh\u1ea9n c\u1ea5p
         List<ChatAttachment> attachments = chatAttachmentRepository.findByChatSessionIdOrderByCreatedAtAsc(session.getId());
         boolean hasFailedAttachment = attachments.stream()
                 .anyMatch(a -> a.getExtractionStatus() == ChatAttachment.ExtractionStatus.FAILED);
@@ -631,7 +781,7 @@ public class ChatServiceImpl implements ChatService {
             severity = TriageTicket.Severity.MAJOR;
             triageResult.put("red_flag_detected", true);
             triageResult.put("attachment_extraction_failed", true);
-            triageResult.put("system_alert_note", "Có tài liệu y khoa đính kèm phân tích thất bại. Cần bác sĩ kiểm tra thủ công.");
+            triageResult.put("system_alert_note", "C\u00f3 t\u00e0i li\u1ec7u y khoa \u0111\u00ednh k\u00e8m ph\u00e2n t\u00edch th\u1ea5t b\u1ea1i. C\u1ea7n b\u00e1c s\u0129 ki\u1ec3m tra th\u1ee7 c\u00f4ng.");
         }
 
         TriageTicket ticket;
@@ -642,7 +792,7 @@ public class ChatServiceImpl implements ChatService {
             try {
                 aiSnapshotStr = objectMapper.writeValueAsString(triageResult);
             } catch (Exception e) {
-                log.warn("Failed to serialize AI analysis result for snapshot: {}", e.getMessage());
+                log.warn("Failed to serialize AI analysis result for snapshot: {}", e.getClass().getSimpleName());
             }
 
             ticket = TriageTicket.builder()
@@ -747,7 +897,7 @@ public class ChatServiceImpl implements ChatService {
         // Complete the ChatSession
         session.setStatus(ChatSession.SessionStatus.COMPLETED);
 
-        // TÍCH HỢP REDIS: Xả toàn bộ tin nhắn từ Redis xuống MySQL (Hot -> Cold)
+        // T\u00cdCH H\u1ee2P REDIS: X\u1ea3 to\u00e0n b\u1ed9 tin nh\u1eafn t\u1eeb Redis xu\u1ed1ng MySQL (Hot -> Cold)
         List<Object> redisMsgs = redisTemplate.opsForList().range("chat:session:" + session.getId(), 0, -1);
         if (redisMsgs != null && !redisMsgs.isEmpty()) {
             List<ChatMessage> entitiesToSave = redisMsgs.stream()
@@ -762,7 +912,7 @@ public class ChatServiceImpl implements ChatService {
                         .build();
                 }).collect(Collectors.toList());
             chatMessageRepository.saveAll(entitiesToSave);
-            redisTemplate.delete("chat:session:" + session.getId()); // Xóa khỏi Redis
+            redisTemplate.delete("chat:session:" + session.getId()); // X\u00f3a kh\u1ecfi Redis
             log.info("Flushed {} messages from Redis to MySQL for session {}", entitiesToSave.size(), session.getId());
         }
 
@@ -838,5 +988,22 @@ public class ChatServiceImpl implements ChatService {
             case "MEDIUM" -> TriageTicket.Severity.MINOR;
             default -> TriageTicket.Severity.COSMETIC;
         };
+    }
+
+    @Override
+    public boolean isConstraintViolation(Throwable error, String constraintName) {
+        String expected = constraintName.toLowerCase(Locale.ROOT);
+        for (Throwable current = error; current != null; current = current.getCause()) {
+            if (current instanceof ConstraintViolationException violation
+                    && violation.getConstraintName() != null
+                    && violation.getConstraintName().equalsIgnoreCase(constraintName)) {
+                return true;
+            }
+            if (current.getMessage() != null
+                    && current.getMessage().toLowerCase(Locale.ROOT).contains(expected)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

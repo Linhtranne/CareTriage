@@ -25,3 +25,12 @@ app:
 
   ai-service:
     internal-api-key: Z9jzNTEwSMh4hQBsHLi0RBsW5fl995ZNOYEMHMckE4E=
+
+  ai:
+    runtime: python
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model-name: ${GEMINI_MODEL_NAME:gemini-2.5-pro}
+      embedding-model-name: ${GEMINI_EMBEDDING_MODEL:text-embedding-004}
+      temperature: 0.1
+      timeout-seconds: 60

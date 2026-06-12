@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
+﻿import { Box, Container, Typography, Grid, Button, Paper } from '@mui/material'
 import { motion, type Variants } from 'framer-motion'
 import { FileText, Database, Share2, ArrowRight, ShieldCheck, Search, Clock, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -32,7 +32,7 @@ export default function EHREngine() {
       }}>
         <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={8} alignItems="center">
-            <Grid item xs={12} lg={6}>
+            <Grid size={{ xs: 12, lg: 6 }} >
               <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
                 <motion.div variants={fadeUp}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -97,7 +97,7 @@ export default function EHREngine() {
             </Grid>
 
             {/* Live Scanning Simulation Mockup */}
-            <Grid item xs={12} lg={6}>
+            <Grid size={{ xs: 12, lg: 6 }} >
               <motion.div
                 initial={{ opacity: 0, x: 50 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -175,7 +175,7 @@ export default function EHREngine() {
         <Container maxWidth="xl">
           <Grid container spacing={4}>
             {/* NER Detection - Large Bento */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, height: '100%', borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
@@ -195,7 +195,7 @@ export default function EHREngine() {
                 </Box>
                 <Grid container spacing={3}>
                   {[t('ehr_engine_page.feat_ner_tag1'), t('ehr_engine_page.feat_ner_tag2'), t('ehr_engine_page.feat_ner_tag3')].map((tag) => (
-                    <Grid item key={tag}>
+                    <Grid size={{  }} key={tag}>
                       <Box sx={{ px: 3, py: 1, borderRadius: '100px', border: '1px solid #e2e8f0', color: 'text.primary', fontWeight: 700, fontSize: '0.875rem' }}>
                         {tag}
                       </Box>
@@ -206,7 +206,7 @@ export default function EHREngine() {
             </Grid>
 
             {/* Standards - Drenched Bento */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 6 }, height: '100%', borderRadius: '40px',
                 background: 'primary.900', color: 'background.paper',
@@ -233,14 +233,14 @@ export default function EHREngine() {
             </Grid>
 
             {/* Patient Timeline - Horizontal Horizontal */}
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
                 transition: 'all 0.4s ease', '&:hover': { transform: 'translateY(-10px)', borderColor: '#08bba3' }
               }}>
                 <Grid container spacing={8} alignItems="center">
-                  <Grid item xs={12} md={5}>
+                  <Grid size={{ xs: 12, md: 5 }} >
                     <Box sx={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(8, 187, 163, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#08bba3', mb: 4 }}>
                       <Clock size={32} />
                     </Box>
@@ -251,7 +251,7 @@ export default function EHREngine() {
                       {t('ehr_engine_page.feat_timeline_desc')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={7}>
+                  <Grid size={{ xs: 12, md: 7 }} >
                     <Box sx={{ p: 4, background: 'background.default', borderRadius: '32px', border: '1px solid #e2e8f0' }}>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                         {[
@@ -301,7 +301,7 @@ export default function EHREngine() {
               { icon: <ShieldCheck />, title: t('ehr_engine_page.process_step_3_title'), desc: t('ehr_engine_page.process_step_3_desc') },
               { icon: <Zap />, title: t('ehr_engine_page.process_step_4_title'), desc: t('ehr_engine_page.process_step_4_desc') },
             ].map((step, idx) => (
-              <Grid item xs={12} sm={6} md={3} key={idx}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
                 <Box sx={{ textAlign: 'center', position: 'relative' }}>
                   <Box sx={{ 
                     width: 80, height: 80, borderRadius: '50%', background: 'background.default',

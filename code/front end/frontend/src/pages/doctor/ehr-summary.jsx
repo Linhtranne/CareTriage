@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import {
   Typography,
   Box,
@@ -70,7 +70,7 @@ export default function EHRSummary() {
         setSummary(summaryData);
         setNotes(notesData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
       } catch (err) {
-        setError('Không thể tải tóm tắt bệnh án EHR của bệnh nhân. Vui lòng thử lại sau.');
+        setError('KhÃ´ng thá»ƒ táº£i tÃ³m táº¯t bá»‡nh Ã¡n EHR cá»§a bá»‡nh nhÃ¢n. Vui lÃ²ng thá»­ láº¡i sau.');
         console.error(err);
       } finally {
         setLoading(false);
@@ -119,7 +119,7 @@ export default function EHRSummary() {
     } catch (err) {
       setNoteEntitiesCache(prev => ({
         ...prev,
-        [noteId]: { entities: [], loading: false, error: 'Không thể tải chi tiết thực thể y khoa.' }
+        [noteId]: { entities: [], loading: false, error: 'KhÃ´ng thá»ƒ táº£i chi tiáº¿t thá»±c thá»ƒ y khoa.' }
       }));
       console.error(err);
     }
@@ -176,7 +176,7 @@ export default function EHRSummary() {
   };
 
   const formatDate = (dateStr) => {
-    if (!dateStr) return 'Chưa xác định';
+    if (!dateStr) return 'ChÆ°a xÃ¡c Ä‘á»‹nh';
     return new Date(dateStr).toLocaleDateString('vi-VN', {
       year: 'numeric',
       month: '2-digit',
@@ -186,13 +186,13 @@ export default function EHRSummary() {
 
   if (loading) {
     return (
-      <PatientPageShell title="EHR Summary" description="Đang tải tóm tắt hồ sơ bệnh án..." maxWidth="xl" transparent>
+      <PatientPageShell title="EHR Summary" description="Äang táº£i tÃ³m táº¯t há»“ sÆ¡ bá»‡nh Ã¡n..." maxWidth="xl" transparent>
         <Grid container spacing={3}>
-          <Grid item xs={12} md={7}>
+          <Grid size={{ xs: 12, md: 7 }} >
             <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 6, mb: 3 }} />
             <Skeleton variant="rectangular" height={500} sx={{ borderRadius: 6 }} />
           </Grid>
-          <Grid item xs={12} md={5}>
+          <Grid size={{ xs: 12, md: 5 }} >
             <Stack spacing={3}>
               {[1, 2, 3].map(i => <Skeleton key={i} variant="rectangular" height={180} sx={{ borderRadius: 6 }} />)}
             </Stack>
@@ -204,12 +204,12 @@ export default function EHRSummary() {
 
   if (error) {
     return (
-      <PatientPageShell title="EHR Summary" description="Lỗi hệ thống" maxWidth="xl" transparent>
+      <PatientPageShell title="EHR Summary" description="Lá»—i há»‡ thá»‘ng" maxWidth="xl" transparent>
         <Box sx={{ py: 10, textAlign: 'center' }}>
           <AlertCircle size={64} color="#f43f5e" />
           <Typography variant="h5" sx={{ mt: 2, fontWeight: 700 }}>{error}</Typography>
           <Button variant="contained" sx={{ mt: 3, borderRadius: 3, bgcolor: 'oklch(60% 0.18 160)' }} onClick={() => window.location.reload()}>
-            Thử lại
+            Thá»­ láº¡i
           </Button>
         </Box>
       </PatientPageShell>
@@ -219,7 +219,7 @@ export default function EHRSummary() {
   return (
     <PatientPageShell
       title={`EHR Summary - ${summary?.patientName}`}
-      description="Tổng quan tóm tắt lâm sàng và lịch sử hồ sơ bệnh án AI"
+      description="Tá»•ng quan tÃ³m táº¯t lÃ¢m sÃ ng vÃ  lá»‹ch sá»­ há»“ sÆ¡ bá»‡nh Ã¡n AI"
       maxWidth="xl"
       transparent={true}
     >
@@ -230,9 +230,9 @@ export default function EHRSummary() {
             onClick={() => navigate('/doctor/ehr/search')} 
             sx={{ display: 'flex', alignItems: 'center', color: 'text.secondary', textDecoration: 'none', gap: 0.5, fontWeight: 600, border: 0, bgcolor: 'transparent', cursor: 'pointer' }}
           >
-            <ChevronLeft size={16} /> Tìm kiếm EHR
+            <ChevronLeft size={16} /> TÃ¬m kiáº¿m EHR
           </Link>
-          <Typography color="text.primary" sx={{ fontWeight: 600 }}>Tóm tắt bệnh án bệnh nhân</Typography>
+          <Typography color="text.primary" sx={{ fontWeight: 600 }}>TÃ³m táº¯t bá»‡nh Ã¡n bá»‡nh nhÃ¢n</Typography>
         </Breadcrumbs>
         
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={2}>
@@ -241,7 +241,7 @@ export default function EHRSummary() {
               {summary?.patientName}
             </Typography>
             <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>
-              Mã số bệnh nhân: #{summary?.patientId}
+              MÃ£ sá»‘ bá»‡nh nhÃ¢n: #{summary?.patientId}
             </Typography>
           </Box>
           <Button
@@ -265,21 +265,21 @@ export default function EHRSummary() {
               }
             }}
           >
-            Nhập ghi chú lâm sàng mới
+            Nháº­p ghi chÃº lÃ¢m sÃ ng má»›i
           </Button>
         </Stack>
       </Box>
 
       <Grid container spacing={4}>
         {/* Left Column: Chronological Clinical Notes Accordion List */}
-        <Grid item xs={12} md={7}>
+        <Grid size={{ xs: 12, md: 7 }} >
           <Typography variant="h5" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 160)', mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-            <FileText size={22} color="oklch(60% 0.18 160)" /> Lịch sử ghi chú lâm sàng ({notes.length})
+            <FileText size={22} color="oklch(60% 0.18 160)" /> Lá»‹ch sá»­ ghi chÃº lÃ¢m sÃ ng ({notes.length})
           </Typography>
 
           {notes.length === 0 ? (
             <Paper sx={{ p: 6, borderRadius: 6, textAlign: 'center', bgcolor: 'oklch(100% 0 0 / 0.15)', backdropFilter: 'blur(20px)', border: '1px solid oklch(100% 0 0 / 0.1)' }}>
-              <Typography sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>Chưa có ghi chú lâm sàng nào được trích xuất cho bệnh nhân này.</Typography>
+              <Typography sx={{ color: 'oklch(50% 0.02 160)', fontWeight: 600 }}>ChÆ°a cÃ³ ghi chÃº lÃ¢m sÃ ng nÃ o Ä‘Æ°á»£c trÃ­ch xuáº¥t cho bá»‡nh nhÃ¢n nÃ y.</Typography>
             </Paper>
           ) : (
             <Stack spacing={2}>
@@ -313,11 +313,11 @@ export default function EHRSummary() {
                       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ width: '100%', pr: 1 }}>
                         <Stack spacing={0.5}>
                           <Typography sx={{ fontWeight: 800, fontSize: '1.05rem', color: 'oklch(20% 0.05 160)' }}>
-                            {note.noteType === 'ADMISSION' ? 'Ghi chú nhập viện' :
-                             note.noteType === 'PROGRESS' ? 'Ghi chú tiến triển' :
-                             note.noteType === 'DISCHARGE' ? 'Ghi chú xuất viện' :
-                             note.noteType === 'CONSULTATION' ? 'Ghi chú hội chẩn' :
-                             note.noteType === 'PRESCRIPTION' ? 'Ghi chú đơn thuốc' : note.noteType}
+                            {note.noteType === 'ADMISSION' ? 'Ghi chÃº nháº­p viá»‡n' :
+                             note.noteType === 'PROGRESS' ? 'Ghi chÃº tiáº¿n triá»ƒn' :
+                             note.noteType === 'DISCHARGE' ? 'Ghi chÃº xuáº¥t viá»‡n' :
+                             note.noteType === 'CONSULTATION' ? 'Ghi chÃº há»™i cháº©n' :
+                             note.noteType === 'PRESCRIPTION' ? 'Ghi chÃº Ä‘Æ¡n thuá»‘c' : note.noteType}
                           </Typography>
                           <Stack direction="row" spacing={2} alignItems="center">
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'oklch(50% 0.02 160)' }}>
@@ -325,7 +325,7 @@ export default function EHRSummary() {
                               <Typography variant="caption" sx={{ fontWeight: 600 }}>{formatDate(note.createdAt)}</Typography>
                             </Box>
                             <Chip 
-                              label={`${note.entityCount} thực thể`}
+                              label={`${note.entityCount} thá»±c thá»ƒ`}
                               size="small"
                               sx={{ height: 20, fontSize: '0.7rem', fontWeight: 800, bgcolor: 'oklch(100% 0 0 / 0.1)', color: 'oklch(30% 0.05 160)' }}
                             />
@@ -364,7 +364,7 @@ export default function EHRSummary() {
                                         {segment.entity.entityType}
                                       </Typography>
                                       <Typography variant="caption" sx={{ display: 'block' }}>
-                                        Độ tin cậy: {(segment.entity.confidenceScore * 100).toFixed(1)}%
+                                        Äá»™ tin cáº­y: {(segment.entity.confidenceScore * 100).toFixed(1)}%
                                       </Typography>
                                     </Box>
                                   }
@@ -420,17 +420,17 @@ export default function EHRSummary() {
         </Grid>
 
         {/* Right Column: Consolidated Clinical Profile Islands */}
-        <Grid item xs={12} md={5}>
+        <Grid size={{ xs: 12, md: 5 }} >
           <Stack spacing={4}>
             {/* 1. Active Conditions */}
             <Paper sx={{ p: 3, borderRadius: 6, border: '1px solid oklch(100% 0 0 / 0.15)', bgcolor: 'oklch(100% 0 0 / 0.1)', backdropFilter: 'blur(35px)', boxShadow: 'none' }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 160)', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Activity size={20} color="oklch(60% 0.18 160)" /> Chẩn đoán & Bệnh lý ({summary?.activeConditions?.length || 0})
+                <Activity size={20} color="oklch(60% 0.18 160)" /> Cháº©n Ä‘oÃ¡n & Bá»‡nh lÃ½ ({summary?.activeConditions?.length || 0})
               </Typography>
               <Divider sx={{ mb: 2, borderColor: 'oklch(100% 0 0 / 0.05)' }} />
 
               {(!summary?.activeConditions || summary.activeConditions.length === 0) ? (
-                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>Không ghi nhận bệnh lý active.</Typography>
+                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>KhÃ´ng ghi nháº­n bá»‡nh lÃ½ active.</Typography>
               ) : (
                 <Stack spacing={2}>
                   {summary.activeConditions.map((c) => (
@@ -439,7 +439,7 @@ export default function EHRSummary() {
                         <Box>
                           <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', color: 'oklch(20% 0.05 160)' }}>{c.conditionName}</Typography>
                           <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block', mt: 0.5, fontWeight: 600 }}>
-                            Chẩn đoán ngày: {formatDate(c.diagnosedDate)}
+                            Cháº©n Ä‘oÃ¡n ngÃ y: {formatDate(c.diagnosedDate)}
                           </Typography>
                         </Box>
                         <Stack direction="row" spacing={0.5}>
@@ -466,12 +466,12 @@ export default function EHRSummary() {
             {/* 2. Active Medications */}
             <Paper sx={{ p: 3, borderRadius: 6, border: '1px solid oklch(100% 0 0 / 0.15)', bgcolor: 'oklch(100% 0 0 / 0.1)', backdropFilter: 'blur(35px)', boxShadow: 'none' }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 160)', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Pill size={20} color="oklch(60% 0.18 160)" /> Thuốc đang sử dụng ({summary?.activeMedications?.length || 0})
+                <Pill size={20} color="oklch(60% 0.18 160)" /> Thuá»‘c Ä‘ang sá»­ dá»¥ng ({summary?.activeMedications?.length || 0})
               </Typography>
               <Divider sx={{ mb: 2, borderColor: 'oklch(100% 0 0 / 0.05)' }} />
 
               {(!summary?.activeMedications || summary.activeMedications.length === 0) ? (
-                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>Không có đơn thuốc active nào được ghi nhận.</Typography>
+                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>KhÃ´ng cÃ³ Ä‘Æ¡n thuá»‘c active nÃ o Ä‘Æ°á»£c ghi nháº­n.</Typography>
               ) : (
                 <Stack spacing={2}>
                   {summary.activeMedications.map((m) => (
@@ -486,16 +486,16 @@ export default function EHRSummary() {
                         />
                       </Stack>
                       <Grid container spacing={1}>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block' }}>Liều lượng</Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{m.dosage || 'Không có'}</Typography>
+                        <Grid size={6} >
+                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block' }}>Liá»u lÆ°á»£ng</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{m.dosage || 'KhÃ´ng cÃ³'}</Typography>
                         </Grid>
-                        <Grid item xs={6}>
-                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block' }}>Tần suất</Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{m.frequency || 'Không có'}</Typography>
+                        <Grid size={6} >
+                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block' }}>Táº§n suáº¥t</Typography>
+                          <Typography variant="body2" sx={{ fontWeight: 700 }}>{m.frequency || 'KhÃ´ng cÃ³'}</Typography>
                         </Grid>
-                        <Grid item xs={12}>
-                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block', mt: 0.5 }}>Ngày bắt đầu</Typography>
+                        <Grid size={12} >
+                          <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block', mt: 0.5 }}>NgÃ y báº¯t Ä‘áº§u</Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>{formatDate(m.startDate)}</Typography>
                         </Grid>
                       </Grid>
@@ -508,12 +508,12 @@ export default function EHRSummary() {
             {/* 3. Recent Symptoms */}
             <Paper sx={{ p: 3, borderRadius: 6, border: '1px solid oklch(100% 0 0 / 0.15)', bgcolor: 'oklch(100% 0 0 / 0.1)', backdropFilter: 'blur(35px)', boxShadow: 'none' }}>
               <Typography variant="h6" sx={{ fontWeight: 800, color: 'oklch(20% 0.05 160)', mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Thermometer size={20} color="oklch(60% 0.18 160)" /> Triệu chứng ghi nhận gần đây ({summary?.recentSymptoms?.length || 0})
+                <Thermometer size={20} color="oklch(60% 0.18 160)" /> Triá»‡u chá»©ng ghi nháº­n gáº§n Ä‘Ã¢y ({summary?.recentSymptoms?.length || 0})
               </Typography>
               <Divider sx={{ mb: 2, borderColor: 'oklch(100% 0 0 / 0.05)' }} />
 
               {(!summary?.recentSymptoms || summary.recentSymptoms.length === 0) ? (
-                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>Không ghi nhận triệu chứng nào gần đây.</Typography>
+                <Typography variant="body2" sx={{ color: 'oklch(50% 0.02 160)', fontStyle: 'italic' }}>KhÃ´ng ghi nháº­n triá»‡u chá»©ng nÃ o gáº§n Ä‘Ã¢y.</Typography>
               ) : (
                 <Stack spacing={2}>
                   {summary.recentSymptoms.map((s) => (
@@ -522,7 +522,7 @@ export default function EHRSummary() {
                         <Box>
                           <Typography sx={{ fontWeight: 800, fontSize: '0.95rem', color: 'oklch(20% 0.05 160)' }}>{s.symptomName}</Typography>
                           <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 160)', display: 'block', mt: 0.5, fontWeight: 600 }}>
-                            Khởi phát: {formatDate(s.onsetDate)}
+                            Khá»Ÿi phÃ¡t: {formatDate(s.onsetDate)}
                           </Typography>
                         </Box>
                         <Chip 

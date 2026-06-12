@@ -51,6 +51,12 @@ function InteractiveParticles({ mode = 'neural', color = '16, 185, 129' }) {
     const connectionDistance = 100
 
     class Particle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      radius: number
+
       constructor() {
         this.x = Math.random() * width
         this.y = Math.random() * height
@@ -184,6 +190,15 @@ function MorphingParticles({ color = '16, 185, 129', shape = 'cross' }) {
     const particles = []
 
     class Particle {
+      x: number
+      y: number
+      vx: number
+      vy: number
+      radius: number
+      isMorpher: boolean
+      offsetX: number = 0
+      offsetY: number = 0
+
       constructor() {
         this.x = Math.random() * width
         this.y = Math.random() * height
@@ -335,7 +350,7 @@ export default function Landing() {
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
           <video src="/assets/waiting_overload.mp4" autoPlay loop muted playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
-            onError={(e) => e.target.style.opacity = 0}
+            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = '0' }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
             <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⏰</Typography>
@@ -351,7 +366,7 @@ export default function Landing() {
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
           <video src="/assets/specialty_error.mp4" autoPlay loop muted playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
-            onError={(e) => e.target.style.opacity = 0}
+            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = '0' }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
             <Typography variant="h1" sx={{ color: 'rgba(239, 68, 68, 0.15)', fontWeight: 900, fontSize: '12rem' }}>⚠️</Typography>
@@ -366,7 +381,7 @@ export default function Landing() {
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
           <video src="/assets/ai_triage.mp4" autoPlay loop muted playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
-            onError={(e) => e.target.style.opacity = 0}
+            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = '0' }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
             <Typography variant="h1" sx={{ color: 'color-mix(in srgb, var(--color-primary-500) 15%, transparent)', fontWeight: 900, fontSize: '12rem' }}>🤖</Typography>
@@ -381,7 +396,7 @@ export default function Landing() {
         <Box sx={{ width: '100%', height: '100%', position: 'relative' }}>
           <video src="/assets/ehr_sync.mp4" autoPlay loop muted playsInline
             style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'absolute', top: 0, left: 0, zIndex: 1 }}
-            onError={(e) => e.target.style.opacity = 0}
+            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.opacity = '0' }}
           />
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', width: '100%' }}>
             <Typography variant="h1" sx={{ color: 'color-mix(in srgb, var(--color-primary-500) 15%, transparent)', fontWeight: 900, fontSize: '12rem' }}>⚡</Typography>

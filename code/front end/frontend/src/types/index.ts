@@ -18,7 +18,7 @@ export interface User {
 }
 
 export interface UserProfile extends Omit<User, 'role'> {
-  role?: User['role'] | string;
+  role?: string;
   address?: string;
   dateOfBirth?: string;
   gender?: string;

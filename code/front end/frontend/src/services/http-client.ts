@@ -43,73 +43,77 @@ const processQueue = (error: unknown, token: string | null = null) => {
 }
 
 // Response interceptor - handle 401 & silent token refresh
+const handleTokenRefresh = async (originalRequest: CustomAxiosRequestConfig, error: AxiosError) => {
+  if (isRefreshing) {
+    return new Promise<string | null>(function (resolve, reject) {
+      failedQueue.push({ resolve, reject })
+    })
+      .then((token) => {
+        if (token && originalRequest.headers) {
+          originalRequest.headers['Authorization'] = 'Bearer ' + token
+        }
+        return axiosClient(originalRequest)
+      })
+      .catch((err) => {
+        throw err
+      })
+  }
+
+  originalRequest._retry = true
+  isRefreshing = true
+
+  const refreshToken = useAuthStore.getState().refreshToken
+  if (refreshToken) {
+    try {
+      const refreshUrl = `${axiosClient.defaults.baseURL || ''}/api/auth/refresh`
+      const res = await axios.post(refreshUrl, {
+        refreshToken: refreshToken,
+      })
+      const { token: newToken, refreshToken: newRefreshToken } = res.data.data
+      
+      useAuthStore.setState({
+        token: newToken,
+        refreshToken: newRefreshToken,
+        isAuthenticated: true,
+      })
+
+      processQueue(null, newToken)
+      isRefreshing = false
+
+      if (originalRequest.headers) {
+        originalRequest.headers['Authorization'] = 'Bearer ' + newToken
+      }
+      return axiosClient(originalRequest)
+    } catch (refreshError) {
+      processQueue(refreshError, null)
+      isRefreshing = false
+      useAuthStore.getState().logout()
+      globalThis.location.href = '/login'
+      throw refreshError
+    }
+  } else {
+    useAuthStore.getState().logout()
+    if (!globalThis.location.pathname.includes('/login')) {
+      globalThis.location.href = '/login'
+    }
+    throw error
+  }
+}
+
 axiosClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig
 
-    if (!originalRequest) return Promise.reject(error);
+    if (!originalRequest) throw error;
 
     const isAuthEndpoint = originalRequest.url?.includes('/api/auth/login') || 
                            originalRequest.url?.includes('/api/auth/register')
 
     if (error.response?.status === UNAUTHORIZED_STATUS && !originalRequest._retry && !isAuthEndpoint) {
-      if (isRefreshing) {
-        return new Promise<string | null>(function (resolve, reject) {
-          failedQueue.push({ resolve, reject })
-        })
-          .then((token) => {
-            if (token && originalRequest.headers) {
-              originalRequest.headers['Authorization'] = 'Bearer ' + token
-            }
-            return axiosClient(originalRequest)
-          })
-          .catch((err) => {
-            return Promise.reject(err)
-          })
-      }
-
-      originalRequest._retry = true
-      isRefreshing = true
-
-      const refreshToken = useAuthStore.getState().refreshToken
-      if (refreshToken) {
-        try {
-          const refreshUrl = `${axiosClient.defaults.baseURL || ''}/api/auth/refresh`
-          const res = await axios.post(refreshUrl, {
-            refreshToken: refreshToken,
-          })
-          const { token: newToken, refreshToken: newRefreshToken } = res.data.data
-          
-          useAuthStore.setState({
-            token: newToken,
-            refreshToken: newRefreshToken,
-            isAuthenticated: true,
-          })
-
-          processQueue(null, newToken)
-          isRefreshing = false
-
-          if (originalRequest.headers) {
-            originalRequest.headers['Authorization'] = 'Bearer ' + newToken
-          }
-          return axiosClient(originalRequest)
-        } catch (refreshError) {
-          processQueue(refreshError, null)
-          isRefreshing = false
-          useAuthStore.getState().logout()
-          window.location.href = '/login'
-          return Promise.reject(refreshError)
-        }
-      } else {
-        useAuthStore.getState().logout()
-        if (!window.location.pathname.includes('/login')) {
-          window.location.href = '/login'
-        }
-        return Promise.reject(error)
-      }
+      return handleTokenRefresh(originalRequest, error)
     }
-    return Promise.reject(error)
+    throw error
   }
 )
 

@@ -16,13 +16,17 @@ const DoctorDashboard = lazy(() => import('../pages/doctor/dashboard'))
 const DoctorAppointments = lazy(() => import('../pages/doctor/doctor-appointments'))
 const TriageTicketInbox = lazy(() => import('../pages/doctor/triage-ticket-inbox'))
 const PatientTriageTickets = lazy(() => import('../pages/patient/triage-tickets'))
+const TriagePage = lazy(() => import('../pages/patient/triage-page'))
 const EHRUpload = lazy(() => import('../pages/doctor/ehr-upload'))
 const EHRResult = lazy(() => import('../pages/doctor/ehr-result'))
 const EHRSearch = lazy(() => import('../pages/doctor/ehr-search'))
 const EHRSummary = lazy(() => import('../pages/doctor/ehr-summary'))
 const CreateMedicalRecord = lazy(() => import('../pages/doctor/create-medical-record'))
 const DoctorPatients = lazy(() => import('../pages/doctor/doctor-patients'))
+const ReviewPage = lazy(() => import('../pages/doctor/review-page'))
 const Profile = lazy(() => import('../pages/shared/profile'))
+const CarePlanPage = lazy(() => import('../pages/patient/care-plan-page'))
+const WorkbenchPage = lazy(() => import('../pages/doctor/workbench-page'))
 const VisionMission = lazy(() => import('../pages/public/vision-mission'))
 const DepartmentDetail = lazy(() => import('../pages/public/department-detail'))
 const Emergency = lazy(() => import('../pages/public/emergency'))
@@ -84,6 +88,8 @@ export default function AppRoutes() {
           <Route path="/patient/records" element={<MedicalHistory />} />
           <Route path="/patient/records/:id" element={<MedicalRecordDetail />} />
           <Route path="/patient/triage-tickets" element={<PatientTriageTickets />} />
+          <Route path="/patient/triage" element={<TriagePage />} />
+          <Route path="/patient/care-plan" element={<CarePlanPage />} />
         </Route>
       </Route>
 
@@ -93,11 +99,13 @@ export default function AppRoutes() {
           <Route path="/doctor/patients" element={<DoctorPatients />} />
           <Route path="/doctor/appointments" element={<DoctorAppointments />} />
           <Route path="/doctor/triage-tickets" element={<TriageTicketInbox />} />
+          <Route path="/doctor/review" element={<ReviewPage />} />
           <Route path="/doctor/medical-records/create/:appointmentId" element={<CreateMedicalRecord />} />
           <Route path="/doctor/ehr/upload" element={<EHRUpload />} />
           <Route path="/doctor/ehr/result/:noteId" element={<EHRResult />} />
           <Route path="/doctor/ehr/search" element={<EHRSearch />} />
           <Route path="/doctor/ehr/summary/:patientId" element={<EHRSummary />} />
+          <Route path="/doctor/workbench" element={<WorkbenchPage />} />
         </Route>
       </Route>
 

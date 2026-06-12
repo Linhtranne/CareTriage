@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class RoleMapper {
-    public static final RoleMapper INSTANCE = new RoleMapper();
+    // Removed INSTANCE field as this is a Spring @Component
 
     public Role toDomain(RoleJpaEntity entity) {
         if (entity == null) {

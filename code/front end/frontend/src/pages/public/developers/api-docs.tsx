@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Grid, Button } from '@mui/material'
+﻿import { Box, Container, Typography, Grid, Button } from '@mui/material'
 import { motion, type Variants } from 'framer-motion'
 import { useTranslation } from 'react-i18next'
 import { 
@@ -79,7 +79,7 @@ export default function APIDocs() {
             transition={{ duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD }}
           >
             <Grid container spacing={4} justifyContent="center" textAlign="center">
-              <Grid item xs={12} md={10}>
+              <Grid size={{ xs: 12, md: 10 }} >
                 <Typography 
                   variant="overline" 
                   sx={{ color: '#08bba3', fontWeight: 700, letterSpacing: '0.1em', display: 'block', mb: 3 }}
@@ -123,7 +123,7 @@ export default function APIDocs() {
             variants={staggerContainer}
           >
             <Grid container spacing={8} alignItems="center">
-              <Grid item xs={12} md={5}>
+              <Grid size={{ xs: 12, md: 5 }} >
                 <motion.div variants={fadeUp}>
                   <Typography variant="h2" sx={{ fontWeight: 900, mb: 3, color: 'text.primary', letterSpacing: '-0.02em', fontSize: { xs: '2.5rem', md: '3.5rem' } }}>
                     {t('api_docs.flow_title')}
@@ -134,7 +134,7 @@ export default function APIDocs() {
                 </motion.div>
               </Grid>
               
-              <Grid item xs={12} md={7}>
+              <Grid size={{ xs: 12, md: 7 }} >
                 <motion.div variants={fadeUp}>
                   <Box sx={{ 
                     display: 'flex', 
@@ -229,12 +229,7 @@ export default function APIDocs() {
           >
             <Grid container spacing={4}>
               {features.map((feat, index) => (
-                <Grid 
-                  item 
-                  xs={12} 
-                  md={index % 4 === 0 || index % 4 === 3 ? 7 : 5} 
-                  key={index}
-                >
+                <Grid size={{ xs: 12, md: index % 4 === 0 || index % 4 === 3 ? 7 : 5 }} key={index} >
                   <motion.div variants={fadeUp} style={{ height: '100%' }}>
                     <Box sx={{ 
                       p: { xs: 4, md: 6 }, 

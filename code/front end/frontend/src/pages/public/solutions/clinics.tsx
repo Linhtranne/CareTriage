@@ -24,7 +24,7 @@ export default function Clinics() {
   // Animation Tokens
   const fadeUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as any } }
   }
 
   const staggerContainer = {
@@ -51,7 +51,7 @@ export default function Clinics() {
       }}>
         <Container maxWidth="xl">
           <Grid container spacing={{ xs: 6, lg: 10 }} alignItems="center">
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, lg: 7 }} >
               <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
                 <motion.div variants={fadeUp}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -115,7 +115,7 @@ export default function Clinics() {
             </Grid>
 
             {/* Visual Flair: Floating App Shell Preview */}
-            <Grid item xs={12} lg={5}>
+            <Grid size={{ xs: 12, lg: 5 }} >
               <motion.div
                 initial={{ opacity: 0, x: 40 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -136,10 +136,10 @@ export default function Clinics() {
                     <Stack spacing={2}>
                       <Box sx={{ h: 40, bgcolor: 'background.paper', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
                       <Grid container spacing={2}>
-                        <Grid item xs={4}>
+                        <Grid size={4} >
                           <Box sx={{ height: 120, bgcolor: 'background.paper', borderRadius: '12px', border: '1px solid #e2e8f0' }} />
                         </Grid>
-                        <Grid item xs={8}>
+                        <Grid size={8} >
                           <Box sx={{ height: 120, bgcolor: 'background.paper', borderRadius: '12px', border: '1px solid #e2e8f0', p: 2 }}>
                             <Box sx={{ width: '60%', height: 10, bgcolor: '#f1f5f9', mb: 1 }} />
                             <Box sx={{ width: '40%', height: 10, bgcolor: '#f1f5f9' }} />
@@ -169,7 +169,7 @@ export default function Clinics() {
         <Container maxWidth="xl">
           <Grid container spacing={4}>
             {/* Feature 1: Setup */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Paper sx={{ 
                 p: 6, height: '100%', borderRadius: '40px', bgcolor: 'background.paper',
                 border: '1px solid #e2e8f0', transition: 'all 0.3s ease',
@@ -188,14 +188,14 @@ export default function Clinics() {
             </Grid>
 
             {/* Feature 2: Automation (Larger) */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <Paper sx={{ 
                 p: 6, height: '100%', borderRadius: '40px', bgcolor: 'primary.900', color: 'background.paper',
                 border: 'none', transition: 'all 0.3s ease',
                 '&:hover': { transform: 'translateY(-8px)', bgcolor: '#042f24' }
               }}>
                 <Grid container spacing={4} alignItems="center">
-                  <Grid item xs={12} md={7}>
+                  <Grid size={{ xs: 12, md: 7 }} >
                     <Box sx={{ width: 56, height: 56, borderRadius: '18px', bgcolor: 'color-mix(in srgb, var(--color-surface-50) 10%, transparent)', color: '#08bba3', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
                       <Zap size={28} />
                     </Box>
@@ -206,7 +206,7 @@ export default function Clinics() {
                       {t('clinics_solution.feat_automation_desc')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={5}>
+                  <Grid size={{ xs: 12, md: 5 }} >
                     <Box sx={{ p: 3, bgcolor: 'color-mix(in srgb, var(--color-surface-50) 5%, transparent)', borderRadius: '24px', textAlign: 'center' }}>
                       <Typography variant="h2" sx={{ fontWeight: 900, color: '#08bba3' }}>-4.2h</Typography>
                       <Typography variant="caption" sx={{ opacity: 0.6, fontWeight: 700 }}>PAPERWORK / DAY</Typography>
@@ -217,14 +217,14 @@ export default function Clinics() {
             </Grid>
 
             {/* Feature 3: Loyalty */}
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Paper sx={{ 
                 p: { xs: 6, md: 10 }, borderRadius: '40px', bgcolor: 'background.paper',
                 border: '1px solid #e2e8f0', transition: 'all 0.3s ease',
                 '&:hover': { borderColor: '#08bba3' }
               }}>
                 <Grid container spacing={6} alignItems="center">
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Box sx={{ width: 56, height: 56, borderRadius: '18px', bgcolor: alpha('#08bba3', 0.1), color: '#08bba3', display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 4 }}>
                       <Heart size={28} />
                     </Box>
@@ -235,7 +235,7 @@ export default function Clinics() {
                       {t('clinics_solution.feat_loyalty_desc')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Stack direction="row" spacing={3} justifyContent="center">
                       {[
                         { label: 'Follow-ups', val: 'Auto' },

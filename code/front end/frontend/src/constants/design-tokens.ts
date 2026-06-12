@@ -50,5 +50,17 @@ export const DESIGN_TOKENS = {
   typography: {
     fontFamily: "'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   },
+  glass: {
+    surface: 'var(--glass-surface)',
+    border: 'var(--glass-border)',
+    highlight: 'var(--glass-highlight)',
+    shadow: 'var(--glass-shadow)',
+    agentSurface: 'var(--agent-surface)',
+  },
+  urgency: {
+    emergency: 'var(--urgency-emergency)',
+    warning: 'var(--urgency-warning)',
+    routine: 'var(--urgency-routine)',
+  },
 }
 

@@ -13,11 +13,24 @@ vi.mock('../../store/auth-store', async () => {
     getHighestPriorityLandingPage: vi.fn(),
   }
 })
-vi.mock('react-i18next', () => ({
-  useTranslation: () => ({
-    i18n: { language: 'vi' }
-  })
-}))
+vi.mock('react-i18next', () => {
+  const translationMap = {
+    'auth.email_label': 'EMAIL',
+    'auth.password': 'MẬT KHẨU',
+    'auth.login_btn': 'ĐĂNG NHẬP',
+    'auth.register_btn': 'ĐĂNG KÝ',
+    'auth.full_name': 'HỌ VÀ TÊN',
+    'auth.phone': 'SỐ ĐIỆN THOẠI',
+    'auth.confirm_password': 'XÁC NHẬN MẬT KHẨU',
+    'auth.email_empty': 'Email không được để trống',
+  }
+  return {
+    useTranslation: () => ({
+      t: (key) => translationMap[key] || key,
+      i18n: { language: 'vi' }
+    })
+  }
+})
 
 const useAuthStoreMock = vi.mocked(useAuthStore)
 const getHighestPriorityLandingPageMock = vi.mocked(getHighestPriorityLandingPage)

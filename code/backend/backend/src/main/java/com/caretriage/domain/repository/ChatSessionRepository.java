@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> {
@@ -16,4 +17,11 @@ public interface ChatSessionRepository extends JpaRepository<ChatSession, Long> 
     List<ChatSession> findByUserIdAndStatus(Long userId, ChatSession.SessionStatus status);
 
     List<ChatSession> findByStatus(ChatSession.SessionStatus status);
+
+    boolean existsByIdAndUserId(Long id, Long userId);
+
+    Optional<ChatSession> findFirstByUserIdAndSessionTypeAndStatusOrderByLastMessageTimeDescCreatedAtDesc(
+            Long userId,
+            ChatSession.SessionType sessionType,
+            ChatSession.SessionStatus status);
 }

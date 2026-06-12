@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+﻿import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   Box,
@@ -135,7 +135,7 @@ export default function Dashboard() {
       })}
       maxWidth={false}
       transparent={true}
-      badge="Khu vực bác sĩ"
+      badge="Khu vá»±c bÃ¡c sÄ©"
       actions={
         <Button
           variant="outlined"
@@ -162,7 +162,7 @@ export default function Dashboard() {
             { title: t('dashboard.doctor.in_progress'), value: stats.inProgress, icon: PlayArrow, color: '#10b981' },
             { title: t('dashboard.doctor.pending_tickets'), value: stats.pendingTicketTotal, icon: Assignment, color: '#7c3aed' },
           ].map((stat, idx) => (
-            <Grid item xs={12} sm={6} md={3} key={idx} sx={{ display: 'flex', flexGrow: 1 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx} sx={{ display: 'flex', flexGrow: 1 }}>
               <DashboardCard
                 title={stat.title}
                 value={stat.value}
@@ -176,7 +176,7 @@ export default function Dashboard() {
 
         <Grid container spacing={6}>
           {/* Today's Schedule Island */}
-          <Grid item xs={12} lg={7}>
+          <Grid size={{ xs: 12, lg: 7 }} >
             <Box sx={{
               p: 4,
               borderRadius: 8,
@@ -258,7 +258,7 @@ export default function Dashboard() {
                             {item.patientName || t('common.patient')}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 700 }}>
-                            {item.appointmentTime} • {item.departmentName || t('common.no_dept')}
+                            {item.appointmentTime} â€¢ {item.departmentName || t('common.no_dept')}
                           </Typography>
                         </Box>
                         <Chip
@@ -276,7 +276,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Pending Triage Island */}
-          <Grid item xs={12} lg={5}>
+          <Grid size={{ xs: 12, lg: 5 }} >
             <Box sx={{
               p: 4,
               borderRadius: 8,
@@ -350,7 +350,7 @@ export default function Dashboard() {
                             {ticket.patientName || t('common.patient')}
                           </Typography>
                           <Typography variant="caption" sx={{ color: 'oklch(50% 0.02 250)', fontWeight: 700 }}>
-                            {ticket.ticketNumber} • {ticket.priority || 'MEDIUM'}
+                            {ticket.ticketNumber} â€¢ {ticket.priority || 'MEDIUM'}
                           </Typography>
                         </Box>
                         <Chip
@@ -368,7 +368,7 @@ export default function Dashboard() {
                     onClick={() => navigate('/doctor/triage-tickets')}
                     sx={{ mt: 2, borderRadius: 3, py: 1.5, fontWeight: 800, borderColor: alpha('#7c3aed', 0.3), color: '#7c3aed', textTransform: 'none' }}
                   >
-                    Xem tất cả phiếu phân loại
+                    Xem táº¥t cáº£ phiáº¿u phÃ¢n loáº¡i
                   </Button>
                 </Stack>
               )}

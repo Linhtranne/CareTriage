@@ -618,6 +618,118 @@ const resources = {
         footer_cta_title: 'Elevate your private practice.',
         footer_cta_desc: 'Join the smart healthcare revolution with the most advanced clinical suite for private clinics.',
         footer_cta_btn: 'Get Started for Free'
+      },
+
+      doctorWorkbench: {
+        errorFallback: 'Failed to load workbench data.',
+        title: 'Clinical Workbench',
+        activeCase: 'Active Case',
+        priorityBoard: 'Clinical Priority',
+        evidencePanel: 'AI Evidence Panel',
+        handoffActions: 'Handoff & Actions',
+        commandHeader: {
+          vitals: 'Latest Vitals',
+          urgency: 'System Urgency',
+          vitalsUnavailable: 'Not recorded'
+        },
+        board: {
+          critical: 'Critical',
+          urgent: 'Urgent',
+          routine: 'Routine',
+          unassigned: 'Unassigned'
+        },
+        evidence: {
+          reasoning: 'AI Reasoning Trace',
+          confidence: 'Confidence Score',
+          source: 'Source Extraction',
+          summary: 'AI Summary',
+          conditions: 'Possible Conditions'
+        },
+        handoff: {
+          approve: 'Approve & Assign',
+          reject: 'Reject Case',
+          escalate: 'Escalate'
+        }
+      },
+      agentTriage: {
+        pageTitle: 'AI Triage',
+        greetingDescription: 'Tell us what you are feeling. We will help route you to the right next step.',
+        sendButton: 'Send',
+        emergencyAction: 'Emergency mode is active.',
+        steps: {
+          symptoms: 'Symptoms',
+          history: 'Medical history',
+          details: 'Details',
+          review: 'Review'
+        },
+        orbState: {
+          collecting: 'Collecting symptoms',
+          analyzing: 'Analyzing response',
+          ready: 'Ready for next step',
+          emergency: 'Emergency detected'
+        },
+        quickReplies: {
+          headache: 'Headache',
+          fever: 'Fever',
+          cough: 'Cough',
+          breathing: 'Breathing issue',
+          chestPain: 'Chest pain',
+          insomnia: 'Insomnia'
+        },
+        greeting: 'Hello, I am the CareTriage AI Assistant. Could you please describe the symptoms you are experiencing?',
+        send: 'Send',
+        inputPlaceholder: 'Describe your symptoms here...',
+        thinking: 'Analyzing your response...',
+        retry: 'Retry Analysis',
+        emptyValidation: 'Please enter your symptoms.',
+      },
+      doctorReview: {
+        errorFallback: 'Failed to load tickets.',
+        recently: 'Recently',
+        loadingQueue: 'Loading tickets...',
+        loadingCase: 'Loading case data...',
+        retry: 'Retry',
+        emptyQueue: 'No pending tickets.',
+        refresh: 'Refresh Queue',
+        selectTicket: 'Select a ticket to review.',
+        noSelectedCase: 'No case selected',
+        unknownPatient: 'Unknown Patient',
+        unknownDepartment: 'Unknown Department',
+        missingSummary: 'No summary available',
+        reasoning: 'Clinical Reasoning',
+        conditions: 'Possible Conditions',
+        timeline: {
+          staffLabel: 'Staff'
+        }
+      },
+      carePlan: {
+        pageTitle: 'Your Care Plan',
+        loading: 'Generating your care plan...',
+        errorTitle: 'Care plan unavailable',
+        errorFallback: 'Failed to load your care plan. Please try again.',
+        retry: 'Retry',
+        emptyTitle: 'No Care Plan Found',
+        emptyDescription: 'We could not find an active triage result. Please start a new consultation.',
+        emptyCta: 'Start Consultation',
+        emergencyTitle: 'Emergency Action Required',
+        emergencyAction: 'Please call emergency services or go to the nearest emergency room immediately.',
+        overviewTitle: 'Triage Summary',
+        departmentLabel: 'Suggested Department',
+        summaryLabel: 'Summary',
+        nextStepTitle: 'AI Recommended Next Step',
+        safetyChecklistTitle: 'Safety & Readiness Checklist',
+        appointmentReadinessTitle: 'Appointment Status',
+        ready: 'Ready to Book',
+        notReady: 'Action Required Before Booking',
+        bookAppointment: 'Book Appointment',
+        continueTriage: 'Provide More Info',
+        unknownDepartment: 'General Practice',
+        missingInfoFallback: 'No additional information needed.',
+        noActionsFallback: 'Await further instructions.',
+        timeline: 'Timeline',
+        timelineTriageComplete: 'Triage Complete',
+        timelineGenerated: 'Care Plan Generated',
+        timelineAppointment: 'Appointment'
       }
     }
   },
@@ -1238,6 +1350,86 @@ const resources = {
         footer_cta_title: 'Nâng tầm phòng khám của bạn.',
         footer_cta_desc: 'Gia nhập cuộc cách mạng y tế thông minh với bộ công cụ lâm sàng tiên tiến nhất cho phòng khám tư.',
         footer_cta_btn: 'Bắt đầu Miễn phí'
+      },
+
+      doctorWorkbench: {
+        errorFallback: 'Không tải được dữ liệu bàn làm việc.',
+        title: 'Không gian làm việc lâm sàng',
+        activeCase: 'Ca bệnh hiện tại',
+        priorityBoard: 'Ưu tiên lâm sàng',
+        evidencePanel: 'Bằng chứng AI',
+        handoffActions: 'Thao tác bàn giao',
+        commandHeader: {
+          vitals: 'Sinh hiệu mới nhất',
+          urgency: 'Độ khẩn cấp hệ thống'
+        },
+        board: {
+          critical: 'Nguy kịch',
+          urgent: 'Cấp cứu',
+          routine: 'Thường quy',
+          unassigned: 'Chưa phân công'
+        },
+        evidence: {
+          reasoning: 'Suy luận AI',
+          confidence: 'Độ tin cậy',
+          source: 'Trích xuất nguồn'
+        },
+        handoff: {
+          approve: 'Duyệt & Phân công',
+          reject: 'Từ chối ca',
+          escalate: 'Chuyển tuyến'
+        }
+      },
+      agentTriage: {
+        greeting: 'Chào bạn, tôi là Trợ lý AI CareTriage. Xin bạn vui lòng mô tả các triệu chứng đang gặp phải?',
+        send: 'Gửi',
+        inputPlaceholder: 'Mô tả triệu chứng của bạn tại đây...',
+        thinking: 'Đang phân tích phản hồi...',
+        retry: 'Thử lại',
+        emptyValidation: 'Vui lòng nhập triệu chứng.',
+      },
+      doctorReview: {
+        loadingQueue: 'Đang tải danh sách...',
+        loadingCase: 'Đang tải dữ liệu bệnh án...',
+        retry: 'Thử lại',
+        emptyQueue: 'Không có ca nào đang chờ.',
+        refresh: 'Làm mới danh sách',
+        selectTicket: 'Chọn một ca để xem xét.',
+        noSelectedCase: 'Chưa chọn ca nào',
+        unknownPatient: 'Bệnh nhân ẩn danh',
+        unknownDepartment: 'Chưa rõ chuyên khoa',
+        missingSummary: 'Không có tóm tắt',
+        reasoning: 'Lý do lâm sàng',
+        conditions: 'Các tình trạng có thể xảy ra'
+      },
+      carePlan: {
+        pageTitle: 'Kế hoạch chăm sóc',
+        loading: 'Đang tạo kế hoạch chăm sóc...',
+        errorTitle: 'Không thể tải kế hoạch',
+        errorFallback: 'Không tải được kế hoạch chăm sóc. Vui lòng thử lại.',
+        retry: 'Thử lại',
+        emptyTitle: 'Không tìm thấy kế hoạch',
+        emptyDescription: 'Chúng tôi không tìm thấy kết quả phân loại y tế nào. Vui lòng bắt đầu cuộc tư vấn mới.',
+        emptyCta: 'Bắt đầu Tư vấn',
+        emergencyTitle: 'Yêu cầu hành động khẩn cấp',
+        emergencyAction: 'Vui lòng gọi dịch vụ cấp cứu hoặc đến phòng cấp cứu gần nhất ngay lập tức.',
+        overviewTitle: 'Tóm tắt phân loại',
+        departmentLabel: 'Chuyên khoa đề xuất',
+        summaryLabel: 'Tóm tắt',
+        nextStepTitle: 'Bước tiếp theo được đề xuất',
+        safetyChecklistTitle: 'Danh sách kiểm tra an toàn',
+        appointmentReadinessTitle: 'Trạng thái đặt lịch',
+        ready: 'Sẵn sàng đặt lịch',
+        notReady: 'Cần hành động trước khi đặt lịch',
+        bookAppointment: 'Đặt lịch khám',
+        continueTriage: 'Cung cấp thêm thông tin',
+        unknownDepartment: 'Đa khoa',
+        missingInfoFallback: 'Không cần thêm thông tin bổ sung.',
+        noActionsFallback: 'Đang chờ hướng dẫn thêm.',
+        timeline: 'Dòng thời gian',
+        timelineTriageComplete: 'Hoàn tất phân loại',
+        timelineGenerated: 'Kế hoạch đã tạo',
+        timelineAppointment: 'Lịch khám'
       }
     }
   }

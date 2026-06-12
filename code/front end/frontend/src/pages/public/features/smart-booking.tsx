@@ -50,7 +50,7 @@ export default function SmartBooking() {
 
   const fadeUp = {
     hidden: { opacity: 0, y: 30 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] } }
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as any } }
   }
 
   return (
@@ -65,7 +65,7 @@ export default function SmartBooking() {
       }}>
         <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={8} alignItems="center">
-            <Grid item xs={12} lg={6}>
+            <Grid size={{ xs: 12, lg: 6 }} >
               <motion.div initial="hidden" animate="visible" variants={staggerContainer}>
                 <motion.div variants={fadeUp}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
@@ -130,7 +130,7 @@ export default function SmartBooking() {
             </Grid>
 
             {/* Live Queue Simulation */}
-            <Grid item xs={12} lg={6}>
+            <Grid size={{ xs: 12, lg: 6 }} >
               <Box sx={{ position: 'relative' }}>
                 <Box sx={{ 
                   p: 4, background: 'background.default', borderRadius: '40px', border: '1px solid #e2e8f0',
@@ -163,7 +163,7 @@ export default function SmartBooking() {
                               <Box>
                                 <Typography variant="body1" sx={{ fontWeight: 700 }}>{patient.name}</Typography>
                                 <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                                  ID: 0402{patient.id} • <span style={{ color: patient.priority === 'urgent' ? '#f43f5e' : '#08bba3' }}>{patient.type}</span>
+                                  ID: 0402{patient.id} â€¢ <span style={{ color: patient.priority === 'urgent' ? '#f43f5e' : '#08bba3' }}>{patient.type}</span>
                                 </Typography>
                               </Box>
                             </Box>
@@ -192,7 +192,7 @@ export default function SmartBooking() {
         <Container maxWidth="xl">
           <Grid container spacing={4}>
             {/* Real-time Sync - Large Bento */}
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, height: '100%', borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
@@ -212,7 +212,7 @@ export default function SmartBooking() {
                 </Box>
                 <Grid container spacing={3}>
                   {[t('smart_booking_page.feat_sync_tag1'), t('smart_booking_page.feat_sync_tag2'), t('smart_booking_page.feat_sync_tag3')].map((tag) => (
-                    <Grid item key={tag}>
+                    <Grid size={{  }} key={tag}>
                       <Box sx={{ px: 3, py: 1, borderRadius: '100px', border: '1px solid #e2e8f0', color: 'text.primary', fontWeight: 700, fontSize: '0.875rem' }}>
                         {tag}
                       </Box>
@@ -223,7 +223,7 @@ export default function SmartBooking() {
             </Grid>
 
             {/* Load Balancing - Drenched Bento */}
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }} >
               <Paper sx={{ 
                 p: { xs: 4, md: 6 }, height: '100%', borderRadius: '40px',
                 background: 'primary.900', color: 'background.paper',
@@ -247,14 +247,14 @@ export default function SmartBooking() {
             </Grid>
 
             {/* Reminders - Horizontal Bento */}
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Paper sx={{ 
                 p: { xs: 4, md: 8 }, borderRadius: '40px',
                 background: 'background.paper', border: '1px solid #e2e8f0',
                 transition: 'all 0.4s ease', '&:hover': { transform: 'translateY(-10px)', borderColor: '#08bba3' }
               }}>
                 <Grid container spacing={8} alignItems="center">
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Box sx={{ width: 64, height: 64, borderRadius: '20px', background: 'rgba(8, 187, 163, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#08bba3', mb: 4 }}>
                       <Bell size={32} />
                     </Box>
@@ -265,7 +265,7 @@ export default function SmartBooking() {
                       {t('smart_booking_page.feat_reminder_desc')}
                     </Typography>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }} >
                     <Box sx={{ position: 'relative', width: '100%', height: '100%', minHeight: 200, display: 'flex', justifyContent: 'center' }}>
                       <motion.div
                         animate={{ y: [0, -10, 0] }}
@@ -310,7 +310,7 @@ export default function SmartBooking() {
               { icon: <Zap />, title: t('smart_booking_page.process_step_3_title'), desc: t('smart_booking_page.process_step_3_desc') },
               { icon: <ShieldCheck />, title: t('smart_booking_page.process_step_4_title'), desc: t('smart_booking_page.process_step_4_desc') }
             ].map((step, idx) => (
-              <Grid item xs={12} sm={6} md={3} key={idx}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }} key={idx}>
                 <Box sx={{ textAlign: 'center' }}>
                   <Box sx={{ 
                     width: 72, height: 72, borderRadius: '24px', background: 'background.default',

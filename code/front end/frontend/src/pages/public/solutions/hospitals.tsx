@@ -106,7 +106,7 @@ export default function Hospitals() {
     initial: { opacity: 0, filter: 'blur(10px)', y: 40 },
     whileInView: { opacity: 1, filter: 'blur(0px)', y: 0 },
     viewport: { once: true },
-    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] }
+    transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as any }
   };
 
   return (
@@ -124,7 +124,7 @@ export default function Hospitals() {
           >
             <img
               src="/images/solutions/hospitals/hero.png"
-              alt="Minh họa CareTriage trong bệnh viện"
+              alt="Minh há»a CareTriage trong bá»‡nh viá»‡n"
               className="w-full h-full object-cover opacity-40 blur-[2px]"
             />
             <Box className="absolute inset-0 bg-gradient-to-b from-[var(--color-primary-50)] via-[var(--color-primary-50)]/40 to-white"></Box>
@@ -132,34 +132,34 @@ export default function Hospitals() {
 
           <Container maxWidth="lg" className="relative z-10">
             <Grid container spacing={8} alignItems="center">
-              <Grid item xs={12} lg={7}>
+              <Grid size={{ xs: 12, lg: 7 }} >
                 <motion.div
                   initial={{ opacity: 0, x: -50 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
                 >
                   <Box className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary-500/10 text-primary-600 font-bold text-sm mb-8 border border-primary-500/20">
-                    <Zap className="w-4 h-4 fill-current" /> GIẢI PHÁP SỐ HÓA BỆNH VIỆN
+                    <Zap className="w-4 h-4 fill-current" /> GIáº¢I PHÃP Sá» HÃ“A Bá»†NH VIá»†N
                   </Box>
                   <Typography variant="h1" className="text-6xl md:text-8xl leading-tight mb-8 text-slate-900 tracking-tight">
-                    Vận hành bệnh viện<br />
-                    <span className="text-primary-500">nhanh hơn, rõ hơn.</span>
+                    Váº­n hÃ nh bá»‡nh viá»‡n<br />
+                    <span className="text-primary-500">nhanh hÆ¡n, rÃµ hÆ¡n.</span>
                   </Typography>
                   <Typography variant="h5" className="text-slate-600 mb-12 max-w-xl leading-relaxed">
-                    CareTriage giúp bệnh viện tiếp nhận, phân luồng và khai thác dữ liệu lâm sàng nhanh hơn, để đội ngũ y bác sĩ dành nhiều thời gian hơn cho bệnh nhân.
+                    CareTriage giÃºp bá»‡nh viá»‡n tiáº¿p nháº­n, phÃ¢n luá»“ng vÃ  khai thÃ¡c dá»¯ liá»‡u lÃ¢m sÃ ng nhanh hÆ¡n, Ä‘á»ƒ Ä‘á»™i ngÅ© y bÃ¡c sÄ© dÃ nh nhiá»u thá»i gian hÆ¡n cho bá»‡nh nhÃ¢n.
                   </Typography>
                   <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3}>
                     <Button variant="contained" size="large" endIcon={<ChevronRight />} className="text-lg py-5 px-10">
-                      Đặt lịch demo
+                      Äáº·t lá»‹ch demo
                     </Button>
                     <Button variant="outlined" size="large" className="text-lg py-5 px-10 border-2">
-                      Xem cách tích hợp
+                      Xem cÃ¡ch tÃ­ch há»£p
                     </Button>
                   </Stack>
                 </motion.div>
               </Grid>
 
-              <Grid item xs={12} lg={5} className="hidden lg:block">
+              <Grid size={{ xs: 12, lg: 5 }} className="hidden lg:block">
                 <Box
                   component={motion.div}
                   initial={{ opacity: 0, scale: 0.8, rotate: -5 }}
@@ -170,12 +170,12 @@ export default function Hospitals() {
                   {/* Floating Mockup with Overdrive Depth */}
                   <Card className="p-2 rounded-[2rem] bg-white/30 backdrop-blur-3xl border-white/40 shadow-2xl overflow-hidden relative group">
                     <Box className="absolute inset-0 bg-primary-500/5 group-hover:opacity-0 transition-opacity" />
-                    <img src="/images/solutions/hospitals/tech-precision.png" className="rounded-[1.5rem] w-full" alt="Minh họa giao diện CareTriage trong bệnh viện" />
+                    <img src="/images/solutions/hospitals/tech-precision.png" className="rounded-[1.5rem] w-full" alt="Minh há»a giao diá»‡n CareTriage trong bá»‡nh viá»‡n" />
 
                     <Box className="absolute top-8 right-8 flex flex-col gap-3">
                       <Box className="p-3 rounded-xl bg-white/80 backdrop-blur-md shadow-lg border border-white flex items-center gap-3">
                         <Box className="w-2 h-2 rounded-full bg-green-500 animate-ping" />
-                        <Typography variant="caption" className="font-bold text-slate-800">HỆ THỐNG ĐANG HOẠT ĐỘNG</Typography>
+                        <Typography variant="caption" className="font-bold text-slate-800">Há»† THá»NG ÄANG HOáº T Äá»˜NG</Typography>
                       </Box>
                     </Box>
                   </Card>
@@ -189,58 +189,58 @@ export default function Hospitals() {
         <section className="relative" style={{ padding: 'clamp(80px, 10vw, 128px) 0', backgroundColor: 'background.paper' }}>
           <Container maxWidth="lg">
             <Box className="mb-24 max-w-3xl" component={motion.div} {...cinematicIn}>
-              <Typography variant="h2" className="text-4xl md:text-6xl mb-6 text-slate-900">Trung tâm điều phối thời gian thực</Typography>
+              <Typography variant="h2" className="text-4xl md:text-6xl mb-6 text-slate-900">Trung tÃ¢m Ä‘iá»u phá»‘i thá»i gian thá»±c</Typography>
               <Typography variant="h6" className="text-slate-500 max-w-2xl leading-relaxed font-normal">
-                Mô phỏng cách CareTriage hỗ trợ điều phối bệnh nhân, nhân sự và dữ liệu trong bệnh viện quy mô lớn.
+                MÃ´ phá»ng cÃ¡ch CareTriage há»— trá»£ Ä‘iá»u phá»‘i bá»‡nh nhÃ¢n, nhÃ¢n sá»± vÃ  dá»¯ liá»‡u trong bá»‡nh viá»‡n quy mÃ´ lá»›n.
               </Typography>
             </Box>
 
             <Grid container spacing={6} alignItems="stretch">
-              <Grid item xs={12} lg={8}>
+              <Grid size={{ xs: 12, lg: 8 }} >
                 <Card className="h-full p-8 rounded-3xl bg-slate-50 border-none relative overflow-hidden">
                   <Box className="flex justify-between items-center mb-10">
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Box className="w-10 h-10 rounded-xl bg-primary-500 text-white flex items-center justify-center">
                         <Activity className="w-6 h-6" />
                       </Box>
-                      <Typography variant="h5" className="font-bold">Phân luồng thời gian thực</Typography>
+                      <Typography variant="h5" className="font-bold">PhÃ¢n luá»“ng thá»i gian thá»±c</Typography>
                     </Stack>
-                    <IconButton size="small" aria-label="Phóng to bảng điều phối"><Maximize2 className="w-5 h-5 text-slate-400" /></IconButton>
+                    <IconButton size="small" aria-label="PhÃ³ng to báº£ng Ä‘iá»u phá»‘i"><Maximize2 className="w-5 h-5 text-slate-400" /></IconButton>
                   </Box>
 
                   {/* Mock Triage Stream with tighter density */}
                   <Stack spacing={2}>
                     {[
-                      { id: '#TR-8291', status: 'Khẩn cấp', time: '2 phút trước', color: 'var(--color-danger)' },
-                      { id: '#TR-8292', status: 'Ưu tiên cao', time: '5 phút trước', color: 'var(--color-warning)' },
-                      { id: '#TR-8293', status: 'Thông thường', time: '8 phút trước', color: 'primary.main' },
+                      { id: '#TR-8291', status: 'Kháº©n cáº¥p', time: '2 phÃºt trÆ°á»›c', color: 'var(--color-danger)' },
+                      { id: '#TR-8292', status: 'Æ¯u tiÃªn cao', time: '5 phÃºt trÆ°á»›c', color: 'var(--color-warning)' },
+                      { id: '#TR-8293', status: 'ThÃ´ng thÆ°á»ng', time: '8 phÃºt trÆ°á»›c', color: 'primary.main' },
                     ].map((item, idx) => (
-                      <Box key={idx} component={motion.div} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
+                      <Box key={item.id} component={motion.div} initial={{ x: -20, opacity: 0 }} whileInView={{ x: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }} className="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 hover:shadow-md transition-shadow">
                         <Stack direction="row" spacing={3} alignItems="center">
                           <Typography className="font-mono text-slate-400 text-sm">{item.id}</Typography>
                           <Box sx={{px: 2, py: 0.5, borderRadius: 10, bgcolor: alpha(item.color, 0.1), color: item.color, fontWeight: 700, fontSize: '0.7rem' }}>
                             {item.status.toUpperCase()}
                           </Box>
                         </Stack>
-                        <Typography variant="caption" className="text-slate-400 italic">AI tự phân luồng • {item.time}</Typography>
+                        <Typography variant="caption" className="text-slate-400 italic">AI tá»± phÃ¢n luá»“ng â€¢ {item.time}</Typography>
                       </Box>
                     ))}
                     <Box className="p-4 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center">
-                      <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-widest">Đang chờ lượt phân luồng tiếp theo...</Typography>
+                      <Typography variant="caption" className="text-slate-400 font-bold uppercase tracking-widest">Äang chá» lÆ°á»£t phÃ¢n luá»“ng tiáº¿p theo...</Typography>
                     </Box>
                   </Stack>
                 </Card>
               </Grid>
 
-              <Grid item xs={12} lg={4}>
+              <Grid size={{ xs: 12, lg: 4 }} >
                 <Stack spacing={4} className="h-full">
                   <Card className="p-8 rounded-3xl bg-primary-600 text-white border-none relative overflow-hidden flex-1 group">
                     <Box className="absolute -top-6 -right-6 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                       <TrendingUp className="w-32 h-32" />
                     </Box>
-                    <Typography variant="h6" className="font-bold mb-6 uppercase tracking-widest opacity-80 text-sm">Độ chính xác AI</Typography>
+                    <Typography variant="h6" className="font-bold mb-6 uppercase tracking-widest opacity-80 text-sm">Äá»™ chÃ­nh xÃ¡c AI</Typography>
                     <Typography variant="h2" className="font-black mb-2 tracking-tighter">98.4%</Typography>
-                    <Typography variant="body2" className="opacity-80 leading-relaxed">Độ chính xác trung bình khi phân loại ca khẩn cấp.</Typography>
+                    <Typography variant="body2" className="opacity-80 leading-relaxed">Äá»™ chÃ­nh xÃ¡c trung bÃ¬nh khi phÃ¢n loáº¡i ca kháº©n cáº¥p.</Typography>
                     <Box className="mt-8">
                       <LinearProgress variant="determinate" value={98.4} color="inherit" className="h-2 rounded-full bg-white/20" />
                     </Box>
@@ -248,9 +248,9 @@ export default function Hospitals() {
 
                   <Card className="p-8 rounded-3xl border-slate-200 bg-white flex-1 relative overflow-hidden group border">
                     <Box className="absolute top-0 right-0 w-24 h-24 bg-primary-500/5 rounded-full -mr-12 -mt-12 group-hover:scale-150 transition-transform" />
-                    <Typography variant="h6" className="font-bold mb-6 text-slate-400 uppercase tracking-widest text-sm">Giảm tải nhân sự</Typography>
+                    <Typography variant="h6" className="font-bold mb-6 text-slate-400 uppercase tracking-widest text-sm">Giáº£m táº£i nhÃ¢n sá»±</Typography>
                     <Typography variant="h2" className="font-black text-slate-900 mb-2 tracking-tighter">-42%</Typography>
-                    <Typography variant="body2" className="text-slate-500 leading-relaxed font-medium">Tự động hóa các bước sàng lọc ban đầu.</Typography>
+                    <Typography variant="body2" className="text-slate-500 leading-relaxed font-medium">Tá»± Ä‘á»™ng hÃ³a cÃ¡c bÆ°á»›c sÃ ng lá»c ban Ä‘áº§u.</Typography>
                   </Card>
                 </Stack>
               </Grid>
@@ -266,17 +266,17 @@ export default function Hospitals() {
 
           <Container maxWidth="lg" className="relative z-10">
             <Grid container spacing={8} alignItems="flex-start">
-              <Grid item xs={12} lg={5}>
+              <Grid size={{ xs: 12, lg: 5 }} >
                 <Box component={motion.div} {...cinematicIn}>
-                  <Typography variant="h2" className="text-4xl md:text-6xl mb-8 leading-tight">Ước tính hiệu quả đầu tư (ROI)</Typography>
-                  <Typography className="text-xl text-slate-500 mb-12">CareTriage giúp bạn xem thời gian tiết kiệm, năng suất và chi phí thay đổi như thế nào khi quy mô bệnh viện tăng lên.</Typography>
+                  <Typography variant="h2" className="text-4xl md:text-6xl mb-8 leading-tight">Æ¯á»›c tÃ­nh hiá»‡u quáº£ Ä‘áº§u tÆ° (ROI)</Typography>
+                  <Typography className="text-xl text-slate-500 mb-12">CareTriage giÃºp báº¡n xem thá»i gian tiáº¿t kiá»‡m, nÄƒng suáº¥t vÃ  chi phÃ­ thay Ä‘á»•i nhÆ° tháº¿ nÃ o khi quy mÃ´ bá»‡nh viá»‡n tÄƒng lÃªn.</Typography>
 
                   <Box className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-xl relative">
                     <Stack spacing={10}>
                       <Box>
                         <Typography variant="h6" className="font-bold text-slate-900 mb-8 flex justify-between items-center">
-                          Bệnh nhân trung bình mỗi ngày
-                          <span className="text-primary-500 bg-primary-50 px-4 py-1 rounded-full text-sm">{hospitalSize} bệnh nhân</span>
+                          Bá»‡nh nhÃ¢n trung bÃ¬nh má»—i ngÃ y{" "}
+                          <span className="text-primary-500 bg-primary-50 px-4 py-1 rounded-full text-sm">{hospitalSize} bá»‡nh nhÃ¢n</span>
                         </Typography>
                         <Slider
                           value={hospitalSize}
@@ -307,8 +307,8 @@ export default function Hospitals() {
 
                       <Box>
                         <Typography variant="h6" className="font-bold text-slate-900 mb-8 flex justify-between items-center">
-                          Số bác sĩ
-                          <span className="text-primary-500 bg-primary-50 px-4 py-1 rounded-full text-sm">{doctorCount} bác sĩ</span>
+                          Sá»‘ bÃ¡c sÄ©{" "}
+                          <span className="text-primary-500 bg-primary-50 px-4 py-1 rounded-full text-sm">{doctorCount} bÃ¡c sÄ©</span>
                         </Typography>
                         <Slider
                           value={doctorCount}
@@ -337,15 +337,15 @@ export default function Hospitals() {
                 </Box>
               </Grid>
 
-              <Grid item xs={12} lg={7}>
+              <Grid size={{ xs: 12, lg: 7 }} >
                 <Grid container spacing={3}>
                   {[
-                    { label: 'Giờ tiết kiệm mỗi ngày', value: `${savedHoursPerDay} giờ`, sub: 'trên toàn hệ thống', icon: Clock, featured: true },
-                    { label: 'Năng suất đội ngũ', value: `+${productivityBoost}%`, sub: 'so với quy trình hiện tại', icon: TrendingUp },
-                    { label: 'Giảm chi phí vận hành', value: '30%', sub: 'ước tính theo quy mô này', icon: Zap },
-                    { label: 'Hài lòng bệnh nhân', value: '4,9/5', sub: 'theo phản hồi khảo sát', icon: Stethoscope },
+                    { label: 'Giá» tiáº¿t kiá»‡m má»—i ngÃ y', value: `${savedHoursPerDay} giá»`, sub: 'trÃªn toÃ n há»‡ thá»‘ng', icon: Clock, featured: true },
+                    { label: 'NÄƒng suáº¥t Ä‘á»™i ngÅ©', value: `+${productivityBoost}%`, sub: 'so vá»›i quy trÃ¬nh hiá»‡n táº¡i', icon: TrendingUp },
+                    { label: 'Giáº£m chi phÃ­ váº­n hÃ nh', value: '30%', sub: 'Æ°á»›c tÃ­nh theo quy mÃ´ nÃ y', icon: Zap },
+                    { label: 'HÃ i lÃ²ng bá»‡nh nhÃ¢n', value: '4,9/5', sub: 'theo pháº£n há»“i kháº£o sÃ¡t', icon: Stethoscope },
                   ].map((card, i) => (
-                    <Grid item xs={12} md={card.featured ? 12 : 4} key={i}>
+                    <Grid size={{ xs: 12, md: card.featured ? 12 : 4 }} key={card.label}>
                       <motion.div
                         layout
                         initial={{ opacity: 0, y: 20 }}
@@ -391,19 +391,19 @@ export default function Hospitals() {
 
           <Container maxWidth="lg" className="relative z-10">
             <Box className="mb-20 max-w-2xl" component={motion.div} {...cinematicIn}>
-              <Typography variant="h2" className="text-4xl md:text-6xl mb-6 text-white">Kiến trúc dữ liệu an toàn, chuẩn y tế</Typography>
+              <Typography variant="h2" className="text-4xl md:text-6xl mb-6 text-white">Kiáº¿n trÃºc dá»¯ liá»‡u an toÃ n, chuáº©n y táº¿</Typography>
               <Typography variant="h6" className="text-slate-400 max-w-2xl leading-relaxed font-normal">
-                Dữ liệu được bảo vệ qua nhiều lớp bảo mật và kết nối theo các chuẩn y tế phổ biến.
+                Dá»¯ liá»‡u Ä‘Æ°á»£c báº£o vá»‡ qua nhiá»u lá»›p báº£o máº­t vÃ  káº¿t ná»‘i theo cÃ¡c chuáº©n y táº¿ phá»• biáº¿n.
               </Typography>
             </Box>
 
             <Grid container spacing={4}>
               {[
-                { title: 'Tuân thủ HIPAA và HL7', desc: 'Bảo vệ dữ liệu bệnh nhân và kết nối với hệ thống y tế theo chuẩn phổ biến.', icon: ShieldCheck },
-                { title: 'Trích xuất EHR linh hoạt', desc: 'Xử lý và chuẩn hóa hồ sơ y tế ở quy mô lớn mà vẫn giữ tốc độ ổn định.', icon: Database },
-                { title: 'Dự báo nhu cầu nhân lực', desc: 'Ước tính lưu lượng bệnh nhân trong 24 giờ tới để sắp xếp nhân sự chủ động.', icon: BarChart3 },
+                { title: 'TuÃ¢n thá»§ HIPAA vÃ  HL7', desc: 'Báº£o vá»‡ dá»¯ liá»‡u bá»‡nh nhÃ¢n vÃ  káº¿t ná»‘i vá»›i há»‡ thá»‘ng y táº¿ theo chuáº©n phá»• biáº¿n.', icon: ShieldCheck },
+                { title: 'TrÃ­ch xuáº¥t EHR linh hoáº¡t', desc: 'Xá»­ lÃ½ vÃ  chuáº©n hÃ³a há»“ sÆ¡ y táº¿ á»Ÿ quy mÃ´ lá»›n mÃ  váº«n giá»¯ tá»‘c Ä‘á»™ á»•n Ä‘á»‹nh.', icon: Database },
+                { title: 'Dá»± bÃ¡o nhu cáº§u nhÃ¢n lá»±c', desc: 'Æ¯á»›c tÃ­nh lÆ°u lÆ°á»£ng bá»‡nh nhÃ¢n trong 24 giá» tá»›i Ä‘á»ƒ sáº¯p xáº¿p nhÃ¢n sá»± chá»§ Ä‘á»™ng.', icon: BarChart3 },
               ].map((item, i) => (
-                <Grid item xs={12} md={i === 0 ? 6 : 3} key={i}>
+                <Grid size={{ xs: 12, md: i === 0 ? 6 : 3 }} key={item.title}>
                   <Box
                     component={motion.div}
                     {...cinematicIn}
@@ -427,18 +427,18 @@ export default function Hospitals() {
               <Box className="absolute top-0 right-0 w-1/2 h-full bg-white/10 blur-[100px] rounded-full translate-x-1/2" />
 
               <Box className="relative z-10 text-center">
-                <Typography variant="h2" className="text-5xl md:text-7xl mb-10">Sẵn sàng xem CareTriage phù hợp với bệnh viện của bạn?</Typography>
-                <Typography variant="h5" className="opacity-80 mb-16 leading-relaxed font-medium">Nhận buổi đánh giá mức độ sẵn sàng số hóa miễn phí cho bệnh viện của bạn.</Typography>
+                <Typography variant="h2" className="text-5xl md:text-7xl mb-10">Sáºµn sÃ ng xem CareTriage phÃ¹ há»£p vá»›i bá»‡nh viá»‡n cá»§a báº¡n?</Typography>
+                <Typography variant="h5" className="opacity-80 mb-16 leading-relaxed font-medium">Nháº­n buá»•i Ä‘Ã¡nh giÃ¡ má»©c Ä‘á»™ sáºµn sÃ ng sá»‘ hÃ³a miá»…n phÃ­ cho bá»‡nh viá»‡n cá»§a báº¡n.</Typography>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={4} justifyContent="center">
-                  <Button variant="contained" className="bg-white text-primary-600 px-12 py-6 text-xl shadow-2xl hover:bg-slate-50">Đặt lịch tư vấn</Button>
-                  <Button variant="outlined" className="border-white/50 text-white px-12 py-6 text-xl hover:border-white">Xem cách triển khai</Button>
+                  <Button variant="contained" className="bg-white text-primary-600 px-12 py-6 text-xl shadow-2xl hover:bg-slate-50">Äáº·t lá»‹ch tÆ° váº¥n</Button>
+                  <Button variant="outlined" className="border-white/50 text-white px-12 py-6 text-xl hover:border-white">Xem cÃ¡ch triá»ƒn khai</Button>
                 </Stack>
 
                 <Box className="mt-20 flex justify-center gap-12 opacity-60">
-                  <Tooltip title="Bảo mật đã xác minh"><ShieldCheck className="stroke-[1.5]" /></Tooltip>
-                  <Tooltip title="Hỗ trợ toàn cầu"><Users className="stroke-[1.5]" /></Tooltip>
-                  <Tooltip title="Triển khai nhanh"><Zap className="stroke-[1.5]" /></Tooltip>
+                  <Tooltip title="Báº£o máº­t Ä‘Ã£ xÃ¡c minh"><ShieldCheck className="stroke-[1.5]" /></Tooltip>
+                  <Tooltip title="Há»— trá»£ toÃ n cáº§u"><Users className="stroke-[1.5]" /></Tooltip>
+                  <Tooltip title="Triá»ƒn khai nhanh"><Zap className="stroke-[1.5]" /></Tooltip>
                 </Box>
               </Box>
             </Card>
@@ -446,7 +446,7 @@ export default function Hospitals() {
         </section>
 
         <footer className="py-12 bg-slate-900 border-t border-white/10 text-center text-slate-400 text-sm">
-          <Typography variant="caption">© 2026 CareTriage Global Solution • Hạ tầng bệnh viện thông minh</Typography>
+          <Typography variant="caption">Â© 2026 CareTriage Global Solution â€¢ Háº¡ táº§ng bá»‡nh viá»‡n thÃ´ng minh</Typography>
         </footer>
       </Box>
     </ThemeProvider>

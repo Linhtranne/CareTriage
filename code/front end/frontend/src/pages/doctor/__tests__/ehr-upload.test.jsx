@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import EHRUpload from '../EHRUpload';
+import EHRUpload from '../ehr-upload';
 
 // Mock routing
 const mockNavigate = vi.fn();
@@ -10,6 +10,7 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
+    useLocation: () => ({ state: {} }),
   };
 });
 
@@ -32,6 +33,7 @@ vi.mock('framer-motion', () => ({
 // Mock react-i18next
 vi.mock('react-i18next', () => ({
   useTranslation: () => ({
+    t: (key) => key,
     i18n: { language: 'vi' }
   })
 }));

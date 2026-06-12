@@ -1,0 +1,11 @@
+{
+  "contract_version": "1",
+  "turn_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reply": "I can continue the conversation, but classification is unavailable.",
+  "intake_complete": false,
+  "red_flag_detected": false,
+  "missing_information": [],
+  "classification_status": "DEGRADED",
+  "classification_error_code": "LLM_PHASE_B_FAILED",
+  "triage_result": null
+}

@@ -18,7 +18,12 @@ public class ChatMessageDTO {
     private String content;
     private SenderType senderType;
     private String metadata;
+    private String turnId;
+    private Long legacyRedisId;
     private LocalDateTime createdAt;
+    
+    private com.caretriage.domain.entity.ChatSession.SessionType sessionType;
+    private String title;
     
     // For specific UI states
     public enum MessageStatus {

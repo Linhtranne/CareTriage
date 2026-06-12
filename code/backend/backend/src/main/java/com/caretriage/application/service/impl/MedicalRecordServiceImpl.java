@@ -88,7 +88,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         try {
             String researchQuery = String.format("%s symptoms: %s", saved.getDiagnosis(), saved.getSymptoms());
             aiClientService.triggerResearch(saved.getPatient().getId(), researchQuery);
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Failed to trigger background research: {}", e.getMessage());
         }
 
@@ -96,6 +96,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public MedicalRecordResponse getRecordById(Long id, String userEmail) {
         MedicalRecord record = medicalRecordRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy hồ sơ bệnh án"));
@@ -112,6 +113,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<MedicalRecordResponse> getPatientHistory(Long patientId, String userEmail) {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new ResourceNotFoundException("Người dùng không tồn tại"));
@@ -128,6 +130,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<MedicalRecordResponse> getPatientHistoryPaged(Long patientId, Pageable pageable) {
         // This would typically be used by Admin/Doctor portals
         return medicalRecordRepository.findAll(pageable).map(this::mapToResponse);

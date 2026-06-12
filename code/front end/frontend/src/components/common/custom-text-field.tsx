@@ -7,24 +7,26 @@ const CustomTextField = ({ icon, label, ...props }) => {
       fullWidth
       label={label}
       variant="outlined"
-      InputLabelProps={{
-        shrink: true,
-        sx: {
-          color: 'oklch(50% 0.05 160)',
-          fontWeight: 700,
-          '&.Mui-focused': {
-            color: 'oklch(65% 0.15 160)',
+      slotProps={{
+        inputLabel: {
+          shrink: true,
+          sx: {
+            color: 'oklch(50% 0.05 160)',
+            fontWeight: 700,
+            '&.Mui-focused': {
+              color: 'oklch(65% 0.15 160)',
+            },
           },
         },
-      }}
-      InputProps={{
-        startAdornment: icon ? (
-          <InputAdornment position="start">
-            <Box sx={{ color: 'oklch(65% 0.15 160)', display: 'flex' }}>
-              {React.cloneElement(icon, { sx: { fontSize: 20 } })}
-            </Box>
-          </InputAdornment>
-        ) : null,
+        input: {
+          startAdornment: icon ? (
+            <InputAdornment position="start">
+              <Box sx={{ color: 'oklch(65% 0.15 160)', display: 'flex' }}>
+                {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+              </Box>
+            </InputAdornment>
+          ) : null,
+        },
       }}
       sx={{
         '& .MuiOutlinedInput-root': {

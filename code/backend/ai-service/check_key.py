@@ -9,7 +9,9 @@ print("Using API Key: ***masked***" if api_key else "Using API Key: None")
 client = genai.Client(api_key=api_key)
 
 try:
-    response = client.models.generate_content(model=settings["gemini_model_name"], contents="Hello")
+    response = client.models.generate_content(
+        model=settings["gemini_model_name"], contents="Hello"
+    )
     print("Success!")
     print(response.text)
 except Exception as e:

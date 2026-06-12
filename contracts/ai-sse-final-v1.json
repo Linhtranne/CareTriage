@@ -1,0 +1,20 @@
+{
+  "contract_version": "1",
+  "turn_id": "550e8400-e29b-41d4-a716-446655440000",
+  "reply": "Based on the symptoms provided.",
+  "intake_complete": true,
+  "red_flag_detected": false,
+  "missing_information": [],
+  "classification_status": "OK",
+  "classification_error_code": null,
+  "triage_result": {
+    "suggested_department_code": "CARDIOLOGY",
+    "suggested_department_name": "Cardiology",
+    "urgency_level": "HIGH",
+    "confidence_score": 0.87,
+    "possible_conditions": ["Stable angina"],
+    "suggested_actions": ["Arrange an urgent medical review"],
+    "clinical_reasoning_summary": "Chest pain warrants cardiac assessment.",
+    "summary": "Adult patient reporting chest pain."
+  }
+}

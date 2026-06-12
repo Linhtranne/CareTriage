@@ -12,6 +12,17 @@ import java.util.List;
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
     List<ChatMessage> findByChatSessionIdOrderByCreatedAtAsc(Long sessionId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT m FROM ChatMessage m WHERE m.chatSession.id = :sessionId AND (m.turnId IS NULL OR m.turnId != :turnId) ORDER BY m.createdAt ASC")
+    List<ChatMessage> findHistoryExcludingTurn(
+            @org.springframework.data.repository.query.Param("sessionId") Long sessionId, 
+            @org.springframework.data.repository.query.Param("turnId") String turnId
+    );
     
     Page<ChatMessage> findByChatSessionId(Long sessionId, Pageable pageable);
+
+    @org.springframework.data.jpa.repository.Query("SELECT CAST(m.id AS string) FROM ChatMessage m WHERE m.chatSession.id = :sessionId AND m.turnId = :turnId AND m.senderType = 'AI'")
+    java.util.Optional<String> findAiMessageIdBySessionIdAndTurnId(@org.springframework.data.repository.query.Param("sessionId") Long sessionId, @org.springframework.data.repository.query.Param("turnId") String turnId);
+
+    boolean existsByChatSessionIdAndLegacyRedisId(Long chatSessionId, Long legacyRedisId);
 }

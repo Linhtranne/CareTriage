@@ -303,7 +303,7 @@ export default function DoctorPatients() {
       headerName: 'Lịch hẹn tiếp theo',
       flex: 1.5,
       minWidth: 180,
-      renderCell: () => (
+      renderCell: (params) => (
         <Typography
           variant="body2"
           sx={{
@@ -384,7 +384,7 @@ export default function DoctorPatients() {
     >
       {/* 4 INTERACTIVE KPI STAT CARDS */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             onClick={() => handleKpiClick('ALL')}
             sx={{
@@ -426,7 +426,7 @@ export default function DoctorPatients() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             onClick={() => handleKpiClick('UPCOMING')}
             sx={{
@@ -468,7 +468,7 @@ export default function DoctorPatients() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             onClick={() => handleKpiClick('RECORDS')}
             sx={{
@@ -510,7 +510,7 @@ export default function DoctorPatients() {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card
             onClick={() => handleKpiClick('TRIAGE')}
             sx={{
@@ -585,12 +585,14 @@ export default function DoctorPatients() {
                   }
                 }
               }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: 'primary.main', fontSize: 22 }} />
-                  </InputAdornment>
-                )
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <Search sx={{ color: 'primary.main', fontSize: 22 }} />
+                    </InputAdornment>
+                  )
+                }
               }}
             />
 
@@ -863,32 +865,32 @@ export default function DoctorPatients() {
               {activeTab === 0 && (
                 <Grid container spacing={3}>
                   {/* Summary Island exactly like Admin styling */}
-                  <Grid item xs={12}>
+                  <Grid size={12}>
                     <Card sx={{ borderRadius: 3, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
                       <CardContent sx={{ p: 3 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 2.5, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                           Tóm tắt hoạt động điều trị
                         </Typography>
                         <Grid container spacing={2}>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.info.main, 0.05) }}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'info.main', display: 'block' }}>LỊCH HẸN</Typography>
                               <Typography variant="h5" sx={{ fontWeight: 900, mt: 0.5 }}>{patientDetail.totalAppointments}</Typography>
                             </Box>
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.success.main, 0.05) }}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'success.main', display: 'block' }}>HOÀN THÀNH</Typography>
                               <Typography variant="h5" sx={{ fontWeight: 900, mt: 0.5 }}>{patientDetail.completedAppointments}</Typography>
                             </Box>
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.success.main, 0.05) }}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'success.main', display: 'block' }}>BỆNH ÁN</Typography>
                               <Typography variant="h5" sx={{ fontWeight: 900, mt: 0.5 }}>{patientDetail.totalMedicalRecords}</Typography>
                             </Box>
                           </Grid>
-                          <Grid item xs={6} sm={3}>
+                          <Grid size={{ xs: 6, sm: 3 }}>
                             <Box sx={{ textAlign: 'center', p: 2, borderRadius: 2, bgcolor: alpha(theme.palette.warning.main, 0.05) }}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'warning.main', display: 'block' }}>TICKET MỞ</Typography>
                               <Typography variant="h5" sx={{ fontWeight: 900, mt: 0.5 }}>{patientDetail.activeTriageTickets}</Typography>
@@ -900,7 +902,7 @@ export default function DoctorPatients() {
                   </Grid>
 
                   {/* Administrative Grid Items */}
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
                       <CardContent sx={{ p: 3 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 2.5, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -941,7 +943,7 @@ export default function DoctorPatients() {
                   </Grid>
 
                   {/* Clinical Background Grid Items */}
-                  <Grid item xs={12} md={6}>
+                  <Grid size={{ xs: 12, md: 6 }}>
                     <Card sx={{ height: '100%', borderRadius: 3, border: '1px solid rgba(0,0,0,0.06)', boxShadow: '0 4px 12px rgba(0,0,0,0.02)' }}>
                       <CardContent sx={{ p: 3 }}>
                         <Typography variant="subtitle2" sx={{ fontWeight: 900, mb: 2.5, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
@@ -949,14 +951,14 @@ export default function DoctorPatients() {
                         </Typography>
                         <Stack spacing={2.5}>
                           <Grid container spacing={2}>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', display: 'block' }}>NHÓM MÁU</Typography>
                               <Typography variant="body2" sx={{ fontWeight: 900, color: 'error.main', mt: 0.2 }}>
                                 <Bloodtype sx={{ verticalAlign: 'middle', mr: 0.5 }} fontSize="small" />
                                 {patientDetail.bloodType || 'Chưa rõ'}
                               </Typography>
                             </Grid>
-                            <Grid item xs={6}>
+                            <Grid size={6}>
                               <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', display: 'block' }}>BHYT (HI)</Typography>
                               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.primary', mt: 0.2 }}>{patientDetail.insuranceNumber || 'Chưa có'}</Typography>
                             </Grid>
@@ -1032,11 +1034,11 @@ export default function DoctorPatients() {
                               <Divider sx={{ my: 2, borderColor: 'rgba(0,0,0,0.04)' }} />
 
                               <Grid container spacing={2}>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                   <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', display: 'block' }}>LÝ DO KHÁM</Typography>
                                   <Typography variant="body2" sx={{ fontWeight: 700, mt: 0.2 }}>{appt.reason || 'Khám tổng quát'}</Typography>
                                 </Grid>
-                                <Grid item xs={12} sm={6}>
+                                <Grid size={{ xs: 12, sm: 6 }}>
                                   <Typography variant="caption" sx={{ fontWeight: 800, color: 'text.secondary', display: 'block' }}>GHI CHÚ LÂM SÀNG</Typography>
                                   <Typography variant="body2" sx={{ fontWeight: 600, mt: 0.2, color: 'text.secondary' }}>{appt.notes || 'Không có ghi chú'}</Typography>
                                 </Grid>

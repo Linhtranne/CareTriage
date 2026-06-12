@@ -20,6 +20,7 @@ spring:
       port: ${REDIS_PORT:6379}
 
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: validate
     show-sql: false
@@ -54,13 +55,18 @@ app:
     expiration-ms: 86400000  # 24 hours
     refresh-expiration-ms: 604800000  # 7 days
 
+  chat:
+    inactivity-timeout: 45s
+    whole-turn-timeout: 120s
+    active-turn-stale-timeout: 150s
+
   websocket:
     allowed-origins: ${WS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://localhost:3000}
 
   # AI Service
   ai-service:
     url: ${AI_SERVICE_URL:http://localhost:8000}
-    internal-api-key: ${AI_SERVICE_INTERNAL_KEY:dummy-key-for-local-and-test}
+    internal-api-key: ${AI_SERVICE_INTERNAL_KEY:Z9jzNTEwSMh4hQBsHLi0RBsW5fl995ZNOYEMHMckE4E=}
     connect-timeout-ms: ${AI_CONNECT_TIMEOUT_MS:3000}
     read-timeout-seconds: ${AI_READ_TIMEOUT_SECONDS:30}
     write-timeout-seconds: ${AI_WRITE_TIMEOUT_SECONDS:10}
@@ -68,6 +74,29 @@ app:
       max-attempts: ${AI_RETRY_MAX_ATTEMPTS:3}
       initial-backoff-ms: ${AI_RETRY_INITIAL_BACKOFF_MS:300}
       max-backoff-ms: ${AI_RETRY_MAX_BACKOFF_MS:2000}
+
+  # LangChain4j Config
+  ai:
+    runtime: java
+    gemini:
+      api-key: ${GEMINI_API_KEY:}
+      model-name: ${GEMINI_MODEL_NAME:gemini-2.5-pro}
+      embedding-model-name: ${GEMINI_EMBEDDING_MODEL:text-embedding-004}
+      temperature: 0.1
+      timeout-seconds: 60
+      connect-timeout-ms: 10000
+      read-timeout-ms: 30000
+    rag:
+      enabled: ${RAG_ENABLED:true}
+      index-path: ${RAG_INDEX_PATH:medical_rag_index.json}
+      corpus-path: ${RAG_CORPUS_PATH:corpus}
+      max-results: ${RAG_MAX_RESULTS:5}
+      min-relevance-score: ${RAG_MIN_RELEVANCE_SCORE:0.3}
+      max-context-characters: ${RAG_MAX_CONTEXT_CHARACTERS:6000}
+      allowed-source-types: ${RAG_ALLOWED_SOURCE_TYPES:guideline,internal_reviewed}
+      require-phi-safe: ${RAG_REQUIRE_PHI_SAFE:true}
+      require-integrity-hash: ${RAG_REQUIRE_INTEGRITY_HASH:true}
+      max-evidence-age-days: ${RAG_MAX_EVIDENCE_AGE_DAYS:730}
 
   # Firebase Storage
   firebase:

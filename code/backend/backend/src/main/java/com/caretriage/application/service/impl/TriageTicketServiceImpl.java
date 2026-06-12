@@ -15,6 +15,9 @@ import com.caretriage.domain.repository.TriageTicketRepository;
 import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.application.service.TriageTicketService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -28,11 +31,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TriageTicketServiceImpl implements TriageTicketService {
 
     private final TriageTicketRepository triageTicketRepository;
     private final UserRepository userRepository;
     private final TicketCategoryRepository ticketCategoryRepository;
+    private final ObjectMapper objectMapper;
     private final com.caretriage.domain.repository.ChatSessionRepository chatSessionRepository;
     private final com.caretriage.domain.repository.ChatMessageRepository chatMessageRepository;
     private final ApplicationEventPublisher eventPublisher;
@@ -191,9 +196,10 @@ public class TriageTicketServiceImpl implements TriageTicketService {
             return null;
         }
         try {
-            com.fasterxml.jackson.databind.JsonNode node = new com.fasterxml.jackson.databind.ObjectMapper().readTree(metadata);
+            com.fasterxml.jackson.databind.JsonNode node = objectMapper.readTree(metadata);
             return node.has("session_id") ? node.get("session_id").asLong() : null;
-        } catch (Exception e) {
+        } catch (JsonProcessingException e) {
+            log.warn("Ignoring malformed triage ticket metadata", e);
             return null;
         }
     }
@@ -285,9 +291,9 @@ public class TriageTicketServiceImpl implements TriageTicketService {
             edits.put("confirmed_summary", ticket.getDoctorConfirmedSummary());
             edits.put("reviewed_by", doctor.getFullName());
             edits.put("reviewed_at", ticket.getReviewedAt().toString());
-            ticket.setDoctorEditsSnapshot(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(edits));
-        } catch (Exception e) {
-            // Ignore exception
+            ticket.setDoctorEditsSnapshot(objectMapper.writeValueAsString(edits));
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException("Failed to serialize doctor review snapshot", e);
         }
 
         TriageTicket saved = triageTicketRepository.save(ticket);

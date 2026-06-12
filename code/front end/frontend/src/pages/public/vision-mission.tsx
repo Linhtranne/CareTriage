@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Grid, Button } from '@mui/material'
+﻿import { Box, Container, Typography, Grid, Button } from '@mui/material'
 import { useTranslation } from 'react-i18next'
 import { motion, type Variants } from 'framer-motion'
 
@@ -52,7 +52,7 @@ export default function VisionMission() {
 
         <Container maxWidth="xl" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={4}>
-            <Grid item xs={12} md={9} lg={8}>
+            <Grid size={{ xs: 12, md: 9, lg: 8 }} >
               <motion.div
                 initial={{ opacity: 0, x: -30 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -114,7 +114,7 @@ export default function VisionMission() {
             variants={staggerContainer}
           >
             <Grid container spacing={8} alignItems="flex-start">
-              <Grid item xs={12} md={3}>
+              <Grid size={{ xs: 12, md: 3 }} >
                 <motion.div variants={fadeUp}>
                   <Typography 
                     variant="overline" 
@@ -124,7 +124,7 @@ export default function VisionMission() {
                   </Typography>
                 </motion.div>
               </Grid>
-              <Grid item xs={12} md={9}>
+              <Grid size={{ xs: 12, md: 9 }} >
                 <motion.div variants={fadeUp}>
                   <Typography 
                     variant="h2" 
@@ -163,7 +163,7 @@ export default function VisionMission() {
             variants={staggerContainer}
           >
             <Grid container spacing={8} alignItems="center">
-              <Grid item xs={12} md={8} lg={9} order={{ xs: 2, md: 1 }}>
+              <Grid size={{ xs: 12, md: 8, lg: 9 }} order={{ xs: 2, md: 1 }}>
                 <motion.div variants={fadeUp}>
                   <Typography 
                     variant="h2" 
@@ -187,7 +187,7 @@ export default function VisionMission() {
                   </Typography>
                 </motion.div>
               </Grid>
-              <Grid item xs={12} md={4} lg={3} order={{ xs: 1, md: 2 }} sx={{ textAlign: { md: 'right' } }}>
+              <Grid size={{ xs: 12, md: 4, lg: 3 }} order={{ xs: 1, md: 2 }} sx={{ textAlign: { md: 'right' } }}>
                 <motion.div variants={fadeUp}>
                   <Typography 
                     variant="overline" 
@@ -249,7 +249,7 @@ export default function VisionMission() {
                     }}
                   >
                     <Grid container spacing={4} alignItems="center">
-                      <Grid item xs={12} md={3}>
+                      <Grid size={{ xs: 12, md: 3 }} >
                         <Typography 
                           className="manifesto-num"
                           variant="h1" 
@@ -263,7 +263,7 @@ export default function VisionMission() {
                           {value.num}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} md={4}>
+                      <Grid size={{ xs: 12, md: 4 }} >
                         <Typography 
                           variant="h4" 
                           sx={{ fontWeight: 900, color: 'primary.900', fontSize: '2.5rem', letterSpacing: '-0.02em' }}
@@ -271,7 +271,7 @@ export default function VisionMission() {
                           {value.title}
                         </Typography>
                       </Grid>
-                      <Grid item xs={12} md={5}>
+                      <Grid size={{ xs: 12, md: 5 }} >
                         <Typography 
                           variant="body1" 
                           sx={{ color: 'text.secondary', fontSize: '1.25rem', lineHeight: 1.7 }}
@@ -298,7 +298,7 @@ export default function VisionMission() {
             variants={staggerContainer}
           >
             <Grid container spacing={6} alignItems="center">
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }} >
                 <motion.div variants={fadeUp}>
                   <Typography 
                     variant="h2" 
@@ -308,7 +308,7 @@ export default function VisionMission() {
                   </Typography>
                 </motion.div>
               </Grid>
-              <Grid item xs={12} md={4} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
+              <Grid size={{ xs: 12, md: 4 }} sx={{ textAlign: { xs: 'left', md: 'right' } }}>
                 <motion.div variants={fadeUp}>
                   <Button 
                     variant="contained" 

@@ -7,9 +7,6 @@ import com.google.firebase.cloud.StorageClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 import java.util.UUID;
 
 @Service
@@ -32,9 +29,9 @@ public class FirebaseStorageServiceImpl implements FirebaseStorageService {
             return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media", 
                 bucketName, fileName.replace("/", "%2F"));
             
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Failed to upload file to Firebase folder: {}", folder, e);
-            throw new RuntimeException("Could not upload file: " + e.getMessage());
+            throw new IllegalStateException("Could not upload file", e);
         }
     }
 
@@ -55,7 +52,7 @@ public class FirebaseStorageServiceImpl implements FirebaseStorageService {
                     log.info("Deleted file from Firebase: {}", path);
                 }
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.warn("Failed to delete file from Firebase: {}", fileUrl, e);
         }
     }

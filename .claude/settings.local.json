@@ -23,7 +23,11 @@
       "PowerShell(npm test *)",
       "PowerShell(python -c \"import google.genai as genai; print\\('google-genai available'\\)\")",
       "PowerShell(python -c \"from google import genai; from google.genai import types; c=genai.Client\\(api_key='x'\\); print\\(hasattr\\(c,'models'\\), hasattr\\(c,'aio'\\), hasattr\\(c,'chats'\\)\\); print\\(types.GenerateContentConfig\\)\")",
-      "PowerShell(python -c \"import google.genai, importlib.metadata as m; print\\(m.version\\('google-genai'\\)\\)\")"
+      "PowerShell(python -c \"import google.genai, importlib.metadata as m; print\\(m.version\\('google-genai'\\)\\)\")",
+      "Skill(code-review)",
+      "Skill(code-review:*)",
+      "PowerShell(git -C \"D:\\\\CareTriage\" status --short -- \"code/backend/backend/src/main/java/com/caretriage/domain/repository/ChatTurnRepository.java\" \"code/backend/backend/src/main/java/com/caretriage/application/service/impl/ChatTurnReconciliationService.java\" \"code/backend/backend/src/main/java/com/caretriage/application/ai/service/LangChainTriageEngine.java\" \"code/front end/frontend/src/hooks/use-chat.js\" \"code/front end/frontend/src/components/chat/chat-widget.tsx\" \"code/front end/frontend/src/components/chat/chat-window.tsx\")",
+      "PowerShell($env:PYTHONPATH = 'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service'; & 'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service\\\\venv\\\\Scripts\\\\python.exe' -m pytest 'D:\\\\CareTriage\\\\code\\\\backend\\\\ai-service')"
     ]
   }
 }

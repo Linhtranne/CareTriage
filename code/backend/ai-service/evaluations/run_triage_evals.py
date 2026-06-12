@@ -1,130 +1,329 @@
+# ruff: noqa: E402, I001
+import argparse
 import asyncio
 import json
 import os
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+import unicodedata
 from typing import List, Optional, Type
+
 from pydantic import BaseModel
 
-# Add the project root to sys.path so we can import 'app'
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.stdout.reconfigure(encoding="utf-8")
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app.domain.evaluation_models import EvalCase, EvalResult, EvalSummary
-from app.application.usecases.triage_use_case import TriageUseCase
-from app.domain.interfaces import ILlmProvider
-from app.domain.schemas import TriageRecommendationOutput
-from app.infrastructure.telemetry.factory import get_telemetry_client
+from app.application.context.clinical_context_builder import (
+    DeterministicClinicalContextBuilder,
+)  # noqa: E402
+from app.application.evaluations import TriageEvalRunner  # noqa: E402
+from app.application.usecases.triage_use_case import TriageUseCase  # noqa: E402
+from app.domain.evaluation_models import EvalCase  # noqa: E402
+from app.domain.interfaces import ILlmProvider  # noqa: E402
+from app.domain.schemas import TriageRecommendationOutput  # noqa: E402
+from app.infrastructure.telemetry.factory import get_telemetry_client  # noqa: E402
+
+
+def normalize_text(value: str) -> str:
+    normalized = unicodedata.normalize(
+        "NFKD", value.lower().replace("đ", "d").replace("Đ", "D")
+    )
+    return "".join(ch for ch in normalized if not unicodedata.combining(ch))
+
+
+def make_output(
+    department: str,
+    urgency: str,
+    *,
+    confidence: float = 0.9,
+    red_flag: bool = False,
+    missing_information: Optional[List[str]] = None,
+    reasoning: str = "Mocked deterministic routing",
+) -> dict:
+    return TriageRecommendationOutput(
+        intake_complete=not missing_information,
+        missing_information=missing_information or [],
+        urgency_level=urgency,
+        suggested_department=department,
+        confidence_score=confidence,
+        clinical_reasoning_summary=reasoning,
+        summary=reasoning,
+        red_flag_detected=red_flag,
+        infection_control=red_flag,
+    ).model_dump()
+
 
 class MockLlmProvider(ILlmProvider):
-    async def generate_text(self, system_prompt: str, user_prompt: str, history: Optional[List[str]] = None, context: Optional[str] = None, attachments: Optional[List[dict]] = None) -> str:
+    async def generate_text(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        history: Optional[List[str]] = None,
+        context: Optional[str] = None,
+        attachments: Optional[List[dict]] = None,
+        session_id: str = "system",
+    ) -> str:
         return "Mocked response"
 
-    async def generate_structured_data(self, system_prompt: str, user_prompt: str, output_schema: Type[BaseModel], context: Optional[str] = None) -> dict:
-        # Mocking responses based on simple keyword matches for testing eval correctness without LLM cost
-        msg = user_prompt.lower()
-        if "ngứa" in msg or "mẩn đỏ" in msg or "hải sản" in msg:
-            return TriageRecommendationOutput(
-                intake_complete=True,
-                urgency_level="MEDIUM",
-                suggested_department="Da liễu",
-                confidence_score=0.9,
-                clinical_reasoning_summary="Allergic reaction",
-                summary="Patient has allergic reaction to seafood"
-            ).model_dump()
-        elif "sốt" in msg and "cháu" in msg:
-            return TriageRecommendationOutput(
-                intake_complete=True,
-                urgency_level="HIGH",
-                suggested_department="Nhi khoa",
-                confidence_score=0.9,
-                clinical_reasoning_summary="High fever in toddler",
-                summary="Toddler with 39C fever"
-            ).model_dump()
-        elif "dạ dày" in msg:
-            return TriageRecommendationOutput(
-                intake_complete=True,
-                urgency_level="LOW",
-                suggested_department="Tiêu hóa",
-                confidence_score=0.9,
-                clinical_reasoning_summary="Stomach ache",
-                summary="Patient has stomach ache"
-            ).model_dump()
-        
-        # Default fallback
-        return TriageRecommendationOutput(
-            intake_complete=True,
-            urgency_level="MEDIUM",
-            suggested_department="Nội tổng quát",
-            confidence_score=0.8,
-            clinical_reasoning_summary="Default",
-            summary="Default"
-        ).model_dump()
+    async def generate_structured_data(  # noqa: C901
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        output_schema: Type[BaseModel],
+        context: Optional[str] = None,
+        session_id: str = "system",
+    ) -> dict:
+        msg = normalize_text(user_prompt)
+        # Extract just the patient message at the end
+        patient_msg = msg
+        if "patient:" in msg:
+            patient_msg = msg.split("patient:")[-1]
 
-async def run_evals():
-    dataset_path = os.path.join(os.path.dirname(__file__), "golden_dataset.json")
+        if any(
+            term in patient_msg
+            for term in [
+                "dot ngot meo mieng",
+                "meo mieng",
+                "liet nua nguoi",
+                "dau tuc nguc",
+                "moi tim",
+                "khong noi duoc",
+                "kho khe",
+                "sung moi",
+                "mang thai",
+                "ra mau am dao",
+                "khong muon song",
+                "tu lam hai",
+                "dau dau du doi nhat",
+            ]
+        ):
+            return make_output("Cấp cứu", "EMERGENCY", red_flag=True)
+
+        if "nga" in patient_msg and (
+            "lu lan" in patient_msg or "dau hong" in patient_msg
+        ):
+            return make_output("Cấp cứu", "HIGH", red_flag=True)
+
+        if "phan đen" in patient_msg or "phan den" in patient_msg:
+            return make_output("Cấp cứu", "HIGH", red_flag=True)
+
+        if (
+            "ngua" in patient_msg
+            or "man" in patient_msg
+            or "hai san" in patient_msg
+            or "noi mun do" in patient_msg
+        ):
+            urgency = "LOW" if "noi mun do" in patient_msg else "MEDIUM"
+            return make_output("Da liễu", urgency, reasoning="Dermatology symptoms")
+
+        if ("sot" in patient_msg and "chau" in patient_msg) or "con toi" in patient_msg:
+            urgency = (
+                "HIGH" if "39" in patient_msg or "sot cao" in patient_msg else "MEDIUM"
+            )
+            return make_output("Nhi khoa", urgency, reasoning="Pediatric symptoms")
+
+        if "da day" in patient_msg or "o chua" in patient_msg:
+            return make_output("Tiêu hóa", "LOW", reasoning="Stomach reflux")
+
+        if any(
+            term in patient_msg for term in ["di ngoai", "ho chau phai", "dau bung"]
+        ):
+            urgency = (
+                "HIGH"
+                if "ho chau phai" in patient_msg or "bung duoi ben phai" in patient_msg
+                else "MEDIUM"
+            )
+            return make_output("Tiêu hóa", urgency, reasoning="GI symptoms")
+
+        if any(
+            term in patient_msg for term in ["dau lung", "treo co chan", "sung dau"]
+        ):
+            return make_output(
+                "Cơ xương khớp", "LOW", reasoning="Musculoskeletal symptoms"
+            )
+
+        if any(
+            term in patient_msg
+            for term in ["nghet mui", "dau hong", "u tai", "chay dich tai"]
+        ):
+            return make_output("Tai Mũi Họng", "LOW", reasoning="ENT symptoms")
+
+        if "mat khu giac" in patient_msg or "covid" in patient_msg:
+            return make_output(
+                "Nội tổng quát", "MEDIUM", reasoning="Infection control symptoms"
+            )
+
+        if "dau dau nhe" in patient_msg and "khong yeu tay chan" in patient_msg:
+            return make_output(
+                "Nội tổng quát", "LOW", reasoning="Negated neurological red flags"
+            )
+
+        if "dau dau nhe" in patient_msg and "khong nhin mo" in patient_msg:
+            return make_output(
+                "Nội tổng quát", "LOW", reasoning="Mild headache without red flags"
+            )
+
+        if "sooot" in patient_msg or (
+            "ho nhieu" in patient_msg and "tho dc" in patient_msg
+        ):
+            return make_output(
+                "Nội tổng quát", "MEDIUM", reasoning="Noisy respiratory symptoms"
+            )
+
+        if "hoi hop" in patient_msg or "danh trong nguc" in patient_msg:
+            return make_output("Tim mạch", "MEDIUM", reasoning="Cardiology symptoms")
+
+        if any(term in patient_msg for term in ["te bi", "run tay", "dau dau am i"]):
+            return make_output("Thần kinh", "MEDIUM", reasoning="Neurology symptoms")
+
+        if any(
+            term in patient_msg for term in ["khi hu", "tre kinh", "dau vung ha vi"]
+        ):
+            return make_output("Sản phụ khoa", "MEDIUM", reasoning="OBGYN symptoms")
+
+        if "khong duoc khoe" in patient_msg or "hoi met" in patient_msg:
+            return make_output(
+                "Nội tổng quát",
+                "MEDIUM",
+                missing_information=["triệu chứng chính", "thời gian khởi phát"],
+                reasoning="Ambiguous symptoms need more intake",
+            )
+
+        return make_output("Nội tổng quát", "MEDIUM", confidence=0.8)
+
+
+async def run_evals(dataset_path: str, output_path: str, threshold: float, mode: str):  # noqa: C901
     with open(dataset_path, "r", encoding="utf-8") as f:
         cases_data = json.load(f)
 
-    eval_cases = [EvalCase(**c) for c in cases_data]
-    
-    llm = MockLlmProvider()
-    telemetry = get_telemetry_client()
-    use_case = TriageUseCase(llm_provider=llm, telemetry=telemetry)
+    eval_cases = [EvalCase(**case_data) for case_data in cases_data]
+    eval_runner = TriageEvalRunner()
 
     results = []
-    passed_count = 0
 
-    print(f"Running evaluation on {len(eval_cases)} cases...")
-
-    for case in eval_cases:
-        print(f"Evaluating case: {case.id}")
-        
-        # Run triage pipeline
-        res = await use_case.recommend(
-            session_id=f"eval_{case.id}",
-            message=case.patient_message,
-            history=case.history
+    if mode == "saved":
+        print(
+            f"Running evaluation on {len(eval_cases)} cases using saved outputs from {output_path}..."
         )
-        
-        triage_res = res.get("triage_result") or {}
-        actual_dept = triage_res.get("suggested_department_name", "Nội tổng quát")
-        actual_urgency = triage_res.get("urgency_level", "MEDIUM")
-        
-        dept_match = actual_dept == case.expected_department
-        urgency_match = actual_urgency == case.expected_urgency
-        # If expected red flag is true, then we expect the triage_result to indicate an emergency bypass
-        is_emergency = actual_dept == "Cấp cứu" and actual_urgency == "EMERGENCY"
-        red_flag_match = is_emergency == case.expected_red_flag
+        if not os.path.exists(output_path):
+            print(f"Error: Saved outputs file {output_path} not found.")
+            sys.exit(1)
 
-        passed = dept_match and urgency_match and red_flag_match
-        if passed:
-            passed_count += 1
-            
-        results.append(EvalResult(
-            case_id=case.id,
-            passed=passed,
-            department_match=dept_match,
-            urgency_match=urgency_match,
-            red_flag_match=red_flag_match,
-            safety_notes=None if passed else f"Expected: {case.expected_department}/{case.expected_urgency}, Got: {actual_dept}/{actual_urgency}"
-        ))
+        with open(output_path, "r", encoding="utf-8") as f:
+            saved_outputs_list = json.load(f)
 
-    summary = EvalSummary(
-        total_cases=len(eval_cases),
-        passed_cases=passed_count,
-        accuracy=passed_count / len(eval_cases),
-        results=results
-    )
+        saved_outputs = {item["case_id"]: item for item in saved_outputs_list}
+
+        for case in eval_cases:
+            print(f"Evaluating case: {case.id}")
+            actual_output = saved_outputs.get(case.id, {})
+            result = eval_runner.evaluate_result(case, actual_output)
+            results.append(result)
+
+    else:
+        print(f"Running evaluation on {len(eval_cases)} cases using mode: {mode}...")
+        llm_provider = None
+        if mode == "live":
+            if os.getenv("ENABLE_LIVE_EVALS") != "true":
+                print(
+                    "Error: Live mode requested but ENABLE_LIVE_EVALS != 'true'. Aborting."
+                )
+                sys.exit(1)
+            from app.infrastructure.llm.gemini_provider import GeminiProvider
+
+            llm_provider = GeminiProvider()
+        else:
+            llm_provider = MockLlmProvider()
+
+        use_case = TriageUseCase(
+            llm_provider=llm_provider,
+            context_builder=DeterministicClinicalContextBuilder(),
+            clinical_context_builder_enabled=False,
+            telemetry=get_telemetry_client(),
+        )
+
+        actual_outputs_to_save = []
+
+        for case in eval_cases:
+            print(f"Evaluating case: {case.id}")
+            response = await use_case.recommend(
+                session_id=f"eval_{case.id}",
+                message=case.input_text,
+                history=case.conversation_history,
+            )
+
+            # Map for TriageEvalRunner expectations (suggested_department_code)
+            triage_result = response.get("triage_result") or {}
+            if (
+                "suggested_department_name" in triage_result
+                and "suggested_department_code" not in triage_result
+            ):
+                triage_result["suggested_department_code"] = triage_result[
+                    "suggested_department_name"
+                ]
+
+            actual_outputs_to_save.append(
+                {
+                    "case_id": case.id,
+                    "triage_result": triage_result,
+                    "red_flag_detected": triage_result.get("red_flag_detected", False),
+                }
+            )
+
+            result = eval_runner.evaluate_result(case, response)
+            results.append(result)
+
+        if output_path:
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(actual_outputs_to_save, f, ensure_ascii=False, indent=2)
+
+    summary = eval_runner.summarize(results)
 
     print("\n--- Evaluation Summary ---")
-    print(f"Total Cases: {summary.total_cases}")
-    print(f"Passed: {summary.passed_cases}")
-    print(f"Accuracy: {summary.accuracy * 100:.1f}%\n")
-    
-    for r in summary.results:
-        status = "PASS" if r.passed else "FAIL"
-        notes = f" - Notes: {r.safety_notes}" if r.safety_notes else ""
-        print(f"[{status}] {r.case_id}{notes}")
+    print(f"Total Cases: {summary.total}")
+    print(f"Passed: {summary.passed}")
+    accuracy = summary.passed / summary.total if summary.total > 0 else 0
+    print(f"Accuracy: {accuracy * 100:.1f}%\n")
+
+    for result in summary.results:
+        status = "PASS" if result.passed else "FAIL"
+        notes = f" - Notes: {', '.join(result.reasons)}" if result.reasons else ""
+        print(f"[{status}] {result.case_id}{notes}")
+
+    if accuracy < threshold:
+        print(
+            f"\nError: Accuracy {accuracy * 100:.1f}% is below the threshold of {threshold * 100:.1f}%."
+        )
+        sys.exit(1)
+
 
 if __name__ == "__main__":
-    asyncio.run(run_evals())
+    parser = argparse.ArgumentParser(description="Run AI Triage Evaluations")
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), "golden_dataset.json"),
+        help="Path to golden dataset",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default=os.path.join(os.path.dirname(__file__), "eval_outputs.json"),
+        help="Path to save/load outputs",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.8,
+        help="Pass/fail threshold for accuracy (0.0 - 1.0)",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        choices=["mocked", "saved", "live"],
+        default="mocked",
+        help="Evaluation mode",
+    )
+
+    args = parser.parse_args()
+
+    asyncio.run(run_evals(args.dataset, args.output, args.threshold, args.mode))

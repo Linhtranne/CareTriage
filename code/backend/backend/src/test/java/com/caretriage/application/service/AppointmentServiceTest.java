@@ -13,7 +13,6 @@ import com.caretriage.domain.entity.TriageTicket;
 import com.caretriage.domain.entity.User;
 import com.caretriage.infrastructure.persistence.entity.UserJpaEntity;
 import com.caretriage.shared.exception.BusinessException;
-import com.caretriage.shared.exception.ResourceNotFoundException;
 import com.caretriage.domain.repository.AppointmentRepository;
 import com.caretriage.domain.repository.DepartmentRepository;
 import com.caretriage.domain.repository.DoctorScheduleRepository;

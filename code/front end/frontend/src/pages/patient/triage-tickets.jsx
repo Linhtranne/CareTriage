@@ -233,7 +233,7 @@ export default function TriageTickets() {
         ) : tickets.length > 0 ? (
           <Grid container spacing={4}>
             {tickets.map((ticket) => (
-              <Grid item xs={12} md={6} xl={4} key={ticket.id}>
+              <Grid size={{ xs: 12, md: 6, xl: 4 }} key={ticket.id}>
                 <Box
                   onClick={() => handleOpenDetail(ticket)}
                   onKeyDown={(event) => handleCardKeyDown(event, ticket)}
@@ -373,7 +373,7 @@ export default function TriageTickets() {
             <Alert severity="error" variant="outlined" sx={{ borderRadius: 4 }}>{detailError}</Alert>
           ) : selectedTicket && (
             <Grid container spacing={6}>
-              <Grid item xs={12} lg={4}>
+              <Grid size={{ xs: 12, lg: 4 }}>
                 <Stack spacing={4}>
                   <Box sx={{ p: 4, borderRadius: 5, bgcolor: 'oklch(99% 0.01 250)', border: '1px solid oklch(96% 0.01 250)' }}>
                     <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(60% 0.02 250)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
@@ -417,7 +417,7 @@ export default function TriageTickets() {
                 </Stack>
               </Grid>
 
-              <Grid item xs={12} lg={8}>
+              <Grid size={{ xs: 12, lg: 8 }}>
                 <Stack spacing={6}>
                   <Box>
                     <Typography variant="h4" sx={{ fontWeight: 700, color: 'oklch(20% 0.05 250)', mb: 2, letterSpacing: '-0.02em' }}>

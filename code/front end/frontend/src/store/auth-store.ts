@@ -59,14 +59,20 @@ interface AuthState {
   getRole: () => string | null;
 }
 
-const normalizeRole = (role: string) => role.replace('ROLE_', '').toUpperCase()
+const normalizeRole = (role?: string) => {
+  if (!role) return ''
+  return role.replace('ROLE_', '').toUpperCase()
+}
 
 const normalizeUserRole = (user: User) => ({
   ...user,
-  role: normalizeRole(user.role) as User['role'],
+  role: user.role ? (normalizeRole(user.role) as User['role']) : undefined as unknown as User['role'],
 })
 
-const getErrorMessage = (error: unknown, fallbackMessage: string) => {
+const getErrorMessage = (error: any, fallbackMessage: string) => {
+  if (error && error.response?.data?.message) {
+    return error.response.data.message
+  }
   if (error instanceof AxiosError) {
     return (error.response?.data as ErrorResponse | undefined)?.message || fallbackMessage
   }

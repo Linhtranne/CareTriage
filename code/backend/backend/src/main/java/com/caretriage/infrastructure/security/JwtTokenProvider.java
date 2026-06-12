@@ -37,7 +37,7 @@ public class JwtTokenProvider {
     }
 
     public String generateTempTokenFromEmail(String email) {
-        return buildToken(email, 5 * 60 * 1000); // 5 minutes
+        return buildToken(email, 5L * 60 * 1000); // 5 minutes
     }
 
     public String generateRefreshToken(String email) {

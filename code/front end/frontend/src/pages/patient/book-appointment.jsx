@@ -128,15 +128,49 @@ export default function BookAppointment() {
               .replace(/\s+/g, ' ')
               .trim() || '';
             
+            const normalizeDepartmentText = (value) => normalize(value)
+              .replace(/đ/g, 'd')
+              .replace(/[^a-z0-9\s]/g, ' ')
+              .replace(/\b(chuyen khoa|khoa|phong kham|bac si)\b/g, ' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+
+            const expandDepartmentAliases = (value) => {
+              const normalized = normalizeDepartmentText(value);
+              const aliases = new Set([normalized]);
+
+              if (/(tai mui hong|rang ham mat|nha khoa|mieng|luoi|hong|loet|nuou)/.test(normalized)) {
+                aliases.add('tai mui hong');
+                aliases.add('rang ham mat');
+                aliases.add('nha khoa');
+              }
+              if (/(da lieu|ngua|phat ban|noi man)/.test(normalized)) aliases.add('da lieu');
+              if (/(tieu hoa|bung|da day|ruot|gan|mat)/.test(normalized)) aliases.add('tieu hoa');
+              if (/(tim mach|nguc|tim|huyet ap)/.test(normalized)) aliases.add('tim mach');
+              if (/(than kinh|dau dau|co giat|te liet|chong mat)/.test(normalized)) aliases.add('than kinh');
+              if (/(co xuong khop|xuong|khop|lung)/.test(normalized)) aliases.add('co xuong khop');
+              if (/(cap cuu|nguy kich|khan cap)/.test(normalized)) aliases.add('cap cuu');
+              if (/(noi tong quat|tong quat|general)/.test(normalized)) aliases.add('noi tong quat');
+
+              return [...aliases].filter(Boolean);
+            };
+            
             // Split by comma or slash to handle multiple suggestions
-            const suggestedParts = departmentName.split(/[,/]/).map(p => normalize(p));
+            const suggestedParts = departmentName.split(/[,/]/).flatMap(expandDepartmentAliases);
             
             const matchedDept = deptList.find(d => {
-              const dName = normalize(d.name);
-              const dNameVi = normalize(d.nameVi);
-              return suggestedParts.some(target => 
-                (target && dName.includes(target)) || (dName && target.includes(dName)) || 
-                (target && dNameVi.includes(target)) || (dNameVi && target.includes(dNameVi))
+              const departmentTargets = [
+                normalizeDepartmentText(d.name),
+                normalizeDepartmentText(d.nameVi || d.name),
+                normalizeDepartmentText(d.code),
+                normalizeDepartmentText(d.slug),
+              ].filter(Boolean);
+
+              return suggestedParts.some(target =>
+                departmentTargets.some(candidate =>
+                  (target && candidate.includes(target)) ||
+                  (candidate && target.includes(candidate))
+                )
               );
             });
 
@@ -278,7 +312,7 @@ export default function BookAppointment() {
               {(doctors || []).map((doc) => {
                 const isSelected = selectedDoctor?.id === doc.id;
                 return (
-                  <Grid item xs={12} sm={6} lg={4} key={doc.id}>
+                  <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={doc.id}>
                     <Box 
                       onClick={() => { setSelectedDoctor(doc); setSelectedSlot(null); setError(''); }}
                       sx={{ 
@@ -384,7 +418,7 @@ export default function BookAppointment() {
             ) : (availableSlots || []).length > 0 ? (
               <Grid container spacing={2}>
                 {(availableSlots || []).map((slot, idx) => (
-                  <Grid item xs={6} sm={4} md={3} lg={2} key={idx}>
+                  <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={idx}>
                     <Box
                       onClick={() => { if(slot.available) { setSelectedSlot(slot); setError(''); } }}
                       sx={{ 
@@ -429,7 +463,7 @@ export default function BookAppointment() {
               mb: 6
             }}>
               <Grid container spacing={6}>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
                     {t('booking.confirm_doctor')}
                   </Typography>
@@ -445,7 +479,7 @@ export default function BookAppointment() {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} md={6}>
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
                     {t('booking.confirm_time')}
                   </Typography>
@@ -468,7 +502,7 @@ export default function BookAppointment() {
                     </Box>
                   </Stack>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid size={12}>
                   <Box sx={{ p: 3, bgcolor: 'white', borderRadius: 4, border: '1px solid oklch(92% 0.02 250)' }}>
                     <Typography variant="caption" sx={{ textTransform: 'uppercase', fontWeight: 900, color: 'oklch(60% 0.02 250)', letterSpacing: '0.1em' }}>
                       {t('booking.confirm_patient')}

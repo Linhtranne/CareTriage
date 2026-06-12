@@ -5,12 +5,14 @@ import com.caretriage.application.dto.response.DoctorScheduleResponse;
 import com.caretriage.domain.entity.DoctorSchedule;
 import com.caretriage.domain.entity.User;
 import com.caretriage.shared.exception.ResourceNotFoundException;
+import com.caretriage.shared.exception.BusinessException;
 import com.caretriage.domain.repository.DoctorScheduleRepository;
 import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.application.service.DoctorScheduleService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -38,7 +40,7 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
 
         // Validate time range
         if (!request.getStartTime().isBefore(request.getEndTime())) {
-            throw new RuntimeException("Giờ bắt đầu phải trước giờ kết thúc");
+            throw new BusinessException("Giờ bắt đầu phải trước giờ kết thúc");
         }
 
         // Check for overlapping schedules on the same day
@@ -50,7 +52,7 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
                         && request.getEndTime().isAfter(s.getStartTime()));
 
         if (hasOverlap) {
-            throw new RuntimeException("Lịch làm việc bị trùng với ca khác vào " + request.getDayOfWeek());
+            throw new BusinessException("Lịch làm việc bị trùng với ca khác vào " + request.getDayOfWeek());
         }
 
         DoctorSchedule schedule = DoctorSchedule.builder()
@@ -75,11 +77,11 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch làm việc"));
 
         if (!schedule.getDoctor().getId().equals(doctorId)) {
-            throw new RuntimeException("Bạn không có quyền sửa lịch này");
+            throw new AccessDeniedException("Bạn không có quyền sửa lịch này");
         }
 
         if (!request.getStartTime().isBefore(request.getEndTime())) {
-            throw new RuntimeException("Giờ bắt đầu phải trước giờ kết thúc");
+            throw new BusinessException("Giờ bắt đầu phải trước giờ kết thúc");
         }
 
         schedule.setDayOfWeek(request.getDayOfWeek());
@@ -97,7 +99,7 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch làm việc"));
 
         if (!schedule.getDoctor().getId().equals(doctorId)) {
-            throw new RuntimeException("Bạn không có quyền xóa lịch này");
+            throw new AccessDeniedException("Bạn không có quyền xóa lịch này");
         }
 
         // Soft delete by deactivating

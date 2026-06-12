@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Typography,
   Box,
@@ -39,7 +39,7 @@ const schema = yup.object().shape({
   severity: yup.string(),
 }).test(
   'atLeastOne',
-  'Vui lòng nhập ít nhất một tiêu chí tìm kiếm (Triệu chứng, Thuốc, hoặc Bệnh lý)',
+  'Vui lÃ²ng nháº­p Ã­t nháº¥t má»™t tiÃªu chÃ­ tÃ¬m kiáº¿m (Triá»‡u chá»©ng, Thuá»‘c, hoáº·c Bá»‡nh lÃ½)',
   (values) => !!(values.symptom || values.medication || values.condition)
 );
 
@@ -110,7 +110,7 @@ export default function EHRSearch() {
       setResults(dataList);
       setSearched(true);
     } catch (err) {
-      setError('Có lỗi xảy ra khi tìm kiếm. Vui lòng thử lại.');
+      setError('CÃ³ lá»—i xáº£y ra khi tÃ¬m kiáº¿m. Vui lÃ²ng thá»­ láº¡i.');
       console.error(err);
     } finally {
       setLoading(false);
@@ -127,7 +127,7 @@ export default function EHRSearch() {
   const columns = [
     {
       field: 'patientName',
-      headerName: 'Bệnh nhân',
+      headerName: 'Bá»‡nh nhÃ¢n',
       flex: 2,
       minWidth: 220,
       renderCell: (params) => (
@@ -154,7 +154,7 @@ export default function EHRSearch() {
     },
     {
       field: 'totalNotes',
-      headerName: 'Số ghi chú',
+      headerName: 'Sá»‘ ghi chÃº',
       flex: 1,
       minWidth: 120,
       align: 'center',
@@ -171,7 +171,7 @@ export default function EHRSearch() {
     },
     {
       field: 'findings',
-      headerName: 'Phát hiện lâm sàng',
+      headerName: 'PhÃ¡t hiá»‡n lÃ¢m sÃ ng',
       flex: 3,
       minWidth: 300,
       renderCell: (params) => (
@@ -190,7 +190,7 @@ export default function EHRSearch() {
     },
     {
       field: 'actions',
-      headerName: 'Hành động',
+      headerName: 'HÃ nh Ä‘á»™ng',
       flex: 1.2,
       minWidth: 140,
       align: 'right',
@@ -221,7 +221,7 @@ export default function EHRSearch() {
   return (
     <PatientPageShell
       title="EHR Search"
-      description="Tìm kiếm bệnh nhân thông minh dựa trên lịch sử hồ sơ lâm sàng"
+      description="TÃ¬m kiáº¿m bá»‡nh nhÃ¢n thÃ´ng minh dá»±a trÃªn lá»‹ch sá»­ há»“ sÆ¡ lÃ¢m sÃ ng"
       maxWidth="xl"
       transparent={true}
     >
@@ -241,7 +241,7 @@ export default function EHRSearch() {
       >
         <form onSubmit={handleSubmit(onSearch)}>
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="symptom"
                 control={control}
@@ -249,15 +249,15 @@ export default function EHRSearch() {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Triệu chứng"
-                    placeholder="Ví dụ: đau đầu, ho, sốt..."
+                    label="Triá»‡u chá»©ng"
+                    placeholder="VÃ­ dá»¥: Ä‘au Ä‘áº§u, ho, sá»‘t..."
                     variant="filled"
                     sx={inputSx}
                   />
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="medication"
                 control={control}
@@ -265,15 +265,15 @@ export default function EHRSearch() {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Thuốc đang dùng"
-                    placeholder="Ví dụ: Paracetamol, Insulin..."
+                    label="Thuá»‘c Ä‘ang dÃ¹ng"
+                    placeholder="VÃ­ dá»¥: Paracetamol, Insulin..."
                     variant="filled"
                     sx={inputSx}
                   />
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="condition"
                 control={control}
@@ -281,8 +281,8 @@ export default function EHRSearch() {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Chẩn đoán / Bệnh lý"
-                    placeholder="Ví dụ: Tiểu đường, Tăng huyết áp..."
+                    label="Cháº©n Ä‘oÃ¡n / Bá»‡nh lÃ½"
+                    placeholder="VÃ­ dá»¥: Tiá»ƒu Ä‘Æ°á»ng, TÄƒng huyáº¿t Ã¡p..."
                     variant="filled"
                     sx={inputSx}
                   />
@@ -290,7 +290,7 @@ export default function EHRSearch() {
               />
             </Grid>
 
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="dateFrom"
                 control={control}
@@ -298,7 +298,7 @@ export default function EHRSearch() {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Từ ngày"
+                    label="Tá»« ngÃ y"
                     type={field.value ? "date" : "text"}
                     onFocus={(e) => (e.target.type = 'date')}
                     onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
@@ -309,7 +309,7 @@ export default function EHRSearch() {
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="dateTo"
                 control={control}
@@ -317,7 +317,7 @@ export default function EHRSearch() {
                   <TextField
                     {...field}
                     fullWidth
-                    label="Đến ngày"
+                    label="Äáº¿n ngÃ y"
                     type={field.value ? "date" : "text"}
                     onFocus={(e) => (e.target.type = 'date')}
                     onBlur={(e) => { if (!e.target.value) e.target.type = 'text' }}
@@ -328,7 +328,7 @@ export default function EHRSearch() {
                 )}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} >
               <Controller
                 name="severity"
                 control={control}
@@ -337,21 +337,21 @@ export default function EHRSearch() {
                     {...field}
                     select
                     fullWidth
-                    label="Mức độ nghiêm trọng"
+                    label="Má»©c Ä‘á»™ nghiÃªm trá»ng"
                     variant="filled"
                     InputLabelProps={{ shrink: true }}
                     sx={inputSx}
                   >
-                    <MenuItem value="">Tất cả</MenuItem>
-                    <MenuItem value="MILD" sx={{ fontWeight: 600 }}>MILD (Nhẹ)</MenuItem>
-                    <MenuItem value="MODERATE" sx={{ fontWeight: 600 }}>MODERATE (Vừa)</MenuItem>
-                    <MenuItem value="SEVERE" sx={{ fontWeight: 600 }}>SEVERE (Nặng)</MenuItem>
+                    <MenuItem value="">Táº¥t cáº£</MenuItem>
+                    <MenuItem value="MILD" sx={{ fontWeight: 600 }}>MILD (Nháº¹)</MenuItem>
+                    <MenuItem value="MODERATE" sx={{ fontWeight: 600 }}>MODERATE (Vá»«a)</MenuItem>
+                    <MenuItem value="SEVERE" sx={{ fontWeight: 600 }}>SEVERE (Náº·ng)</MenuItem>
                   </TextField>
                 )}
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid size={12} >
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
                   {errors.atLeastOne && (
@@ -373,7 +373,7 @@ export default function EHRSearch() {
                       '&:hover': { transform: 'scale(1.05)', bgcolor: 'transparent', color: 'oklch(20% 0.05 160)' }
                     }}
                   >
-                    Xóa bộ lọc
+                    XÃ³a bá»™ lá»c
                   </Button>
                   <Button
                     variant="text"
@@ -389,7 +389,7 @@ export default function EHRSearch() {
                       '&:hover': { transform: 'scale(1.05)', bgcolor: 'transparent', color: 'oklch(50% 0.18 160)' }
                     }}
                   >
-                    {loading ? 'Đang tìm...' : 'Tìm kiếm'}
+                    {loading ? 'Äang tÃ¬m...' : 'TÃ¬m kiáº¿m'}
                   </Button>
                 </Stack>
               </Box>
@@ -406,14 +406,14 @@ export default function EHRSearch() {
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, py: 10 }}>
             <FileSearch size={80} color="oklch(90% 0.02 160)" strokeWidth={1} />
             <Typography color="oklch(50% 0.02 160)" sx={{ mt: 2, fontWeight: 600 }}>
-              Nhập tiêu chí và tìm kiếm để xem kết quả
+              Nháº­p tiÃªu chÃ­ vÃ  tÃ¬m kiáº¿m Ä‘á»ƒ xem káº¿t quáº£
             </Typography>
           </Box>
         ) : results.length === 0 ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: 400, py: 10 }}>
             <AlertTriangle size={80} color="oklch(90% 0.02 160)" strokeWidth={1} />
             <Typography color="oklch(50% 0.02 160)" sx={{ mt: 2, fontWeight: 600 }}>
-              Không tìm thấy bệnh nhân nào khớp với tiêu chí
+              KhÃ´ng tÃ¬m tháº¥y bá»‡nh nhÃ¢n nÃ o khá»›p vá»›i tiÃªu chÃ­
             </Typography>
           </Box>
         ) : (

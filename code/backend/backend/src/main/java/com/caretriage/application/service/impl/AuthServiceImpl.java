@@ -9,9 +9,13 @@ import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.domain.repository.RoleRepository;
 import com.caretriage.infrastructure.security.JwtTokenProvider;
 import com.caretriage.application.service.AuthService;
+import com.caretriage.shared.exception.BusinessException;
+import com.caretriage.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import com.caretriage.application.service.TwoFactorService;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -31,10 +35,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email đã được sử dụng");
+            throw new BusinessException("Email đã được sử dụng");
         }
         if (userRepository.existsByPhone(request.getPhone())) {
-            throw new RuntimeException("Số điện thoại đã được sử dụng");
+            throw new BusinessException("Số điện thoại đã được sử dụng");
         }
 
         String roleName = "PATIENT";
@@ -76,10 +80,10 @@ public class AuthServiceImpl implements AuthService {
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!user.getIsActive()) {
-            throw new RuntimeException("Tài khoản đã bị khóa");
+            throw new DisabledException("Tài khoản đã bị khóa");
         }
 
         if (user.getTwoFactorEmail() != null && user.getTwoFactorEmail()) {
@@ -103,15 +107,15 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refreshToken(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new RuntimeException("Refresh token không hợp lệ");
+            throw new BadCredentialsException("Refresh token không hợp lệ");
         }
 
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getRefreshToken() == null || !user.getRefreshToken().equals(refreshToken)) {
-            throw new RuntimeException("Refresh token has been revoked or is invalid");
+            throw new BadCredentialsException("Refresh token has been revoked or is invalid");
         }
 
         String newToken = jwtTokenProvider.generateTokenFromEmail(email);
@@ -126,12 +130,12 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public void logout(String refreshToken) {
         if (!jwtTokenProvider.validateToken(refreshToken)) {
-            throw new RuntimeException("Refresh token không hợp lệ");
+            throw new BadCredentialsException("Refresh token không hợp lệ");
         }
 
         String email = jwtTokenProvider.getEmailFromToken(refreshToken);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (user.getRefreshToken() != null && user.getRefreshToken().equals(refreshToken)) {
             user.setRefreshToken(null);

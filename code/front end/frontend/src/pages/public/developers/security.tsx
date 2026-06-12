@@ -1,4 +1,4 @@
-import { Box, Container, Typography, Grid, Button } from '@mui/material'
+﻿import { Box, Container, Typography, Grid, Button } from '@mui/material'
 import { motion, type Variants } from 'framer-motion'
 import { 
   ShieldCheck, 
@@ -37,11 +37,11 @@ export default function Security() {
             transition={{ duration: MOTION_DURATION_MEDIUM, ease: MOTION_EASE_STANDARD }}
           >
             <Grid container spacing={4} alignItems="center">
-              <Grid item xs={12} md={7}>
+              <Grid size={{ xs: 12, md: 7 }} >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
                   <Box sx={{ width: 40, height: 2, background: '#08bba3' }} />
                   <Typography variant="overline" sx={{ color: '#08bba3', fontWeight: 800, letterSpacing: '0.15em' }}>
-                    KIẾN TRÚC BẢO MẬT
+                    KIáº¾N TRÃšC Báº¢O Máº¬T
                   </Typography>
                 </Box>
                 <Typography 
@@ -52,8 +52,8 @@ export default function Security() {
                     lineHeight: 1, color: 'text.primary'
                   }}
                 >
-                  Riêng tư. <br />
-                  <span style={{ color: 'primary.900' }}>Tuyệt đối.</span>
+                  RiÃªng tÆ°. <br />
+                  <span style={{ color: 'primary.900' }}>Tuyá»‡t Ä‘á»‘i.</span>
                 </Typography>
                 <Typography 
                   variant="h5" 
@@ -63,10 +63,10 @@ export default function Security() {
                     maxWidth: '45ch'
                   }}
                 >
-                  Bảo vệ quyền riêng tư và an toàn dữ liệu của người bệnh bằng các tiêu chuẩn cấp độ quân đội. Kiến trúc cốt lõi dựa trên 3 trụ cột vững chắc.
+                  Báº£o vá»‡ quyá»n riÃªng tÆ° vÃ  an toÃ n dá»¯ liá»‡u cá»§a ngÆ°á»i bá»‡nh báº±ng cÃ¡c tiÃªu chuáº©n cáº¥p Ä‘á»™ quÃ¢n Ä‘á»™i. Kiáº¿n trÃºc cá»‘t lÃµi dá»±a trÃªn 3 trá»¥ cá»™t vá»¯ng cháº¯c.
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={5}>
+              <Grid size={{ xs: 12, md: 5 }} >
                 {/* Hero Abstract Visual (Restrained geometry) */}
                 <Box sx={{ position: 'relative', height: 400, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <motion.div 
@@ -101,7 +101,7 @@ export default function Security() {
             <Grid container spacing={3}>
               
               {/* Pillar 1: AES-256 */}
-              <Grid item xs={12} md={8}>
+              <Grid size={{ xs: 12, md: 8 }} >
                 <motion.div variants={fadeUp} style={{ height: '100%' }}>
                   <Box sx={{ 
                     background: 'background.paper', borderRadius: '32px', p: { xs: 4, md: 6 }, 
@@ -116,10 +116,10 @@ export default function Security() {
                         <Lock size={16} /> Encryption
                       </Box>
                       <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', mb: 3, fontSize: { xs: '2rem', md: '2.5rem' }, letterSpacing: '-0.02em' }}>
-                        Mã hóa AES-256
+                        MÃ£ hÃ³a AES-256
                       </Typography>
                       <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.25rem', lineHeight: 1.7 }}>
-                        Toàn bộ dữ liệu bệnh án được mã hóa đầu cuối tuyệt đối. Từ kho lưu trữ cho đến quá trình truyền tải tín hiệu, thông tin y tế của người bệnh luôn trong trạng thái bị "khóa" hoàn toàn.
+                        ToÃ n bá»™ dá»¯ liá»‡u bá»‡nh Ã¡n Ä‘Æ°á»£c mÃ£ hÃ³a Ä‘áº§u cuá»‘i tuyá»‡t Ä‘á»‘i. Tá»« kho lÆ°u trá»¯ cho Ä‘áº¿n quÃ¡ trÃ¬nh truyá»n táº£i tÃ­n hiá»‡u, thÃ´ng tin y táº¿ cá»§a ngÆ°á»i bá»‡nh luÃ´n trong tráº¡ng thÃ¡i bá»‹ "khÃ³a" hoÃ n toÃ n.
                       </Typography>
                     </Box>
                     {/* Decorative Lock */}
@@ -131,7 +131,7 @@ export default function Security() {
               </Grid>
 
               {/* Pillar 2: HIPAA */}
-              <Grid item xs={12} md={4}>
+              <Grid size={{ xs: 12, md: 4 }} >
                 <motion.div variants={fadeUp} style={{ height: '100%' }}>
                   <Box sx={{ 
                     background: 'primary.900', borderRadius: '32px', p: { xs: 4, md: 6 }, 
@@ -142,17 +142,17 @@ export default function Security() {
                   }}>
                     <ShieldCheck size={40} color="#08bba3" style={{ marginBottom: '24px' }} />
                     <Typography variant="h4" sx={{ fontWeight: 800, mb: 2 }}>
-                      Tuân thủ HIPAA
+                      TuÃ¢n thá»§ HIPAA
                     </Typography>
                     <Typography variant="body2" sx={{ color: '#94a3b8', fontSize: '1.125rem', lineHeight: 1.6 }}>
-                      Thiết lập quy trình kiểm soát truy cập chặt chẽ. Hệ thống tuân thủ nghiêm ngặt các điều khoản bảo vệ dữ liệu theo tiêu chuẩn an toàn thông tin y tế cốt lõi.
+                      Thiáº¿t láº­p quy trÃ¬nh kiá»ƒm soÃ¡t truy cáº­p cháº·t cháº½. Há»‡ thá»‘ng tuÃ¢n thá»§ nghiÃªm ngáº·t cÃ¡c Ä‘iá»u khoáº£n báº£o vá»‡ dá»¯ liá»‡u theo tiÃªu chuáº©n an toÃ n thÃ´ng tin y táº¿ cá»‘t lÃµi.
                     </Typography>
                   </Box>
                 </motion.div>
               </Grid>
 
               {/* Pillar 3: Audit Logs */}
-              <Grid item xs={12} md={12}>
+              <Grid size={{ xs: 12, md: 12 }} >
                 <motion.div variants={fadeUp} style={{ height: '100%' }}>
                   <Box sx={{ 
                     background: 'background.paper', borderRadius: '32px', p: { xs: 4, md: 6 }, 
@@ -167,10 +167,10 @@ export default function Security() {
                     </Box>
                     <Box sx={{ zIndex: 1, flex: 1, maxWidth: { md: '50%' } }}>
                       <Typography variant="h4" sx={{ fontWeight: 800, mb: 2, color: 'text.primary' }}>
-                        Audit Logs minh bạch
+                        Audit Logs minh báº¡ch
                       </Typography>
                       <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.25rem', lineHeight: 1.6 }}>
-                        Cơ chế ghi vết toàn bộ lịch sử truy xuất. Bất kỳ thao tác nào của nhân viên y tế trên hồ sơ bệnh án đều được hệ thống lưu trữ minh bạch để đối soát bất cứ lúc nào.
+                        CÆ¡ cháº¿ ghi váº¿t toÃ n bá»™ lá»‹ch sá»­ truy xuáº¥t. Báº¥t ká»³ thao tÃ¡c nÃ o cá»§a nhÃ¢n viÃªn y táº¿ trÃªn há»“ sÆ¡ bá»‡nh Ã¡n Ä‘á»u Ä‘Æ°á»£c há»‡ thá»‘ng lÆ°u trá»¯ minh báº¡ch Ä‘á»ƒ Ä‘á»‘i soÃ¡t báº¥t cá»© lÃºc nÃ o.
                       </Typography>
                     </Box>
                     
@@ -211,10 +211,10 @@ export default function Security() {
               <FileKey2 size={48} color="#08bba3" />
             </Box>
             <Typography variant="h2" sx={{ fontWeight: 900, mb: 3, color: 'primary.900', letterSpacing: '-0.02em', fontSize: { xs: '2rem', md: '3rem' } }}>
-              Tài liệu chuyên sâu
+              TÃ i liá»‡u chuyÃªn sÃ¢u
             </Typography>
             <Typography variant="body1" sx={{ color: 'text.secondary', fontSize: '1.125rem', mb: 6, maxWidth: '50ch', mx: 'auto' }}>
-              Truy cập tài liệu đặc tả hệ thống bảo mật và quy trình mã hóa của CareTriage dành riêng cho đội ngũ kỹ thuật.
+              Truy cáº­p tÃ i liá»‡u Ä‘áº·c táº£ há»‡ thá»‘ng báº£o máº­t vÃ  quy trÃ¬nh mÃ£ hÃ³a cá»§a CareTriage dÃ nh riÃªng cho Ä‘á»™i ngÅ© ká»¹ thuáº­t.
             </Typography>
             <Button 
               variant="contained" 
@@ -231,7 +231,7 @@ export default function Security() {
                 transition: 'all 0.3s ease'
               }}
             >
-              Xem tài liệu kỹ thuật
+              Xem tÃ i liá»‡u ká»¹ thuáº­t
             </Button>
           </motion.div>
         </Container>

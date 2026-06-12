@@ -26,9 +26,11 @@ const ChatWidget = () => {
     isLoadingHistory,
     hasMore,
     loadMoreMessages,
-    completeTriage,
     status
-  } = useChat(sessionId);
+  } = useChat(sessionId, (newSessionId) => {
+    setSessionId(newSessionId);
+    setCurrentSessionStatus('ACTIVE');
+  });
 
   const latestAiSessionStatus = useMemo(() => {
     const latestAiMessage = [...messages].reverse().find((message) => message.senderType === 'AI' && message.metadata);
@@ -39,14 +41,15 @@ const ChatWidget = () => {
         ? JSON.parse(latestAiMessage.metadata)
         : latestAiMessage.metadata;
 
-      return metadata?.is_complete ? 'COMPLETED' : null;
+      return metadata?.intake_complete ? 'COMPLETED' : null;
     } catch {
       return null;
     }
   }, [messages]);
 
   const effectiveSessionStatus = latestAiSessionStatus || currentSessionStatus;
-  const isSessionReady = Boolean(sessionId) && !sessionLoading;
+  const isSessionReady = !sessionLoading;
+  const canUploadAttachment = Boolean(sessionId) && !sessionLoading && effectiveSessionStatus === 'ACTIVE';
 
   useEffect(() => {
     if (!isAuthenticated) return;
@@ -54,10 +57,13 @@ const ChatWidget = () => {
     const init = async () => {
       setSessionLoading(true);
       try {
-        const session = await chatApi.getOrCreateSession();
+        const session = await chatApi.getActiveSession();
         if (session?.id) {
           setSessionId(session.id);
           setCurrentSessionStatus(session.status || 'ACTIVE');
+        } else {
+          setSessionId(null);
+          setCurrentSessionStatus(null);
         }
       } catch (err) {
         console.error('[ChatWidget] Failed to load chat session:', err);
@@ -194,7 +200,7 @@ const ChatWidget = () => {
               isSessionReady={isSessionReady}
               isSessionLoading={sessionLoading}
               isUploadingAttachment={isUploadingAttachment}
-              onCompleteTriage={completeTriage}
+              canUploadAttachment={canUploadAttachment}
             />
           </motion.div>
         )}

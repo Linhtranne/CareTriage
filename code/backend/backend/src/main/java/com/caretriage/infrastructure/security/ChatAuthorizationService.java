@@ -10,9 +10,12 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import org.springframework.transaction.annotation.Transactional;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class ChatAuthorizationService {
 
     private final ChatSessionRepository chatSessionRepository;
@@ -30,49 +33,51 @@ public class ChatAuthorizationService {
             return false;
         }
 
-        // 1. Check Admin Roles (Global Access)
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") 
-                            || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
-        
-        if (isAdmin) {
+        if (isAdmin(authentication)) {
             log.debug("User {} authorized as Admin/Super Admin for session {}", authentication.getName(), sessionId);
             return true;
         }
 
-        // 2. Check Doctor Role (Strict Access)
-        boolean isDoctor = authentication.getAuthorities().stream()
+        if (isDoctor(authentication)) {
+            return canDoctorAccessSession(authentication, sessionId);
+        }
+
+        return canPatientAccessSession(authentication, sessionId);
+    }
+
+    private boolean isAdmin(Authentication authentication) {
+        return authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") 
+                            || a.getAuthority().equals("ROLE_SUPER_ADMIN"));
+    }
+
+    private boolean isDoctor(Authentication authentication) {
+        return authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"));
-        
-        if (isDoctor) {
-            List<TriageTicket> tickets = triageTicketRepository.findByChatSessionId(sessionId);
-            if (tickets.isEmpty()) {
-                log.warn("Access denied: Doctor {} attempted to access session {} with no associated triage ticket", 
-                        authentication.getName(), sessionId);
-                return false;
-            }
+    }
 
-            for (TriageTicket ticket : tickets) {
-                // If ticket has no triage officer assigned, any doctor can view it in the pool
-                if (ticket.getTriageOfficer() == null) {
-                    log.debug("User {} authorized as Doctor (unassigned ticket {}) for session {}", 
-                            authentication.getName(), ticket.getId(), sessionId);
-                    return true;
-                }
-                // If assigned to this doctor
-                if (ticket.getTriageOfficer().getEmail().equalsIgnoreCase(authentication.getName())) {
-                    log.debug("User {} authorized as Doctor (assigned ticket {}) for session {}", 
-                            authentication.getName(), ticket.getId(), sessionId);
-                    return true;
-                }
-            }
-
-            log.warn("Access denied: Doctor {} is not assigned to any ticket for session {}", 
+    private boolean canDoctorAccessSession(Authentication authentication, Long sessionId) {
+        List<TriageTicket> tickets = triageTicketRepository.findByChatSessionId(sessionId);
+        if (tickets.isEmpty()) {
+            log.warn("Access denied: Doctor {} attempted to access session {} with no associated triage ticket", 
                     authentication.getName(), sessionId);
             return false;
         }
 
-        // 3. Check Patient Ownership
+        for (TriageTicket ticket : tickets) {
+            if (ticket.getTriageOfficer() == null || ticket.getTriageOfficer().getEmail().equalsIgnoreCase(authentication.getName())) {
+                log.debug("User {} authorized as Doctor for ticket {} in session {}", 
+                        authentication.getName(), ticket.getId(), sessionId);
+                return true;
+            }
+        }
+
+        log.warn("Access denied: Doctor {} is not assigned to any ticket for session {}", 
+                authentication.getName(), sessionId);
+        return false;
+    }
+
+    private boolean canPatientAccessSession(Authentication authentication, Long sessionId) {
         boolean isOwner = chatSessionRepository.findById(sessionId)
                 .map(session -> session.getUser().getEmail().equalsIgnoreCase(authentication.getName()))
                 .orElse(false);

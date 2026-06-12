@@ -5,6 +5,8 @@ import com.caretriage.application.dto.response.PagedResponse;
 import com.caretriage.domain.entity.*;
 import com.caretriage.domain.repository.*;
 import com.caretriage.application.service.AdminUserService;
+import com.caretriage.shared.exception.BusinessException;
+import com.caretriage.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -66,7 +68,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional(readOnly = true)
     public AdminUserResponse getUserById(Long id) {
         User user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return mapToAdminResponse(user);
     }
 
@@ -74,18 +76,18 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public AdminUserResponse changeUserRole(Long userId, String roleName) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check business rule: Admin cannot demote themselves
         String currentUsername = getCurrentUsername();
         if (user.getUsername().equals(currentUsername)) {
             log.warn("Admin audit: Self-demotion attempt blocked for user {}", currentUsername);
-            throw new RuntimeException(
+            throw new BusinessException(
                     "Bạn không thể tự thay đổi vai trò của chính mình để tránh lỗi vận hành hệ thống.");
         }
 
         Role newRole = roleRepository.findByName(roleName)
-                .orElseThrow(() -> new RuntimeException("Role not found: " + roleName));
+                .orElseThrow(() -> new ResourceNotFoundException("Role not found: " + roleName));
 
         user.getRoles().clear();
         user.getRoles().add(newRole);
@@ -99,13 +101,13 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public AdminUserResponse toggleUserActive(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Check business rule: Admin cannot lock themselves
         String currentUsername = getCurrentUsername();
         if (user.getUsername().equals(currentUsername)) {
             log.warn("Admin audit: Self-locking attempt blocked for user {}", currentUsername);
-            throw new RuntimeException("Bạn không thể tự khóa tài khoản của chính mình.");
+            throw new BusinessException("Bạn không thể tự khóa tài khoản của chính mình.");
         }
 
         user.setIsActive(!user.getIsActive());
@@ -120,7 +122,7 @@ public class AdminUserServiceImpl implements AdminUserService {
     @Transactional
     public AdminUserResponse updateUserProfile(Long userId, AdminUserResponse request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         // Update basic user info
         user.setFullName(request.getFullName());

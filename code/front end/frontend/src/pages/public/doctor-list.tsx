@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+﻿import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
   Box, Container, Grid, Typography, TextField,
@@ -271,7 +271,7 @@ export default function DoctorList() {
             transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
           >
             <Grid container>
-              <Grid item xs={12} md={9} lg={8}>
+              <Grid size={{ xs: 12, md: 9, lg: 8 }} >
                 <Typography variant="overline" sx={{ color: '#08bba3', fontWeight: 700, letterSpacing: '0.1em', display: 'block', mb: 2 }}>
                   {t('doctor_list.hero_overline')}
                 </Typography>
@@ -293,7 +293,7 @@ export default function DoctorList() {
         <Container maxWidth="xl">
           <Grid container spacing={3} alignItems="center">
             {/* 1. Primary Search Box */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }} >
               <TextField
                 fullWidth
                 placeholder={t('doctor_list.search_placeholder')}
@@ -332,7 +332,7 @@ export default function DoctorList() {
             </Grid>
 
             {/* 2. Department Chips - Secondary Filter */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }} >
               <Box sx={{ 
                 display: 'flex', 
                 flexWrap: 'nowrap', 
@@ -381,7 +381,7 @@ export default function DoctorList() {
             </Grid>
             
             {/* 3. Actions: Sort & Reset */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }} >
               <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', justifyContent: { xs: 'flex-start', lg: 'flex-end' } }}>
                 <Select
                   value="popular"

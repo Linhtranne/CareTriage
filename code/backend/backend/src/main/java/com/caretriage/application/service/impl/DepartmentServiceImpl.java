@@ -6,6 +6,7 @@ import com.caretriage.application.dto.response.PagedResponse;
 import com.caretriage.domain.entity.Department;
 import com.caretriage.domain.entity.DepartmentStatus;
 import com.caretriage.shared.exception.ResourceNotFoundException;
+import com.caretriage.shared.exception.BusinessException;
 import com.caretriage.domain.repository.DepartmentRepository;
 import com.caretriage.domain.repository.DoctorProfileRepository;
 import com.caretriage.application.service.DepartmentService;
@@ -22,6 +23,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -77,10 +79,10 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Transactional
     public DepartmentResponse createDepartment(DepartmentRequest request) {
         if (departmentRepository.existsByCode(request.getCode())) {
-            throw new RuntimeException("Mã chuyên khoa đã tồn tại: " + request.getCode());
+            throw new BusinessException("Mã chuyên khoa đã tồn tại: " + request.getCode());
         }
         if (departmentRepository.existsByName(request.getName())) {
-            throw new RuntimeException("Tên chuyên khoa đã tồn tại: " + request.getName());
+            throw new BusinessException("Tên chuyên khoa đã tồn tại: " + request.getName());
         }
 
         String slug = StringUtils.slugify(request.getName());
@@ -108,12 +110,12 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Department not found with id: " + id));
 
         if (!department.getCode().equals(request.getCode()) && departmentRepository.existsByCode(request.getCode())) {
-            throw new RuntimeException("Mã chuyên khoa đã tồn tại: " + request.getCode());
+            throw new BusinessException("Mã chuyên khoa đã tồn tại: " + request.getCode());
         }
 
         if (!department.getName().equals(request.getName())) {
             if (departmentRepository.existsByName(request.getName())) {
-                throw new RuntimeException("Tên chuyên khoa đã tồn tại: " + request.getName());
+                throw new BusinessException("Tên chuyên khoa đã tồn tại: " + request.getName());
             }
             department.setName(request.getName());
             department.setSlug(StringUtils.slugify(request.getName()));
@@ -137,7 +139,9 @@ public class DepartmentServiceImpl implements DepartmentService {
 
         long doctorCount = doctorProfileRepository.countByDepartmentsId(id);
         if (doctorCount > 0) {
-            throw new RuntimeException("Không thể xóa chuyên khoa này vì vẫn còn " + doctorCount + " bác sĩ đang trực thuộc.");
+            throw new BusinessException(
+                    "Không thể xóa chuyên khoa này vì vẫn còn " + doctorCount + " bác sĩ đang trực thuộc."
+            );
         }
 
         // Clean up image from Firebase
@@ -151,25 +155,25 @@ public class DepartmentServiceImpl implements DepartmentService {
     @Override
     public String uploadImage(MultipartFile file) {
         if (file.isEmpty()) {
-            throw new RuntimeException("Vui lòng chọn file để upload");
+            throw new BusinessException("Vui lòng chọn file để upload");
         }
 
         if (file.getSize() > 5 * 1024 * 1024) { // 5MB
-            throw new RuntimeException("Dung lượng ảnh tối đa là 5MB");
+            throw new BusinessException("Dung lượng ảnh tối đa là 5MB");
         }
 
         try {
             // 1. Verify Magic Bytes / Parse with ImageIO
             BufferedImage originalImage = ImageIO.read(file.getInputStream());
             if (originalImage == null) {
-                throw new RuntimeException("File không phải là định dạng ảnh hợp lệ (hoặc bị lỗi)");
+                throw new BusinessException("File không phải là định dạng ảnh hợp lệ (hoặc bị lỗi)");
             }
 
             // 2. Limit Dimensions (Prevent Image Bombs)
             int maxWidth = 4096;
             int maxHeight = 4096;
             if (originalImage.getWidth() > maxWidth || originalImage.getHeight() > maxHeight) {
-                throw new RuntimeException("Kích thước ảnh quá lớn (tối đa 4096x4096px)");
+                throw new BusinessException("Kích thước ảnh quá lớn (tối đa 4096x4096px)");
             }
 
             // 3. Re-encode image (Strip malicious payloads/metadata)
@@ -193,7 +197,7 @@ public class DepartmentServiceImpl implements DepartmentService {
             return firebaseStorageService.uploadFile("departments", identifier, sanitizedBytes, targetContentType, targetExtension);
 
         } catch (IOException e) {
-            throw new RuntimeException("Lỗi xử lý hình ảnh: " + e.getMessage());
+            throw new UncheckedIOException("Lỗi xử lý hình ảnh", e);
         }
     }
 

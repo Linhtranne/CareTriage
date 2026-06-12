@@ -2,6 +2,9 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import useWebSocket from './use-web-socket';
 import chatApi from '../services/chat-service';
 
+const HISTORY_PAGE_SIZE = 20;
+const TYPING_TIMEOUT_MS = 30_000;
+
 const getMessageTime = (message) => {
   const time = new Date(message.createdAt || 0).getTime();
   return Number.isNaN(time) ? 0 : time;
@@ -50,7 +53,7 @@ const mergeChatMessage = (messages, msg) => {
  * reconnect → tự động re-subscribe. Đây là cách DUY NHẤT đáng tin cậy
  * để detect reconnection.
  */
-const useChat = (sessionId) => {
+const useChat = (sessionId, onSessionCreated) => {
   const [messages, setMessages] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
   const [page, setPage] = useState(0);
@@ -63,8 +66,9 @@ const useChat = (sessionId) => {
   const typingTimerRef = useRef(null);
   const loadingRef = useRef(false);
   const sessionIdRef = useRef(sessionId);
+  const prevSessionIdRef = useRef(sessionId);
 
-  const { send, isConnected, status, subscribe, connectionId } = useWebSocket();
+  const { isConnected, status, subscribe, connectionId } = useWebSocket();
 
   // Keep ref in sync
   useEffect(() => { sessionIdRef.current = sessionId; }, [sessionId]);
@@ -91,15 +95,18 @@ const useChat = (sessionId) => {
     setIsLoadingHistory(true);
 
     try {
-      const res = await chatApi.getHistory(targetSessionId, pageNumber, 20);
+      const history = await chatApi.getHistory(
+        targetSessionId,
+        pageNumber,
+        HISTORY_PAGE_SIZE
+      );
 
       // Guard: session đã thay đổi trong khi loading
       if (sessionIdRef.current !== targetSessionId) return;
 
-      const data = res.data;
-      const newMessages = data?.content || (Array.isArray(data) ? data : []);
+      const newMessages = Array.isArray(history) ? history : [];
 
-      if (newMessages.length < 20) setHasMore(false);
+      if (newMessages.length < HISTORY_PAGE_SIZE) setHasMore(false);
 
       const unique = newMessages.filter((m) => {
         if (!m.id) return true;
@@ -126,7 +133,10 @@ const useChat = (sessionId) => {
     if (msg.type === 'TYPING') {
       setIsTyping(true);
       if (typingTimerRef.current) clearTimeout(typingTimerRef.current);
-      typingTimerRef.current = setTimeout(() => setIsTyping(false), 30000);
+      typingTimerRef.current = setTimeout(
+        () => setIsTyping(false),
+        TYPING_TIMEOUT_MS
+      );
       return;
     }
 
@@ -165,7 +175,14 @@ const useChat = (sessionId) => {
 
   // ─── Reset khi sessionId thay đổi ──────────────────────────────────────
   useEffect(() => {
+    const prevSessionId = prevSessionIdRef.current;
+    prevSessionIdRef.current = sessionId;
+
     if (!sessionId) return;
+
+    if (prevSessionId === null) {
+      return;
+    }
 
     // Reset state
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -236,75 +253,242 @@ const useChat = (sessionId) => {
   // ─── Gửi tin nhắn ──────────────────────────────────────────────────────
   const sendMessage = useCallback((content) => {
     const sid = sessionIdRef.current;
-    if (!isConnected || !sid) {
-      console.warn('[Chat] Cannot send: not connected or no session');
-      return;
-    }
-
+    const turnId = window.crypto.randomUUID();
     const tempMessage = {
-      id: `temp-${Date.now()}`,
+      id: `temp-user-${Date.now()}`,
       content,
       senderType: 'USER',
-      status: 'SENDING',
+      status: 'DELIVERED',
       createdAt: new Date().toISOString(),
-      isOptimistic: true,
+      turnId,
     };
     setMessages((prev) => [...prev, tempMessage]);
     setIsTyping(true);
 
-    send('/app/chat.sendMessage', {
-      sessionId: sid,
-      content,
-      senderType: 'USER',
+    let assistantContent = '';
+    const tokens = {};
+    const aiMsgId = `temp-ai-${Date.now()}`;
+
+    chatApi.streamMessage(sid, content, turnId, (event) => {
+      if (event.event === 'session') {
+        const newSessionId = event.session_id || event.sessionId;
+        if (newSessionId && onSessionCreated) {
+          onSessionCreated(newSessionId);
+        }
+      }
+      if (event.event === 'token' && event.content && event.sequence) {
+        tokens[event.sequence] = event.content;
+        const sortedSeqs = Object.keys(tokens).map(Number).sort((a, b) => a - b);
+        assistantContent = sortedSeqs.map(seq => tokens[seq]).join('');
+
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.turnId === turnId && m.senderType === 'AI');
+          if (!exists) {
+            return [...prev, {
+              id: aiMsgId,
+              content: assistantContent,
+              senderType: 'AI',
+              turnId,
+              createdAt: new Date().toISOString(),
+            }];
+          }
+          return prev.map((m) => (m.turnId === turnId && m.senderType === 'AI' ? { ...m, content: assistantContent } : m));
+        });
+      }
+
+      if (event.event === 'final') {
+        assistantContent = event.reply || assistantContent;
+        setMessages((prev) => {
+          const exists = prev.some((m) => m.turnId === turnId && m.senderType === 'AI');
+          if (!exists) {
+            return [...prev, {
+              id: aiMsgId,
+              content: assistantContent,
+              senderType: 'AI',
+              turnId,
+              createdAt: new Date().toISOString(),
+              metadata: event,
+            }];
+          }
+          return prev.map((m) => (m.turnId === turnId && m.senderType === 'AI' ? { ...m, content: assistantContent, metadata: event } : m));
+        });
+      }
+
+      if (event.event === 'persisted') {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.turnId === turnId && m.senderType === 'AI'
+              ? {
+                  ...m,
+                  id: event.ai_message_id ? String(event.ai_message_id) : m.id,
+                  metadata: {
+                    ...(m.metadata || {}),
+                    persisted: event,
+                  },
+                }
+              : m
+          )
+        );
+        setIsTyping(false);
+      }
+
+      if (event.event === 'error') {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `error-${Date.now()}`,
+            content: event.message || 'Gửi tin nhắn thất bại',
+            senderType: 'SYSTEM',
+            turnId,
+            createdAt: new Date().toISOString(),
+            isError: true,
+          },
+        ]);
+      }
+    }).catch((err) => {
+      console.error('[Chat] Streaming error:', err);
+      setIsTyping(false);
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `error-${Date.now()}`,
+          content: 'Không thể kết nối với hệ thống AI. Vui lòng thử lại.',
+          senderType: 'SYSTEM',
+          turnId,
+          createdAt: new Date().toISOString(),
+          isError: true,
+        },
+      ]);
     });
-  }, [isConnected, send]);
+  }, []);
 
   const resendMessage = useCallback((tempId) => {
     const sid = sessionIdRef.current;
-    if (!isConnected || !sid) {
-      console.warn('[Chat] Cannot resend: not connected');
-      return;
-    }
-
     setMessages((prev) => {
       const next = [...prev];
-      const msgIdx = next.findIndex(item => item.id === tempId);
+      const msgIdx = next.findIndex((item) => item.id === tempId);
       if (msgIdx !== -1) {
         const msg = next[msgIdx];
-        next[msgIdx] = { ...msg, status: 'SENDING', error: null };
+        const turnId = msg.turnId || window.crypto.randomUUID();
         
-        send('/app/chat.sendMessage', {
-          sessionId: sid,
-          content: msg.content,
-          senderType: 'USER',
+        // Remove previous error/system messages for this turnId
+        const filtered = next.filter((item) => !(item.turnId === turnId && item.senderType === 'SYSTEM'));
+        const targetIdx = filtered.findIndex((item) => item.id === tempId);
+        if (targetIdx !== -1) {
+          filtered[targetIdx] = { ...msg, status: 'DELIVERED', error: null, turnId };
+        }
+
+        let assistantContent = '';
+        const tokens = {};
+        const aiMsgId = `temp-ai-${Date.now()}`;
+
+        chatApi.streamMessage(sid, msg.content, turnId, (event) => {
+          if (event.event === 'session') {
+            const newSessionId = event.session_id || event.sessionId;
+            if (newSessionId && onSessionCreated) {
+              onSessionCreated(newSessionId);
+            }
+          }
+          if (event.event === 'token' && event.content && event.sequence) {
+            tokens[event.sequence] = event.content;
+            const sortedSeqs = Object.keys(tokens).map(Number).sort((a, b) => a - b);
+            assistantContent = sortedSeqs.map(seq => tokens[seq]).join('');
+
+            setMessages((current) => {
+              const exists = current.some((m) => m.turnId === turnId && m.senderType === 'AI');
+              if (!exists) {
+                return [...current, {
+                  id: aiMsgId,
+                  content: assistantContent,
+                  senderType: 'AI',
+                  turnId,
+                  createdAt: new Date().toISOString(),
+                }];
+              }
+              return current.map((m) => (m.turnId === turnId && m.senderType === 'AI' ? { ...m, content: assistantContent } : m));
+            });
+          }
+
+          if (event.event === 'final') {
+            assistantContent = event.reply || assistantContent;
+            setMessages((current) => {
+              const exists = current.some((m) => m.turnId === turnId && m.senderType === 'AI');
+              if (!exists) {
+                return [...current, {
+                  id: aiMsgId,
+                  content: assistantContent,
+                  senderType: 'AI',
+                  turnId,
+                  createdAt: new Date().toISOString(),
+                  metadata: event,
+                }];
+              }
+              return current.map((m) => (m.turnId === turnId && m.senderType === 'AI' ? { ...m, content: assistantContent, metadata: event } : m));
+            });
+          }
+
+          if (event.event === 'persisted') {
+            setMessages((current) =>
+              current.map((m) =>
+                m.turnId === turnId && m.senderType === 'AI'
+                  ? {
+                      ...m,
+                      id: event.ai_message_id ? String(event.ai_message_id) : m.id,
+                      metadata: {
+                        ...(m.metadata || {}),
+                        persisted: event,
+                      },
+                    }
+                  : m
+              )
+            );
+            setIsTyping(false);
+          }
+
+          if (event.event === 'error') {
+            setIsTyping(false);
+            setMessages((current) => [
+              ...current,
+              {
+                id: `error-${Date.now()}`,
+                content: event.message || 'Gửi tin nhắn thất bại',
+                senderType: 'SYSTEM',
+                turnId,
+                createdAt: new Date().toISOString(),
+                isError: true,
+              },
+            ]);
+          }
+        }).catch((err) => {
+          console.error('[Chat] Streaming error on resend:', err);
+          setIsTyping(false);
+          setMessages((current) => [
+            ...current,
+            {
+              id: `error-${Date.now()}`,
+              content: 'Không thể kết nối với hệ thống AI. Vui lòng thử lại.',
+              senderType: 'SYSTEM',
+              turnId,
+              createdAt: new Date().toISOString(),
+              isError: true,
+            },
+          ]);
         });
+
+        return filtered;
       }
       return next;
     });
     setIsTyping(true);
-  }, [isConnected, send]);
-
-  const completeTriage = useCallback(async (forceSubmit = false) => {
-    const sid = sessionIdRef.current;
-    if (!sid) return null;
-    setIsTyping(true);
-    try {
-      const data = await chatApi.completeTriage(sid, forceSubmit);
-      return data;
-    } catch (err) {
-      console.error('[Chat] Failed to complete triage:', err);
-      throw err;
-    } finally {
-      setIsTyping(false);
-    }
   }, []);
+
 
   return {
     messages,
     sendMessage,
     resendMessage,
     loadMoreMessages,
-    completeTriage,
     isTyping,
     isConnected,
     isLoadingHistory,

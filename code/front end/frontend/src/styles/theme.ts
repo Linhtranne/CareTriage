@@ -1,33 +1,64 @@
 import { createTheme } from '@mui/material/styles'
 import { DESIGN_TOKENS } from '../constants/design-tokens'
 
-const { colors, radius, shadow, typography } = DESIGN_TOKENS
+const { radius, typography } = DESIGN_TOKENS
+
+const MUI_COLORS = {
+  primary: {
+    main: '#08bba3',
+    light: '#20d6bc',
+    dark: '#039786',
+  },
+  secondary: {
+    main: '#f43f5e',
+    light: '#fb7185',
+    dark: '#e11d48',
+  },
+  semantic: {
+    success: '#10b981',
+    warning: '#f59e0b',
+    danger: '#ef4444',
+    info: '#3b82f6',
+  },
+  surface: {
+    default: '#f0fdf4',
+    paper: '#f8fafc',
+    border: '#e2e8f0',
+    primaryText: '#1e293b',
+    secondaryText: '#64748b',
+  },
+} as const
+
+const MUI_SHADOWS = {
+  card: '0 1px 3px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.06)',
+  primaryHover: '0 4px 12px rgba(8, 187, 163, 0.3)',
+} as const
 
 const theme = createTheme({
   palette: {
     primary: {
-      main: colors.primary[500],
-      light: colors.primary[400],
-      dark: colors.primary[600],
-      contrastText: colors.neutral.paper,
+      main: MUI_COLORS.primary.main,
+      light: MUI_COLORS.primary.light,
+      dark: MUI_COLORS.primary.dark,
+      contrastText: MUI_COLORS.surface.paper,
     },
     secondary: {
-      main: colors.accent[500],
-      light: colors.accent[400],
-      dark: colors.accent[600],
-      contrastText: colors.neutral.paper,
+      main: MUI_COLORS.secondary.main,
+      light: MUI_COLORS.secondary.light,
+      dark: MUI_COLORS.secondary.dark,
+      contrastText: MUI_COLORS.surface.paper,
     },
-    success: { main: colors.semantic.success },
-    warning: { main: colors.semantic.warning },
-    error: { main: colors.semantic.danger },
-    info: { main: colors.semantic.info },
+    success: { main: MUI_COLORS.semantic.success },
+    warning: { main: MUI_COLORS.semantic.warning },
+    error: { main: MUI_COLORS.semantic.danger },
+    info: { main: MUI_COLORS.semantic.info },
     background: {
-      default: colors.surface[50],
-      paper: colors.neutral.paper,
+      default: MUI_COLORS.surface.default,
+      paper: MUI_COLORS.surface.paper,
     },
     text: {
-      primary: colors.surface[800],
-      secondary: colors.surface[700],
+      primary: MUI_COLORS.surface.primaryText,
+      secondary: MUI_COLORS.surface.secondaryText,
     },
   },
   typography: {
@@ -51,14 +82,14 @@ const theme = createTheme({
           padding: '10px 24px',
           fontSize: '0.9375rem',
           boxShadow: 'none',
-          '&:hover': { boxShadow: `0 4px 12px ${colors.primary[500]}33` },
+          '&:hover': { boxShadow: MUI_SHADOWS.primaryHover },
         },
       },
       variants: [
         {
           props: { variant: 'contained', color: 'primary' },
           style: {
-            background: `linear-gradient(135deg, ${colors.primary[500]} 0%, ${colors.primary[400]} 100%)`,
+            background: `linear-gradient(135deg, ${MUI_COLORS.primary.main} 0%, ${MUI_COLORS.primary.light} 100%)`,
           },
         },
       ],
@@ -67,8 +98,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: radius.lg,
-          boxShadow: shadow.card,
-          border: `1px solid ${colors.surface[200]}`,
+          boxShadow: MUI_SHADOWS.card,
+          border: `1px solid ${MUI_COLORS.surface.border}`,
         },
       },
     },
@@ -83,9 +114,9 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: colors.neutral.paper,
-          color: colors.surface[800],
-          boxShadow: shadow.card,
+          backgroundColor: MUI_COLORS.surface.paper,
+          color: MUI_COLORS.surface.primaryText,
+          boxShadow: MUI_SHADOWS.card,
         },
       },
     },

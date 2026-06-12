@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @Table(name = "chat_messages", indexes = {
     @Index(name = "idx_msg_session", columnList = "session_id"),
     @Index(name = "idx_msg_created", columnList = "created_at")
+}, uniqueConstraints = {
+    @UniqueConstraint(name = "uq_chat_message_turn_sender", columnNames = {"session_id", "turn_id", "sender_type"})
 })
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
@@ -33,6 +35,12 @@ public class ChatMessage {
 
     @Column(name = "metadata", columnDefinition = "JSON")
     private String metadata;
+
+    @Column(name = "turn_id", length = 50)
+    private String turnId;
+
+    @Column(name = "legacy_redis_id")
+    private Long legacyRedisId;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

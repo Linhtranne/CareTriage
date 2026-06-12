@@ -1,14 +1,7 @@
 from dataclasses import dataclass
 from typing import Any, Iterable, Mapping
 
-
-@dataclass(frozen=True)
-class EvalCase:
-    id: str
-    input_text: str
-    expected_department_code: str | None = None
-    expected_urgency_level: str | None = None
-    should_red_flag: bool | None = None
+from app.domain.evaluation_models import EvalCase
 
 
 @dataclass(frozen=True)
@@ -27,7 +20,9 @@ class EvalSummary:
 
 
 class TriageEvalRunner:
-    def evaluate_result(self, case: EvalCase, triage_output: Mapping[str, Any]) -> EvalResult:
+    def evaluate_result(
+        self, case: EvalCase, triage_output: Mapping[str, Any]
+    ) -> EvalResult:
         reasons: list[str] = []
 
         triage_result = triage_output.get("triage_result") or {}
@@ -41,12 +36,19 @@ class TriageEvalRunner:
         if case.expected_urgency_level:
             actual_urgency = triage_result.get("urgency_level")
             if actual_urgency != case.expected_urgency_level:
-                reasons.append(f"urgency expected {case.expected_urgency_level}, got {actual_urgency}")
+                reasons.append(
+                    f"urgency expected {case.expected_urgency_level}, got {actual_urgency}"
+                )
 
-        if case.should_red_flag is not None:
-            actual_red_flag = bool(triage_output.get("red_flag_detected") or triage_result.get("red_flag_detected"))
-            if actual_red_flag != case.should_red_flag:
-                reasons.append(f"red flag expected {case.should_red_flag}, got {actual_red_flag}")
+        if case.expected_red_flag is not None:
+            actual_red_flag = bool(
+                triage_output.get("red_flag_detected")
+                or triage_result.get("red_flag_detected")
+            )
+            if actual_red_flag != case.expected_red_flag:
+                reasons.append(
+                    f"red flag expected {case.expected_red_flag}, got {actual_red_flag}"
+                )
 
         return EvalResult(case_id=case.id, passed=not reasons, reasons=reasons)
 
@@ -54,4 +56,6 @@ class TriageEvalRunner:
         result_list = list(results)
         passed = sum(1 for result in result_list if result.passed)
         total = len(result_list)
-        return EvalSummary(total=total, passed=passed, failed=total - passed, results=result_list)
+        return EvalSummary(
+            total=total, passed=passed, failed=total - passed, results=result_list
+        )

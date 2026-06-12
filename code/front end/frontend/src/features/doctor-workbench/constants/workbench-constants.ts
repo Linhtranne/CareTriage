@@ -1,0 +1,11 @@
+export const WORKBENCH_PRIORITY = {
+  CRITICAL: 'CRITICAL',
+  URGENT: 'URGENT',
+  ROUTINE: 'ROUTINE',
+} as const;
+
+export const WORKBENCH_ACTIONS = {
+  APPROVE: 'APPROVE',
+  REJECT: 'REJECT',
+  ESCALATE: 'ESCALATE'
+} as const;

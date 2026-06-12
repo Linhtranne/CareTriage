@@ -11,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -46,7 +47,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .orElseThrow(() -> new RuntimeException("Notification not found"));
         
         if (!notification.getUser().getId().equals(userId)) {
-            throw new RuntimeException("Unauthorized to mark this notification as read");
+            throw new AccessDeniedException("Unauthorized to mark this notification as read");
         }
         
         if (!notification.getIsRead()) {
@@ -95,7 +96,7 @@ public class NotificationServiceImpl implements NotificationService {
             messagingTemplate.convertAndSendToUser(user.getEmail(), "/queue/notifications", response);
             
             log.info("Pushed notification to user {}: {}", user.getEmail(), notification.getTitle());
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             log.error("Failed to push notification via WebSocket", e);
         }
     }

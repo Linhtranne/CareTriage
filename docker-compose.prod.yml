@@ -8,6 +8,8 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "3307:3306"
     volumes:
       - mysql_prod_data:/var/lib/mysql
     healthcheck:
@@ -19,17 +21,19 @@ services:
       - caretriage-net
 
   backend:
-    image: ${DOCKER_USERNAME}/caretriage-backend:latest
-    container_name: caretriage-backend-prod
-    restart: unless-stopped
+    build: ./code/backend/backend
+    container_name: caretriage-backend
+    ports:
+      - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_NAME: ${DB_NAME}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      DB_NAME: caretriage
+      DB_USERNAME: linhtranne
+      DB_PASSWORD: 123456
+      JWT_SECRET: ${JWT_SECRET:-caretriage-docker-secret-key-min-256-bits-long-for-hmac-sha256}
       AI_SERVICE_URL: http://ai-service:8000
       AI_SERVICE_INTERNAL_KEY: ${INTERNAL_API_KEY}
     depends_on:

@@ -121,7 +121,7 @@ export default function Dashboard() {
         <Stack spacing={4}>
           {/* KPI / Stats Section */}
           <Grid container spacing={3}>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <DashboardCard
                 title={t('dashboard.upcoming_appointment')}
                 value={upcomingAppointment ? upcomingAppointment.appointmentTime : 'None'}
@@ -132,7 +132,7 @@ export default function Dashboard() {
                 loading={loading}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <DashboardCard
                 title={t('dashboard.medical_records')}
                 value={records.length}
@@ -143,7 +143,7 @@ export default function Dashboard() {
                 loading={loading}
               />
             </Grid>
-            <Grid item xs={12} sm={6} md={4}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
               <DashboardCard
                 title={t('dashboard.active_tickets')}
                 value={tickets.filter(t => t.status !== 'CLOSED' && t.status !== 'COMPLETED').length}
@@ -158,7 +158,7 @@ export default function Dashboard() {
 
           <Grid container spacing={5}>
             {/* Quick Actions Grid */}
-            <Grid item xs={12} lg={7}>
+            <Grid size={{ xs: 12, lg: 7 }}>
               <Box>
                 <Typography 
                   variant="h4" 
@@ -178,7 +178,7 @@ export default function Dashboard() {
                   {quickActions.map((action) => {
                     const Icon = action.icon
                     return (
-                      <Grid item xs={12} sm={6} key={action.to}>
+                      <Grid size={{ xs: 12, sm: 6 }} key={action.to}>
                         <Box
                           onClick={() => navigate(action.to)}
                           sx={{
@@ -234,7 +234,7 @@ export default function Dashboard() {
             </Grid>
             
             {/* Recent Records / Timeline Preview */}
-            <Grid item xs={12} lg={5}>
+            <Grid size={{ xs: 12, lg: 5 }}>
               <Box sx={{ 
                 p: 4, 
                 borderRadius: 6, 
@@ -411,4 +411,3 @@ export default function Dashboard() {
     </PatientPageShell>
   )
 }
-

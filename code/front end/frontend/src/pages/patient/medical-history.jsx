@@ -118,8 +118,10 @@ const MedicalHistory = () => {
             placeholder={t('records.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            InputProps={{
-              startAdornment: <Search size={20} style={{ marginRight: 12, color: 'oklch(60% 0.02 250)' }} />,
+            slotProps={{
+              input: {
+                startAdornment: <Search size={20} style={{ marginRight: 12, color: 'oklch(60% 0.02 250)' }} />,
+              },
             }}
             sx={{ 
               flex: 1,
@@ -235,7 +237,7 @@ const MedicalHistory = () => {
                       }}
                     >
                       <Grid container spacing={4}>
-                        <Grid item xs={12} md={8}>
+                        <Grid size={{ xs: 12, md: 8 }}>
                           <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2.5 }}>
                             <Typography variant="caption" sx={{ fontWeight: 700, color: 'oklch(50% 0.02 250)', display: 'flex', alignItems: 'center', gap: 1, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                               <Calendar size={14} />
@@ -276,7 +278,7 @@ const MedicalHistory = () => {
                             {t('records.view_detail')}
                           </Button>
                         </Grid>
-                        <Grid item xs={12} md={4}>
+                        <Grid size={{ xs: 12, md: 4 }}>
                           <Box sx={{ 
                             p: 3, 
                             borderRadius: 5, 

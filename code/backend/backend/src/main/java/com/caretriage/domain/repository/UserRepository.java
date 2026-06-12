@@ -30,6 +30,7 @@ public interface UserRepository {
     Page<User> findByRolesName(String roleName, Pageable pageable);
     Page<User> findByIsActive(Boolean isActive, Pageable pageable);
 
+    @SuppressWarnings("java:S107")
     Page<Long> findPatientIdsByDoctorRelation(
             Long doctorId,
             String search,

@@ -41,4 +41,7 @@ public interface TriageTicketRepository extends JpaRepository<TriageTicket, UUID
 
     @Query("SELECT t FROM TriageTicket t WHERE t.chatSession.id = :chatSessionId")
     List<TriageTicket> findByChatSessionId(@Param("chatSessionId") Long chatSessionId);
+
+    @Query("SELECT t FROM TriageTicket t WHERE t.chatSession.id = :chatSessionId")
+    Optional<TriageTicket> findOptionalByChatSessionId(@Param("chatSessionId") Long chatSessionId);
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import {
   Typography,
   Box,
@@ -42,17 +42,17 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Validation Schema
 const schema = yup.object().shape({
-  symptoms: yup.string().required('Vui lòng nhập triệu chứng lâm sàng'),
-  diagnosis: yup.string().required('Vui lòng nhập chẩn đoán'),
+  symptoms: yup.string().required('Vui lÃ²ng nháº­p triá»‡u chá»©ng lÃ¢m sÃ ng'),
+  diagnosis: yup.string().required('Vui lÃ²ng nháº­p cháº©n Ä‘oÃ¡n'),
   treatmentPlan: yup.string(),
   notes: yup.string(),
   followUpDate: yup.string().nullable(),
   medicines: yup.array().of(
     yup.object().shape({
-      name: yup.string().required('Tên thuốc không được để trống'),
-      quantity: yup.number().typeError('Phải là số').positive('Số lượng > 0').required('Bắt buộc'),
-      unit: yup.string().required('Bắt buộc'),
-      dosage: yup.string().required('Bắt buộc')
+      name: yup.string().required('TÃªn thuá»‘c khÃ´ng Ä‘Æ°á»£c Ä‘á»ƒ trá»‘ng'),
+      quantity: yup.number().typeError('Pháº£i lÃ  sá»‘').positive('Sá»‘ lÆ°á»£ng > 0').required('Báº¯t buá»™c'),
+      unit: yup.string().required('Báº¯t buá»™c'),
+      dosage: yup.string().required('Báº¯t buá»™c')
     })
   )
 });
@@ -63,13 +63,13 @@ const MOCK_DRUGS = [
   'Salbutamol inhaler', 'Gliclazide 30mg', 'Losartan 50mg', 'Augmentin 625mg'
 ];
 
-const UNITS = ['Viên', 'Gói', 'Chai', 'Ống', 'Tuýp'];
+const UNITS = ['ViÃªn', 'GÃ³i', 'Chai', 'á»ng', 'TuÃ½p'];
 
 export default function CreateMedicalRecord() {
   const navigate = useNavigate();
   const { appointmentId } = useParams();
   const location = useLocation();
-  const patientName = new URLSearchParams(location.search).get('patientName') || 'Bệnh nhân';
+  const patientName = new URLSearchParams(location.search).get('patientName') || 'Bá»‡nh nhÃ¢n';
 
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -81,7 +81,7 @@ export default function CreateMedicalRecord() {
       diagnosis: '',
       treatmentPlan: '',
       notes: '',
-      medicines: [{ name: '', quantity: 1, unit: 'Viên', dosage: 'Ngày uống 2 lần, mỗi lần 1 viên sau ăn' }]
+      medicines: [{ name: '', quantity: 1, unit: 'ViÃªn', dosage: 'NgÃ y uá»‘ng 2 láº§n, má»—i láº§n 1 viÃªn sau Äƒn' }]
     }
   });
 
@@ -111,7 +111,7 @@ export default function CreateMedicalRecord() {
       await medicalRecordApi.createRecord(payload);
       navigate('/doctor/appointments');
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Có lỗi xảy ra khi lưu hồ sơ.');
+      setServerError(err.response?.data?.message || 'CÃ³ lá»—i xáº£y ra khi lÆ°u há»“ sÆ¡.');
     } finally {
       setLoading(false);
     }
@@ -120,7 +120,7 @@ export default function CreateMedicalRecord() {
   return (
     <DoctorPageShell
       title={patientName}
-      subtitle="Lập hồ sơ bệnh án chi tiết và kê đơn thuốc cho bệnh nhân."
+      subtitle="Láº­p há»“ sÆ¡ bá»‡nh Ã¡n chi tiáº¿t vÃ  kÃª Ä‘Æ¡n thuá»‘c cho bá»‡nh nhÃ¢n."
       badge="Clinical Workspace"
       actions={
         <Button
@@ -135,7 +135,7 @@ export default function CreateMedicalRecord() {
             '&:hover': { transform: 'translateX(-4px)', color: 'oklch(20% 0.05 250)', bgcolor: 'transparent' }
           }}
         >
-          Quay lại danh sách
+          Quay láº¡i danh sÃ¡ch
         </Button>
       }
     >
@@ -150,7 +150,7 @@ export default function CreateMedicalRecord() {
         <form onSubmit={handleSubmit(onSubmit)}>
           <Grid container spacing={4}>
             {/* Main Column */}
-            <Grid item xs={12} lg={8}>
+            <Grid size={{ xs: 12, lg: 8 }} >
               <Stack spacing={4}>
                 {/* Clinical Info */}
                 <Box sx={{ 
@@ -166,7 +166,7 @@ export default function CreateMedicalRecord() {
                       <Stethoscope size={24} strokeWidth={2.5} />
                     </Box>
                     <Typography variant="h5" sx={{ fontWeight: 900, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
-                      Thông tin lâm sàng
+                      ThÃ´ng tin lÃ¢m sÃ ng
                     </Typography>
                   </Stack>
 
@@ -177,12 +177,12 @@ export default function CreateMedicalRecord() {
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          label="Triệu chứng lâm sàng"
+                          label="Triá»‡u chá»©ng lÃ¢m sÃ ng"
                           multiline
                           rows={3}
                           error={errors.symptoms?.message}
                           icon={<Activity />}
-                          placeholder="Nhập các triệu chứng bệnh nhân mô tả..."
+                          placeholder="Nháº­p cÃ¡c triá»‡u chá»©ng bá»‡nh nhÃ¢n mÃ´ táº£..."
                         />
                       )}
                     />
@@ -193,10 +193,10 @@ export default function CreateMedicalRecord() {
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          label="Chẩn đoán bệnh"
+                          label="Cháº©n Ä‘oÃ¡n bá»‡nh"
                           error={errors.diagnosis?.message}
                           icon={<ClipboardList />}
-                          placeholder="Ví dụ: Viêm họng cấp, Cúm A..."
+                          placeholder="VÃ­ dá»¥: ViÃªm há»ng cáº¥p, CÃºm A..."
                         />
                       )}
                     />
@@ -207,11 +207,11 @@ export default function CreateMedicalRecord() {
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          label="Phác đồ điều trị"
+                          label="PhÃ¡c Ä‘á»“ Ä‘iá»u trá»‹"
                           multiline
                           rows={2}
                           icon={<FileText />}
-                          placeholder="Hướng điều trị, lời dặn chung..."
+                          placeholder="HÆ°á»›ng Ä‘iá»u trá»‹, lá»i dáº·n chung..."
                         />
                       )}
                     />
@@ -233,12 +233,12 @@ export default function CreateMedicalRecord() {
                         <Pill size={24} strokeWidth={2.5} />
                       </Box>
                       <Typography variant="h5" sx={{ fontWeight: 900, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
-                        Đơn thuốc
+                        ÄÆ¡n thuá»‘c
                       </Typography>
                     </Stack>
                     <Button 
                       startIcon={<Plus size={18} strokeWidth={2.5} />} 
-                      onClick={() => append({ name: '', quantity: 1, unit: 'Viên', dosage: '' })}
+                      onClick={() => append({ name: '', quantity: 1, unit: 'ViÃªn', dosage: '' })}
                       sx={{ 
                         borderRadius: 3, textTransform: 'none', fontWeight: 950, 
                         color: 'oklch(65% 0.15 160)', bgcolor: 'oklch(96% 0.01 160)',
@@ -247,7 +247,7 @@ export default function CreateMedicalRecord() {
                         '&:hover': { transform: 'translateY(-2px)', bgcolor: 'oklch(92% 0.02 160)' }
                       }}
                     >
-                      Thêm thuốc
+                      ThÃªm thuá»‘c
                     </Button>
                   </Stack>
                   
@@ -255,10 +255,10 @@ export default function CreateMedicalRecord() {
                     <Table>
                       <TableHead sx={{ bgcolor: 'oklch(98% 0.01 250)' }}>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>Tên thuốc</TableCell>
+                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>TÃªn thuá»‘c</TableCell>
                           <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>SL</TableCell>
-                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>Đơn vị</TableCell>
-                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>Liều dùng & Cách dùng</TableCell>
+                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>ÄÆ¡n vá»‹</TableCell>
+                          <TableCell sx={{ fontWeight: 950, color: 'oklch(40% 0.02 250)', textTransform: 'uppercase', fontSize: '0.7rem', letterSpacing: '0.1em' }}>Liá»u dÃ¹ng & CÃ¡ch dÃ¹ng</TableCell>
                           <TableCell align="right"></TableCell>
                         </TableRow>
                       </TableHead>
@@ -287,7 +287,7 @@ export default function CreateMedicalRecord() {
                                       renderInput={(params) => (
                                         <TextField 
                                           {...params} 
-                                          placeholder="Tìm thuốc..." 
+                                          placeholder="TÃ¬m thuá»‘c..." 
                                           size="small" 
                                           error={!!errors.medicines?.[index]?.name}
                                           sx={{ 
@@ -340,7 +340,7 @@ export default function CreateMedicalRecord() {
                                       {...field} 
                                       fullWidth 
                                       size="small" 
-                                      placeholder="Lưu ý liều dùng..." 
+                                      placeholder="LÆ°u Ã½ liá»u dÃ¹ng..." 
                                       sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, bgcolor: 'oklch(98% 0.01 250)', '& fieldset': { borderColor: 'oklch(92% 0.02 250)' } } }} 
                                     />
                                   )}
@@ -370,7 +370,7 @@ export default function CreateMedicalRecord() {
             </Grid>
 
             {/* Sidebar Column */}
-            <Grid item xs={12} lg={4}>
+            <Grid size={{ xs: 12, lg: 4 }} >
               <Stack spacing={4}>
                 <Box sx={{ 
                   p: 6, borderRadius: 8, bgcolor: 'white', 
@@ -385,7 +385,7 @@ export default function CreateMedicalRecord() {
                       <Calendar size={24} strokeWidth={2.5} />
                     </Box>
                     <Typography variant="h5" sx={{ fontWeight: 900, color: 'oklch(20% 0.05 250)', letterSpacing: '-0.02em' }}>
-                      Thông tin bổ sung
+                      ThÃ´ng tin bá»• sung
                     </Typography>
                   </Stack>
 
@@ -396,7 +396,7 @@ export default function CreateMedicalRecord() {
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          label="Ngày tái khám"
+                          label="NgÃ y tÃ¡i khÃ¡m"
                           type="date"
                           icon={<Calendar />}
                         />
@@ -408,11 +408,11 @@ export default function CreateMedicalRecord() {
                       render={({ field }) => (
                         <CustomTextField
                           {...field}
-                          label="Ghi chú nội bộ"
+                          label="Ghi chÃº ná»™i bá»™"
                           multiline
                           rows={3}
                           icon={<FileText />}
-                          placeholder="Ghi chú thêm cho bác sĩ..."
+                          placeholder="Ghi chÃº thÃªm cho bÃ¡c sÄ©..."
                         />
                       )}
                     />
@@ -435,7 +435,7 @@ export default function CreateMedicalRecord() {
                   )}
                   
                   <Typography variant="body2" sx={{ mb: 4, color: 'oklch(50% 0.02 250)', lineHeight: 1.6, fontWeight: 500 }}>
-                    Xác nhận thông tin bệnh án và đơn thuốc. Sau khi lưu, trạng thái lịch hẹn sẽ chuyển thành <strong style={{ color: 'oklch(20% 0.05 250)' }}>Hoàn thành</strong>.
+                    XÃ¡c nháº­n thÃ´ng tin bá»‡nh Ã¡n vÃ  Ä‘Æ¡n thuá»‘c. Sau khi lÆ°u, tráº¡ng thÃ¡i lá»‹ch háº¹n sáº½ chuyá»ƒn thÃ nh <strong style={{ color: 'oklch(20% 0.05 250)' }}>HoÃ n thÃ nh</strong>.
                   </Typography>
 
                   <Stack spacing={2}>
@@ -459,7 +459,7 @@ export default function CreateMedicalRecord() {
                         }
                       }}
                     >
-                      Lưu hồ sơ bệnh án
+                      LÆ°u há»“ sÆ¡ bá»‡nh Ã¡n
                     </Button>
                     <Button
                       fullWidth
@@ -473,7 +473,7 @@ export default function CreateMedicalRecord() {
                         '&:hover': { color: 'oklch(20% 0.05 250)', bgcolor: 'oklch(96% 0.01 250)' }
                       }}
                     >
-                      Hủy bỏ
+                      Há»§y bá»
                     </Button>
                   </Stack>
                 </Box>
