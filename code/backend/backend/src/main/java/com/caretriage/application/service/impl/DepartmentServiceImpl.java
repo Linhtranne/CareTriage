@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class DepartmentServiceImpl implements DepartmentService {
 
@@ -215,3 +216,4 @@ public class DepartmentServiceImpl implements DepartmentService {
                 .build();
     }
 }
+

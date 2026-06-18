@@ -1,7 +1,52 @@
-import React from 'react';
-import { TextField, InputAdornment, Box } from '@mui/material';
+import type { ReactElement } from 'react'
+import type { SxProps, TextFieldProps, Theme } from '@mui/material'
+import { Box, InputAdornment, TextField } from '@mui/material'
 
-const CustomTextField = ({ icon, label, ...props }) => {
+const CUSTOM_TEXT_FIELD_STYLES = {
+  borderRadius: 2,
+  blur: 'blur(20px)',
+  transition: 'all 0.3s ease',
+  iconFontSize: 20,
+  labelFontWeight: 700,
+  inputFontWeight: 600,
+  focusedBorderWidth: 2,
+  inputBackground: 'var(--glass-surface)',
+  labelColor: 'var(--color-primary-700)',
+  focusColor: 'var(--color-primary-600)',
+  fieldsetBorder: 'var(--glass-border)',
+  inputTextColor: 'var(--color-surface-900)',
+} as const
+
+type CustomTextFieldProps = Omit<TextFieldProps, 'label'> & {
+  icon?: ReactElement
+  label: string
+}
+
+export default function CustomTextField({ icon, label, sx, ...props }: CustomTextFieldProps) {
+  const mergedSx: SxProps<Theme> = {
+    '& .MuiOutlinedInput-root': {
+      bgcolor: CUSTOM_TEXT_FIELD_STYLES.inputBackground,
+      backdropFilter: CUSTOM_TEXT_FIELD_STYLES.blur,
+      borderRadius: CUSTOM_TEXT_FIELD_STYLES.borderRadius,
+      transition: CUSTOM_TEXT_FIELD_STYLES.transition,
+      '& fieldset': {
+        borderColor: CUSTOM_TEXT_FIELD_STYLES.fieldsetBorder,
+      },
+      '&:hover fieldset': {
+        borderColor: CUSTOM_TEXT_FIELD_STYLES.focusColor,
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: CUSTOM_TEXT_FIELD_STYLES.focusColor,
+        borderWidth: CUSTOM_TEXT_FIELD_STYLES.focusedBorderWidth,
+      },
+      '& input': {
+        fontWeight: CUSTOM_TEXT_FIELD_STYLES.inputFontWeight,
+        color: CUSTOM_TEXT_FIELD_STYLES.inputTextColor,
+      },
+    },
+    ...(sx ?? {}),
+  }
+
   return (
     <TextField
       fullWidth
@@ -11,49 +56,25 @@ const CustomTextField = ({ icon, label, ...props }) => {
         inputLabel: {
           shrink: true,
           sx: {
-            color: 'oklch(50% 0.05 160)',
-            fontWeight: 700,
+            color: CUSTOM_TEXT_FIELD_STYLES.labelColor,
+            fontWeight: CUSTOM_TEXT_FIELD_STYLES.labelFontWeight,
             '&.Mui-focused': {
-              color: 'oklch(65% 0.15 160)',
+              color: CUSTOM_TEXT_FIELD_STYLES.focusColor,
             },
           },
         },
         input: {
           startAdornment: icon ? (
             <InputAdornment position="start">
-              <Box sx={{ color: 'oklch(65% 0.15 160)', display: 'flex' }}>
-                {React.cloneElement(icon, { sx: { fontSize: 20 } })}
+              <Box sx={{ color: CUSTOM_TEXT_FIELD_STYLES.focusColor, display: 'flex' }}>
+                {icon.type ? <icon.type {...icon.props} sx={{ fontSize: CUSTOM_TEXT_FIELD_STYLES.iconFontSize }} /> : icon}
               </Box>
             </InputAdornment>
           ) : null,
         },
       }}
-      sx={{
-        '& .MuiOutlinedInput-root': {
-          bgcolor: 'oklch(100% 0 0 / 0.05)',
-          backdropFilter: 'blur(20px)',
-          borderRadius: '16px',
-          transition: 'all 0.3s ease',
-          '& fieldset': {
-            borderColor: 'oklch(100% 0 0 / 0.1)',
-          },
-          '&:hover fieldset': {
-            borderColor: 'oklch(65% 0.15 160 / 0.3)',
-          },
-          '&.Mui-focused fieldset': {
-            borderColor: 'oklch(65% 0.15 160)',
-            borderWidth: '2px',
-          },
-          '& input': {
-            fontWeight: 600,
-            color: 'oklch(20% 0.05 250)',
-          },
-        },
-        ...props.sx,
-      }}
+      sx={mergedSx}
       {...props}
     />
-  );
-};
-
-export default CustomTextField;
+  )
+}

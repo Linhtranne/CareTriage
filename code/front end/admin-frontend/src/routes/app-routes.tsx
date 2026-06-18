@@ -16,6 +16,8 @@ const DepartmentManagement = lazy(() => import('../pages/admin/department-manage
 const MedicalRecordDetail = lazy(() => import('../pages/admin/medical-record-detail'))
 const MedicalRecords = lazy(() => import('../pages/admin/medical-records'))
 const CMSManagement = lazy(() => import('../pages/cms-management'))
+const ExternalDoctors = lazy(() => import('../pages/admin/external-doctors'))
+const AppointmentManagement = lazy(() => import('../pages/admin/appointment-management'))
 
 const NotFound = () => (
   <div
@@ -55,6 +57,8 @@ export default function AppRoutes() {
             <Route path="/admin/records" element={<MedicalRecords />} />
             <Route path="/admin/records/:id" element={<MedicalRecordDetail />} />
             <Route path="/admin/cms" element={<CMSManagement />} />
+            <Route path="/admin/external-doctors" element={<ExternalDoctors />} />
+            <Route path="/admin/appointments" element={<AppointmentManagement />} />
           </Route>
 
           <Route path="/dashboard" element={<DefaultDashboard />} />

@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class DoctorScheduleServiceImpl implements DoctorScheduleService {
@@ -120,3 +121,4 @@ public class DoctorScheduleServiceImpl implements DoctorScheduleService {
                 .build();
     }
 }
+

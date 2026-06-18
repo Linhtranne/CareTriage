@@ -68,12 +68,6 @@ public class AppointmentControllerIntegrationTest {
     @Test
     @WithMockUser(username = "patient2@example.com", roles = "PATIENT")
     void getAppointmentById_AnotherPatient_ReturnsForbidden() throws Exception {
-        AppointmentResponse resp = AppointmentResponse.builder()
-                .id(1L)
-                .patientId(1L) // Belongs to user 1
-                .status("PENDING")
-                .build();
-        
         when(appointmentService.getAppointmentById(eq(1L), anyString()))
                 .thenThrow(new com.caretriage.shared.exception.BusinessException("Bạn không có quyền xem chi tiết lịch hẹn này"));
 

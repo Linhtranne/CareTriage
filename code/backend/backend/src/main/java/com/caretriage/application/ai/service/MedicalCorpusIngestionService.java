@@ -128,7 +128,7 @@ public class MedicalCorpusIngestionService {
                     }
                 }
             } catch (Exception e) {
-                log.warn("Failed to scan classpath corpus resources: {}", e.getMessage());
+                log.warn("Failed to scan classpath corpus resources: {}", e.getClass().getSimpleName());
             }
         }
 

@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class ChatAttachmentPersistenceService {
@@ -119,3 +120,4 @@ public class ChatAttachmentPersistenceService {
         }
     }
 }
+

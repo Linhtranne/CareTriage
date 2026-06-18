@@ -50,7 +50,7 @@ public class FileValidationUtil {
 
             return false;
         } catch (IOException e) {
-            log.error("Failed to read file magic bytes: {}", e.getMessage());
+            log.error("Failed to read file magic bytes: {}", e.getClass().getSimpleName());
             return false;
         }
     }

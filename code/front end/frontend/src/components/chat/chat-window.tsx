@@ -320,7 +320,7 @@ const ChatWindow = ({
                 ))}
                 
                 {isComplete && !isEmergency && triageResult && (
-                  <TriageConclusionCard result={triageResult} />
+                  <TriageConclusionCard result={triageResult} messages={messages} />
                 )}
               </AnimatePresence>
 

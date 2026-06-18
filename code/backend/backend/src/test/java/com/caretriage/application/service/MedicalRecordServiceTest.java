@@ -40,8 +40,6 @@ class MedicalRecordServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private AiClientService aiClientService;
 
     @Mock
     private ApplicationEventPublisher eventPublisher;

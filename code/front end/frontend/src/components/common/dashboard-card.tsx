@@ -4,10 +4,19 @@ import { motion } from 'framer-motion'
 const DashboardCard = ({
   title,
   value,
+  subtitle,
   icon: Icon,
   color = 'primary.main',
   loading = false,
   onClick,
+}: {
+  title: string;
+  value: string | number;
+  subtitle?: string;
+  icon?: any;
+  color?: string;
+  loading?: boolean;
+  onClick?: () => void;
 }) => {
   return (
     <motion.div
@@ -117,6 +126,18 @@ const DashboardCard = ({
           >
             {loading ? '...' : value}
           </Typography>
+          {subtitle && (
+            <Typography
+              variant="subtitle2"
+              sx={{
+                fontWeight: 600,
+                color: 'oklch(40% 0.05 250)',
+                mt: 1,
+              }}
+            >
+              {subtitle}
+            </Typography>
+          )}
         </Box>
       </Box>
     </motion.div>

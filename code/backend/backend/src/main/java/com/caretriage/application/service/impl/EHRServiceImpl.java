@@ -14,6 +14,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
  * Does NOT call Python AI service or WebClient for EHR operations.
  */
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class EHRServiceImpl implements EHRService {
@@ -48,6 +50,7 @@ public class EHRServiceImpl implements EHRService {
      * AI call is intentionally outside @Transactional to prevent connection pool exhaustion.
      */
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EHRDto.ExtractionResultDto extractFromText(String text, Long patientId, Long doctorId, String noteType) {
         log.info("Starting EHR extraction from text for patient {} by doctor {}", patientId, doctorId);
 
@@ -72,6 +75,7 @@ public class EHRServiceImpl implements EHRService {
      * AI call is intentionally outside @Transactional.
      */
     @Override
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public EHRDto.ExtractionResultDto extractFromFile(MultipartFile file, Long patientId, Long doctorId, String noteType) {
         log.info("Starting EHR extraction from file for patient {}", patientId);
 
@@ -192,10 +196,6 @@ public class EHRServiceImpl implements EHRService {
 
     @Override
     public List<EHRDto.PatientSearchResultDto> searchPatients(EHRDto.SearchCriteria criteria, int page, int size) {
-        if (criteria.isEmpty()) {
-            return Collections.emptyList();
-        }
-
         // Validate severity if provided
         if (criteria.getSeverity() != null && !criteria.getSeverity().isBlank()) {
             try {
@@ -212,14 +212,16 @@ public class EHRServiceImpl implements EHRService {
             throw new IllegalArgumentException("dateFrom must be before or equal to dateTo");
         }
 
-        org.springframework.data.jpa.domain.Specification<com.caretriage.infrastructure.persistence.entity.UserJpaEntity> spec = com.caretriage.domain.repository.specification.EHRSpecification.searchPatients(
-                criteria.getSymptom(),
-                criteria.getMedication(),
-                criteria.getCondition(),
-                criteria.getSeverity(),
-                dateFrom,
-                dateTo
-        );
+        org.springframework.data.jpa.domain.Specification<com.caretriage.infrastructure.persistence.entity.UserJpaEntity> spec =
+                com.caretriage.domain.repository.specification.EHRSpecification.searchPatients(
+                        criteria.getSymptom(),
+                        criteria.getMedication(),
+                        criteria.getCondition(),
+                        criteria.getSeverity(),
+                        dateFrom,
+                        dateTo,
+                        criteria.isEmpty()
+                );
 
         int pageSize = Math.min(size, 100);
         Pageable pageable = PageRequest.of(page, pageSize);
@@ -400,3 +402,4 @@ public class EHRServiceImpl implements EHRService {
         }
     }
 }
+

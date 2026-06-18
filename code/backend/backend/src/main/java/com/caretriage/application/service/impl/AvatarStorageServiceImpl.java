@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.application.service.AvatarStorageService;
 import com.caretriage.application.service.FirebaseStorageService;
 import lombok.RequiredArgsConstructor;
@@ -11,6 +13,7 @@ import java.io.UncheckedIOException;
 import com.caretriage.shared.exception.BusinessException;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AvatarStorageServiceImpl implements AvatarStorageService {
 
@@ -44,3 +47,5 @@ public class AvatarStorageServiceImpl implements AvatarStorageService {
         firebaseStorageService.deleteFile(fileUrl);
     }
 }
+
+

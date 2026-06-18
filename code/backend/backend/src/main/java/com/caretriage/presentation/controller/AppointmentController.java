@@ -90,6 +90,27 @@ public class AppointmentController {
         return ResponseEntity.ok(ApiResponse.success("Lấy lịch hẹn hôm nay thành công", appointments));
     }
 
+    @GetMapping("/admin")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Lấy tất cả lịch hẹn", description = "Lấy danh sách tất cả lịch hẹn (cho Admin)")
+    public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getAllAppointmentsForAdmin(
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) Boolean isExternal) {
+        List<AppointmentResponse> appointments = appointmentService.getAllAppointmentsForAdmin(date, status, isExternal);
+        return ResponseEntity.ok(ApiResponse.success("Lấy danh sách lịch hẹn thành công", appointments));
+    }
+
+    @PutMapping("/admin/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Cập nhật trạng thái (Admin)", description = "Admin cập nhật trạng thái lịch hẹn")
+    public ResponseEntity<ApiResponse<AppointmentResponse>> updateStatusByAdmin(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateAppointmentStatusRequest request) {
+        AppointmentResponse response = appointmentService.updateAppointmentStatusByAdmin(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Cập nhật trạng thái thành công", response));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('PATIENT', 'DOCTOR', 'ADMIN')")
     @Operation(summary = "Chi tiết lịch hẹn", description = "Xem chi tiết một lịch hẹn")

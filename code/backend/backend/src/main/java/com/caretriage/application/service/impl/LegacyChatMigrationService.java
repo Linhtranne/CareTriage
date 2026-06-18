@@ -21,6 +21,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class LegacyChatMigrationService {
 
@@ -107,3 +108,4 @@ public class LegacyChatMigrationService {
         }
     }
 }
+

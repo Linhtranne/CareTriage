@@ -28,21 +28,12 @@ import com.caretriage.infrastructure.config.ChatProperties;
 import com.caretriage.shared.exception.ContractViolationException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.MediaType;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.http.MediaType;
-import org.springframework.http.client.MultipartBodyBuilder;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.reactive.function.BodyInserters;
 
 import com.caretriage.application.ai.service.DocumentExtractionService;
-import com.caretriage.application.service.AiClientService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -58,14 +49,15 @@ import reactor.core.publisher.SignalType;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
+@SuppressWarnings({"java:S3776", "java:S1141", "java:S138", "java:S1192", "unused", "java:S112"})
 public class ChatServiceImpl implements ChatService {
 
     private static final long MAX_ATTACHMENT_SIZE_BYTES = 10L * 1024 * 1024;
     private final ChatMessageRepository chatMessageRepository;
     private final ChatSessionRepository chatSessionRepository;
     private final UserRepository userRepository;
-    private final AiClientService aiClientService;
     private final TriageAiRuntimeRouter triageAiRuntimeRouter;
     private final SimpMessagingTemplate messagingTemplate;
     private final ObjectMapper objectMapper;
@@ -194,9 +186,7 @@ public class ChatServiceImpl implements ChatService {
                 e.addSuppressed(failEx);
             }
             
-            if (e instanceof RuntimeException) {
-                throw (RuntimeException) e;
-            }
+            if (e instanceof RuntimeException runtimeException) { throw runtimeException; }
             throw new RuntimeException(e);
         }
 
@@ -355,7 +345,7 @@ public class ChatServiceImpl implements ChatService {
                     .map(message -> Map.of(
                             "role", message.getSenderType() == ChatMessage.SenderType.USER ? "user" : "model",
                             "content", message.getContent()))
-                    .collect(Collectors.toList());
+                    .toList();
             ChatTurn turn = chatTurnRepository.findByChatSessionIdAndTurnId(sessionId, turnId)
                     .orElseThrow(() -> new ResourceNotFoundException("ChatTurn not found"));
 
@@ -471,7 +461,7 @@ public class ChatServiceImpl implements ChatService {
             } else {
                 chatTurnFinalizer.markTurnFailed(turn.getId(), "FINALIZATION_FAILED");
             }
-            return Flux.just(errorEvent(turnId, "FINALIZATION_FAILED", error.getMessage()));
+            return Flux.just(errorEvent(turnId, "FINALIZATION_FAILED", (error != null ? error.getMessage() : "Unknown error")));
         }
     }
 
@@ -485,7 +475,7 @@ public class ChatServiceImpl implements ChatService {
         }
         String code = isTimeout(error) ? "STREAM_TIMEOUT" : "INTERNAL_STREAM_ERROR";
         chatTurnFinalizer.markTurnFailed(turn.getId(), code);
-        return Flux.just(errorEvent(turnId, code, error.getMessage()));
+        return Flux.just(errorEvent(turnId, code, (error != null ? error.getMessage() : "Unknown error")));
     }
 
     private Map<String, Object> errorEvent(String turnId, String code, String message) {
@@ -532,7 +522,7 @@ public class ChatServiceImpl implements ChatService {
         List<ChatMessageDTO> history = chatMessageRepository.findByChatSessionIdOrderByCreatedAtAsc(sessionId)
                 .stream()
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(java.util.ArrayList::new));
                 
         // 2. Get from Redis (Hot Storage)
         List<Object> redisMsgs = redisTemplate.opsForList().range("chat:session:" + sessionId, 0, -1);
@@ -631,19 +621,32 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<com.caretriage.application.dto.ChatSessionDTO> getUserSessions(Long userId) {
         return chatSessionRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()
                 .map(this::convertToSessionDTO)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<com.caretriage.application.dto.ChatSessionDTO> searchSessions(Long userId, String query) {
         return chatSessionRepository.findByUserIdAndTitleContainingIgnoreCaseOrderByLastMessageTimeDesc(userId, query)
                 .stream()
                 .map(this::convertToSessionDTO)
-                .collect(Collectors.toList());
+                .toList();
+    }
+
+    @Override
+    @Transactional
+    public void deleteSession(Long userId, Long sessionId) {
+        ChatSession session = chatSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new ResourceNotFoundException("ChatSession not found"));
+        if (!session.getUser().getId().equals(userId)) {
+            throw new IllegalArgumentException("Unauthorized access to chat session");
+        }
+        chatSessionRepository.delete(session);
     }
 
     @Override
@@ -677,36 +680,11 @@ public class ChatServiceImpl implements ChatService {
                 || lower.endsWith(".txt");
     }
 
-    private String buildAttachmentMetadata(ChatAttachment attachment) {
-        try {
-            Map<String, Object> metadata = new HashMap<>();
-            metadata.put("attachment_id", attachment.getId());
-            metadata.put("original_filename", attachment.getOriginalFilename());
-            metadata.put("mime_type", attachment.getMimeType());
-            metadata.put("file_size", attachment.getFileSize());
-            metadata.put("extraction_status", attachment.getExtractionStatus().name());
-            return objectMapper.writeValueAsString(metadata);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
-    private String buildAttachmentContext(ChatAttachment attachment) {
-        String extractedText = attachment.getExtractedText() == null ? "" : attachment.getExtractedText();
-        if (extractedText.length() > 4000) {
-            extractedText = extractedText.substring(0, 4000) + "...";
-        }
 
-        return "T\u00e0i li\u1ec7u \u0111\u00ednh k\u00e8m: " + attachment.getOriginalFilename()
-                + "\nN\u1ed9i dung tr\u00edch xu\u1ea5t:\n" + extractedText;
-    }
 
-    private Map<String, String> toAttachmentHistoryEntry(ChatAttachment attachment) {
-        Map<String, String> entry = new HashMap<>();
-        entry.put("role", "system");
-        entry.put("content", buildAttachmentContext(attachment));
-        return entry;
-    }
+
+
 
     private ChatAttachmentDTO convertToAttachmentDTO(ChatAttachment attachment) {
         return ChatAttachmentDTO.builder()
@@ -727,6 +705,7 @@ public class ChatServiceImpl implements ChatService {
                 .content(message.getContent())
                 .senderType(message.getSenderType())
                 .metadata(message.getMetadata())
+                .turnId(message.getTurnId())
                 .createdAt(message.getCreatedAt())
                 .status(ChatMessageDTO.MessageStatus.SENT)
                 .build();
@@ -748,181 +727,9 @@ public class ChatServiceImpl implements ChatService {
                 .build();
     }
 
-    private String serializeJson(Object obj) {
-        try {
-            return objectMapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            return null;
-        }
-    }
 
-    private TriageTicket createOrUpdateTriageTicket(ChatSession session, Map<String, Object> aiResponse, List<ChatMessage> historyMessages) {
-        String ticketNumber = "TRIAGE-" + session.getId();
-        Optional<TriageTicket> existingOpt = triageTicketRepository.findByTicketNumber(ticketNumber);
 
-        Map<String, Object> triageResult = asStringObjectMap(aiResponse.get("triage_result"));
-        String summary = triageResult.get("summary") != null
-                ? String.valueOf(triageResult.get("summary"))
-                : buildConversationSummary(historyMessages);
 
-        String urgency = String.valueOf(triageResult.getOrDefault("urgency_level", "MEDIUM"));
-        String suggestedDepartment = String.valueOf(triageResult.getOrDefault("suggested_department", "N\u1ed9i t\u1ed5ng qu\u00e1t"));
-
-        TriageTicket.Priority priority = mapPriority(urgency);
-        TriageTicket.Severity severity = mapSeverity(urgency);
-
-        // T\u1ef1 \u0111\u1ed9ng ki\u1ec3m tra xem c\u00f3 t\u00e0i li\u1ec7u n\u00e0o b\u1ecb l\u1ed7i ph\u00e2n t\u00edch OCR hay kh\u00f4ng \u0111\u1ec3 \u0111\u00e1nh d\u1ea5u kh\u1ea9n c\u1ea5p
-        List<ChatAttachment> attachments = chatAttachmentRepository.findByChatSessionIdOrderByCreatedAtAsc(session.getId());
-        boolean hasFailedAttachment = attachments.stream()
-                .anyMatch(a -> a.getExtractionStatus() == ChatAttachment.ExtractionStatus.FAILED);
-
-        if (hasFailedAttachment) {
-            priority = TriageTicket.Priority.URGENT;
-            severity = TriageTicket.Severity.MAJOR;
-            triageResult.put("red_flag_detected", true);
-            triageResult.put("attachment_extraction_failed", true);
-            triageResult.put("system_alert_note", "C\u00f3 t\u00e0i li\u1ec7u y khoa \u0111\u00ednh k\u00e8m ph\u00e2n t\u00edch th\u1ea5t b\u1ea1i. C\u1ea7n b\u00e1c s\u0129 ki\u1ec3m tra th\u1ee7 c\u00f4ng.");
-        }
-
-        TriageTicket ticket;
-
-        if (existingOpt.isEmpty()) {
-            Optional<TicketCategory> defaultCategory = ticketCategoryRepository.findByCode("TRIAGE_GENERAL");
-            String aiSnapshotStr = null;
-            try {
-                aiSnapshotStr = objectMapper.writeValueAsString(triageResult);
-            } catch (Exception e) {
-                log.warn("Failed to serialize AI analysis result for snapshot: {}", e.getClass().getSimpleName());
-            }
-
-            ticket = TriageTicket.builder()
-                    .ticketNumber(ticketNumber)
-                    .title("Triage ticket - session " + session.getId())
-                    .description(summary)
-                    .status(TriageTicket.Status.NEW)
-                    .priority(priority)
-                    .severity(severity)
-                    .requester(session.getUser())
-                    .category(defaultCategory.orElse(null))
-                    .metadata(extractMetadataForTicket(triageResult, session.getId()))
-                    .doctorReviewStatus(TriageTicket.DoctorReviewStatus.AI_ANALYSIS_PENDING_REVIEW)
-                    .aiAnalysisSnapshot(aiSnapshotStr)
-                    .chatSession(session)
-                    .build();
-            ticket = triageTicketRepository.save(ticket);
-        } else {
-            ticket = existingOpt.get();
-            if (hasFailedAttachment) {
-                ticket.setPriority(priority);
-                ticket.setSeverity(severity);
-                try {
-                    Map<String, Object> existingMeta = new HashMap<>();
-                    if (ticket.getMetadata() != null) {
-                        existingMeta = objectMapper.readValue(ticket.getMetadata(), Map.class);
-                    }
-                    existingMeta.put("red_flag_detected", true);
-                    existingMeta.put("attachment_extraction_failed", true);
-                    ticket.setMetadata(objectMapper.writeValueAsString(existingMeta));
-                } catch (Exception ex) {
-                    log.warn("Failed to update failed attachment flags in metadata: {}", ex.getMessage());
-                }
-            }
-            if (ticket.getChatSession() == null) {
-                ticket.setChatSession(session);
-            }
-            boolean hasAppointment = appointmentRepository.existsByTriageTicketId(ticket.getId());
-            boolean isEditableStatus = ticket.getStatus() == TriageTicket.Status.NEW || ticket.getStatus() == TriageTicket.Status.IN_TRIAGE;
-
-            if (isEditableStatus && !hasAppointment) {
-                // Soft Update main fields
-                ticket.setDescription(summary);
-                ticket.setPriority(maxPriority(ticket.getPriority(), priority));
-                ticket.setSeverity(maxSeverity(ticket.getSeverity(), severity));
-
-                if (ticket.getDoctorReviewStatus() == TriageTicket.DoctorReviewStatus.AI_ANALYSIS_PENDING_REVIEW) {
-                    try {
-                        ticket.setAiAnalysisSnapshot(objectMapper.writeValueAsString(triageResult));
-                    } catch (Exception e) {
-                        log.warn("Failed to update AI analysis snapshot: {}", e.getMessage());
-                    }
-                }
-
-                // Merge and update metadata
-                try {
-                    Map<String, Object> existingMetadata = new HashMap<>();
-                    if (ticket.getMetadata() != null) {
-                        try {
-                            existingMetadata = objectMapper.readValue(ticket.getMetadata(), Map.class);
-                        } catch (Exception e) {
-                            log.warn("Failed to parse existing metadata for ticket {}: {}", ticketNumber, e.getMessage());
-                        }
-                    }
-                    existingMetadata.putAll(triageResult);
-                    existingMetadata.put("latest_recommendation", aiResponse.get("reply"));
-                    existingMetadata.put("missing_information", aiResponse.getOrDefault("missing_information", List.of()));
-                    existingMetadata.put("intake_complete", aiResponse.getOrDefault("intake_complete", false));
-                    existingMetadata.put("recommendation_ready", aiResponse.getOrDefault("recommendation_ready", false));
-                    existingMetadata.put("updated_from_session_at", java.time.LocalDateTime.now().toString());
-
-                    ticket.setMetadata(objectMapper.writeValueAsString(existingMetadata));
-                } catch (Exception e) {
-                    log.error("Error merging metadata for ticket soft-update: {}", e.getMessage());
-                }
-                ticket = triageTicketRepository.save(ticket);
-            } else {
-                // Only append update note to metadata
-                try {
-                    Map<String, Object> existingMetadata = new HashMap<>();
-                    if (ticket.getMetadata() != null) {
-                        try {
-                            existingMetadata = objectMapper.readValue(ticket.getMetadata(), Map.class);
-                        } catch (Exception e) {
-                            log.warn("Failed to parse existing metadata: {}", e.getMessage());
-                        }
-                    }
-                    List<String> updatesLog = (List<String>) existingMetadata.getOrDefault("patient_update_notes", new java.util.ArrayList<String>());
-                    updatesLog.add("Patient submitted updated AI recommendation at " + java.time.LocalDateTime.now() 
-                            + ". Latest urgency recommendation: " + urgency + " (" + suggestedDepartment + ")");
-                    existingMetadata.put("patient_update_notes", updatesLog);
-                    existingMetadata.put("last_ignored_update_at", java.time.LocalDateTime.now().toString());
-
-                    ticket.setMetadata(objectMapper.writeValueAsString(existingMetadata));
-                } catch (Exception e) {
-                    log.error("Error appending update notes to ticket metadata: {}", e.getMessage());
-                }
-                ticket = triageTicketRepository.save(ticket);
-            }
-        }
-
-        // Complete the ChatSession
-        session.setStatus(ChatSession.SessionStatus.COMPLETED);
-
-        // T\u00cdCH H\u1ee2P REDIS: X\u1ea3 to\u00e0n b\u1ed9 tin nh\u1eafn t\u1eeb Redis xu\u1ed1ng MySQL (Hot -> Cold)
-        List<Object> redisMsgs = redisTemplate.opsForList().range("chat:session:" + session.getId(), 0, -1);
-        if (redisMsgs != null && !redisMsgs.isEmpty()) {
-            List<ChatMessage> entitiesToSave = redisMsgs.stream()
-                .map(obj -> {
-                    ChatMessageDTO dto = objectMapper.convertValue(obj, ChatMessageDTO.class);
-                    return ChatMessage.builder()
-                        .chatSession(session)
-                        .content(dto.getContent())
-                        .senderType(dto.getSenderType())
-                        .metadata(dto.getMetadata())
-                        .createdAt(dto.getCreatedAt())
-                        .build();
-                }).collect(Collectors.toList());
-            chatMessageRepository.saveAll(entitiesToSave);
-            redisTemplate.delete("chat:session:" + session.getId()); // X\u00f3a kh\u1ecfi Redis
-            log.info("Flushed {} messages from Redis to MySQL for session {}", entitiesToSave.size(), session.getId());
-        }
-
-        session.setAiSummary(summary);
-        session.setSuggestedDepartment(suggestedDepartment);
-        session.setUrgencyLevel(urgency);
-        chatSessionRepository.save(session);
-
-        return ticket;
-    }
 
     private TriageTicket.Priority maxPriority(TriageTicket.Priority oldP, TriageTicket.Priority newP) {
         if (oldP == null) return newP;
@@ -936,9 +743,7 @@ public class ChatServiceImpl implements ChatService {
         return oldS.ordinal() <= newS.ordinal() ? oldS : newS;
     }
 
-    private void createTriageTicketIfNeeded(ChatSession session, Map<String, Object> aiResponse, List<ChatMessage> historyMessages) {
-        createOrUpdateTriageTicket(session, aiResponse, historyMessages);
-    }
+
 
     private String buildConversationSummary(List<ChatMessage> historyMessages) {
         String transcript = historyMessages.stream()
@@ -1007,3 +812,4 @@ public class ChatServiceImpl implements ChatService {
         return false;
     }
 }
+

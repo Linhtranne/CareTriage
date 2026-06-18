@@ -26,7 +26,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException ex) {
         log.error("Unhandled runtime error", ex);
-        return ResponseEntity.badRequest().body(ApiResponse.error("\u0110\u00e3 x\u1ea3y ra l\u1ed7i nghi\u1ec7p v\u1ee5. Vui l\u00f2ng th\u1eed l\u1ea1i."));
+        return ResponseEntity.badRequest().body(ApiResponse.error("System Error: " + ex.getMessage()));
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)

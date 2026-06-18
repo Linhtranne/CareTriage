@@ -11,7 +11,7 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 const textAllowlist = new Set(['', ' ', '\n'])
 const colorPattern =
-  /(?:#[0-9a-fA-F]{3,8}\b|rgba?\(|hsla?\(|oklch\(|oklab\(|color-mix\(|\b(?:white|black|red|blue|green|yellow|purple|gray|grey|transparent)\b)/
+  /(?:#[0-9a-fA-F]{3,8}\b|(?:rgb|hsl)a?\(|(?:oklch|oklab|color-mix)\(|\b(?:white|black|red|blue|green|yellow|purple|gray|grey|transparent)\b)/
 
 const projectRules = {
   rules: {
@@ -88,7 +88,7 @@ const projectRules = {
 }
 
 export default defineConfig([
-  globalIgnores(['dist/**', 'node_modules/**', 'coverage/**', 'src/pages/doctor/**', 'src/pages/patient/**']),
+  globalIgnores(['dist/**', 'node_modules/**', 'coverage/**', 'src/pages/patient/**']),
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
     plugins: {

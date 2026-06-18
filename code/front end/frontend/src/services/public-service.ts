@@ -19,6 +19,14 @@ const publicApi = {
 
   getDoctorSlots: (id, date) => {
     return axiosClient.get(`/api/v1/doctors/${id}/slots`, { params: { date } })
+  },
+
+  getRecommendedDoctors: (criteria) => {
+    return axiosClient.post('/api/v1/recommendations/doctors', criteria)
+  },
+
+  getExternalDoctors: () => {
+    return axiosClient.get('/api/v1/external-doctors')
   }
 }
 

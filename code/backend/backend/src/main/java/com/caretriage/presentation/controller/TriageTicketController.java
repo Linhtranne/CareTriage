@@ -35,9 +35,9 @@ public class TriageTicketController {
     @PreAuthorize("hasAnyRole('DOCTOR','ADMIN')")
     @Operation(summary = "List pending tickets", description = "Danh sách ticket chờ phân loại")
     public ResponseEntity<ApiResponse<PagedResponse<TriageTicketResponse>>> listPendingTickets(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) TriageTicket.Priority priority
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "priority", required = false) TriageTicket.Priority priority
     ) {
         PagedResponse<TriageTicketResponse> response = triageTicketService.listPendingTickets(page, size, priority);
         return ResponseEntity.ok(ApiResponse.success("Lấy danh sách ticket thành công", response));
@@ -92,8 +92,8 @@ public class TriageTicketController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('PATIENT')")
     public ResponseEntity<ApiResponse<PagedResponse<TriageTicketResponse>>> listMyTickets(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
             Authentication authentication
     ) {
         Long requesterId = getUserId(authentication);

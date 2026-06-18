@@ -56,19 +56,3 @@ jobs:
           cache: maven
       - name: Build and Test
         run: mvn clean package -B
-
-  ai-service:
-    name: AI Service (Python)
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./code/backend/ai-service
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: 'pip'
-      - run: pip install -r requirements.txt
-      - name: Smoke Test
-        run: python -c "from app.main import app; print('OK')"

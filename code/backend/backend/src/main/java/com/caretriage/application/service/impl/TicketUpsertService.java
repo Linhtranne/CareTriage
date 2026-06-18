@@ -22,6 +22,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class TicketUpsertService {
 
@@ -73,7 +74,7 @@ public class TicketUpsertService {
         try {
             aiSnapshotStr = objectMapper.writeValueAsString(tr);
         } catch (JsonProcessingException e) {
-            log.warn("Failed to serialize AI analysis result for snapshot: {}", e.getMessage());
+            log.warn("Failed to serialize AI analysis result for snapshot: {}", e.getClass().getSimpleName());
         }
 
         if (existingOpt.isEmpty()) {
@@ -128,3 +129,4 @@ public class TicketUpsertService {
         };
     }
 }
+

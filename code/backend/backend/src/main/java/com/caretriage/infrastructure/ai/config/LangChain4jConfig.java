@@ -24,7 +24,7 @@ import java.nio.file.Files;
 @Slf4j
 public class LangChain4jConfig {
 
-    private String runtime = "python";
+    private String runtime = "java";
     private GeminiProperties gemini = new GeminiProperties();
     private RagProperties rag = new RagProperties();
 
@@ -103,7 +103,7 @@ public class LangChain4jConfig {
                 String json = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
                 store = dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore.fromJson(json);
             } catch (Exception e) {
-                log.error("Failed to load vector store from file {}: {}", path, e.getMessage(), e);
+                log.error("Failed to load vector store from file {}: {}", path, e.getClass().getSimpleName(), e);
                 store = new dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore<>();
             }
         } else {
@@ -123,6 +123,13 @@ public class LangChain4jConfig {
     @Bean
     public com.caretriage.application.ai.port.StructuredMedicalEntityExtractor structuredMedicalEntityExtractor(ChatLanguageModel chatLanguageModel) {
         return dev.langchain4j.service.AiServices.builder(com.caretriage.application.ai.port.StructuredMedicalEntityExtractor.class)
+                .chatLanguageModel(chatLanguageModel)
+                .build();
+    }
+
+    @Bean
+    public com.caretriage.application.ai.service.DoctorRecommendationAi doctorRecommendationAi(ChatLanguageModel chatLanguageModel) {
+        return dev.langchain4j.service.AiServices.builder(com.caretriage.application.ai.service.DoctorRecommendationAi.class)
                 .chatLanguageModel(chatLanguageModel)
                 .build();
     }

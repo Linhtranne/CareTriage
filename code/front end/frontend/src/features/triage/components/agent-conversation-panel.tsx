@@ -2,7 +2,8 @@ import { type CSSProperties, type ReactNode, useEffect, useRef, useState, Keyboa
 import { useTranslation } from 'react-i18next'
 import { keyframes } from '@emotion/react'
 import useMediaQuery from '@mui/material/useMediaQuery'
-import { Send, Plus, Edit2 } from 'lucide-react'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
+import { Send, Plus, Edit2, X } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { TRIAGE_COPY_KEYS, TRIAGE_FALLBACK_COPY, TRIAGE_FALLBACK_COPY_VI } from '../constants/triage-copy'
@@ -17,6 +18,7 @@ interface AgentConversationPanelProps {
   className?: string
   messages: ChatMessage[]
   isLoading: boolean
+  isLoadingHistory?: boolean
   error: string | null
   onSendMessage: (text: string) => void
   onRetry: () => void
@@ -28,6 +30,8 @@ interface AgentConversationPanelProps {
   sessionId: number | null
 }
 
+const SESSION_TITLE_MAX_LENGTH = 200
+const SESSION_ACTION_PADDING = 4
 const CHAT_COLUMN_WIDTH = 880
 const WORKSPACE_MAX_WIDTH = 'calc(100% - 24px)'
 const FLOW_REVIEW_INDEX = 3
@@ -141,6 +145,7 @@ export default function AgentConversationPanel({
   className = '',
   messages,
   isLoading,
+  isLoadingHistory = false,
   error,
   onSendMessage,
   onRetry,
@@ -150,7 +155,7 @@ export default function AgentConversationPanel({
   progressState,
   isEmergency,
   sessionId,
-}: AgentConversationPanelProps) {
+}: Readonly<AgentConversationPanelProps>) {
   const { t, i18n } = useTranslation()
   const hasHistoryRail = useMediaQuery('(min-width:1280px)')
   const [inputValue, setInputValue] = useState('')
@@ -162,8 +167,8 @@ export default function AgentConversationPanel({
 
   const handleRenameSave = async (id: number) => {
     const trimmedTitle = editTitleInput.trim()
-    if (!trimmedTitle || trimmedTitle.length < 1 || trimmedTitle.length > 200) {
-      alert(t('agentTriage.renameLengthError', 'Tiêu đề phải từ 1 đến 200 ký tự.'))
+    if (!trimmedTitle || trimmedTitle.length < 1 || trimmedTitle.length > SESSION_TITLE_MAX_LENGTH) {
+      alert(t('agentTriage.renameLengthError'))
       return
     }
 
@@ -183,11 +188,41 @@ export default function AgentConversationPanel({
     } catch (err) {
       console.error('Failed to rename session:', err)
       setHistorySessions(originalSessions)
-      alert(t('agentTriage.renameFailedError', 'Đổi tên cuộc hội thoại thất bại. Vui lòng thử lại.'))
+      alert(t('agentTriage.renameFailedError'))
     } finally {
       setIsRenaming(false)
     }
   }
+
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<number | null>(null);
+
+  const confirmDeleteSession = async () => {
+    if (sessionToDelete === null) return;
+    const id = sessionToDelete;
+    setSessionToDelete(null);
+    setIsDeleting(true);
+    const originalSessions = [...historySessions];
+
+    setHistorySessions(prev => prev.filter(s => s.id !== id));
+    
+    try {
+      await chatApi.deleteSession(id);
+      if (sessionId === id && onNewSession) {
+        onNewSession();
+      }
+    } catch (err) {
+      console.error('Failed to delete session:', err);
+      setHistorySessions(originalSessions);
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
+  const handleDeleteSession = (id: number) => {
+    setSessionToDelete(id);
+  }
+
   const [isHistoryLoading, setIsHistoryLoading] = useState(false)
   const [historyError, setHistoryError] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -287,6 +322,7 @@ export default function AgentConversationPanel({
     marginInline: 'auto',
     maxWidth: hasHistoryRail ? WORKSPACE_MAX_WIDTH : CHAT_COLUMN_WIDTH,
     width: '100%',
+    height: '100%',
   }
   const assistantAvatar = (
     <span
@@ -361,7 +397,7 @@ export default function AgentConversationPanel({
         style={{
           flex: 1,
           minHeight: 0,
-          overflowY: 'auto',
+          overflowY: 'hidden',
           padding: '12px 12px 8px',
         }}
       >
@@ -374,9 +410,11 @@ export default function AgentConversationPanel({
               flex: 1,
               flexDirection: 'column',
               justifyContent: hasOnlyGreeting ? 'flex-end' : 'flex-start',
+              overflowY: 'auto',
+              paddingRight: '8px',
             }}
           >
-            {hasOnlyGreeting ? (
+            {hasOnlyGreeting && !isLoadingHistory ? (
               <div style={{ paddingBottom: 28 }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16 }}>
                   {assistantAvatar}
@@ -414,6 +452,33 @@ export default function AgentConversationPanel({
                   </div>
                 </div>
               </div>
+            ) : isLoadingHistory ? (
+              // Loading skeleton when fetching chat history
+              <div
+                style={{
+                  alignItems: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 16,
+                  justifyContent: 'center',
+                  padding: '48px 0',
+                }}
+              >
+                <span
+                  className="animate-spin"
+                  style={{
+                    borderRadius: '50%',
+                    border: '3px solid var(--color-surface-200)',
+                    borderTopColor: 'var(--color-primary-600)',
+                    display: 'inline-block',
+                    height: 32,
+                    width: 32,
+                  }}
+                />
+                <span style={{ color: 'var(--color-surface-500)', fontSize: 13 }}>
+                  {triageCopy.historyLoading}
+                </span>
+              </div>
             ) : (
               <div className="space-y-6 pb-8">
                 {messages.map((message, index) => (
@@ -446,7 +511,7 @@ export default function AgentConversationPanel({
               </div>
             )}
 
-            {isLoading && (
+            {isLoading && messages[messages.length - 1]?.role !== 'assistant' && (
               <div className="mt-5 flex items-center gap-3 text-sm" style={{ color: 'var(--color-surface-600)' }}>
                 {assistantAvatar}
                 <span className="inline-flex gap-1">
@@ -505,9 +570,6 @@ export default function AgentConversationPanel({
             <aside
               aria-label={triageCopy.historyTitle}
               style={{
-                alignSelf: 'start',
-                position: 'sticky',
-                top: 12,
                 background: 'var(--color-surface-50)',
                 border: '1px solid var(--color-surface-200)',
                 borderRadius: 20,
@@ -517,7 +579,7 @@ export default function AgentConversationPanel({
                 minWidth: 0,
                 overflow: 'hidden',
                 padding: 18,
-                maxHeight: 'calc(100vh - 40px)',
+                height: '100%',
               }}
             >
             <div
@@ -525,7 +587,7 @@ export default function AgentConversationPanel({
                 minWidth: 0,
                 display: 'flex',
                 flexDirection: 'column',
-                overflow: 'hidden',
+                overflowY: 'auto',
               }}
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 }}>
@@ -573,7 +635,7 @@ export default function AgentConversationPanel({
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'var(--color-primary-50)'}
                   >
                     <Plus size={14} strokeWidth={2.5} />
-                    {t('agentTriage.newSession', 'Phiên mới')}
+                    {t('agentTriage.newSession')}
                   </button>
                 )}
               </div>
@@ -640,7 +702,7 @@ export default function AgentConversationPanel({
                           onSelectHistorySession(session.id.toString())
                           return
                         }
-                        setInputValue(session.title || 'Tư vấn sức khỏe')
+                        setInputValue(session.title || t('agentTriage.defaultSessionTitle'))
                       }}
                       style={{
                         background: session.id === sessionId ? 'var(--color-primary-50)' : 'var(--color-surface-50)',
@@ -651,6 +713,7 @@ export default function AgentConversationPanel({
                         fontSize: 13,
                         lineHeight: 1.5,
                         minWidth: 0,
+                        flexShrink: 0,
                         overflow: 'hidden',
                         padding: 12,
                         textAlign: 'left',
@@ -699,7 +762,7 @@ export default function AgentConversationPanel({
                               cursor: 'pointer',
                             }}
                           >
-                            Lưu
+                            {t('agentTriage.renameSave')}
                           </button>
                         </div>
                       ) : (
@@ -715,7 +778,7 @@ export default function AgentConversationPanel({
                                 wordBreak: 'break-word',
                               }}
                             >
-                              {session.title || 'Tư vấn sức khỏe'}
+                              {session.title || t('agentTriage.defaultSessionTitle')}
                             </span>
                             <span
                               style={{
@@ -728,29 +791,53 @@ export default function AgentConversationPanel({
                               {new Date(session.createdAt).toLocaleDateString(i18n.language)}
                             </span>
                           </div>
-                          {session.id === sessionId && (
+                          <div style={{ display: 'flex', gap: 4 }}>
+                            {session.id === sessionId && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingSessionId(session.id);
+                                  setEditTitleInput(session.title || t('agentTriage.defaultSessionTitle'));
+                                }}
+                                style={{
+                                  background: 'var(--color-clear)',
+                                  border: 'none',
+                                  color: 'var(--color-surface-500)',
+                                  cursor: 'pointer',
+                                  padding: 4,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                }}
+                                title={t('agentTriage.renameTitle')}
+                              >
+                                <Edit2 size={14} />
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setEditingSessionId(session.id);
-                                setEditTitleInput(session.title || 'Tư vấn sức khỏe');
+                                void handleDeleteSession(session.id);
                               }}
+                              disabled={isDeleting}
                               style={{
-                                background: 'transparent',
+                                background: 'var(--color-clear)',
                                 border: 'none',
                                 color: 'var(--color-surface-500)',
-                                cursor: 'pointer',
+                                cursor: isDeleting ? 'not-allowed' : 'pointer',
                                 padding: 4,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
+                                opacity: isDeleting ? 0.5 : 1
                               }}
-                              title="Đổi tên"
+                              title={t('agentTriage.deleteTitle', 'Xóa phiên chat')}
                             >
-                              <Edit2 size={14} />
+                              <X size={14} />
                             </button>
-                          )}
+                          </div>
                         </div>
                       )}
                     </div>
@@ -770,7 +857,7 @@ export default function AgentConversationPanel({
                   textTransform: 'uppercase',
                 }}
               >
-                {t('agentTriage.progress', 'Progress')}
+                {t('agentTriage.progress')}
               </p>
               
               <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -877,7 +964,7 @@ export default function AgentConversationPanel({
                               style={{ overflow: 'hidden' }}
                             >
                               <span style={{ fontSize: 12, color: 'var(--color-primary-600)', fontWeight: 600 }}>
-                                {isCompleted ? 'Đang hoàn thiện...' : 'Đang thu thập thông tin...'}
+                                {isCompleted ? t('agentTriage.completedProgress') : t('agentTriage.collectingProgress')}
                               </span>
                             </motion.div>
                           )}
@@ -950,7 +1037,7 @@ export default function AgentConversationPanel({
                   padding: '8px 16px 0',
                 }}
               >
-                {triageCopy.promptCards.map((card) => (
+                {triageCopy.promptCards.map((card: typeof triageCopy.promptCards[number]) => (
                   <button
                     key={card.title}
                     type="button"
@@ -1031,6 +1118,51 @@ export default function AgentConversationPanel({
           </div>
         </div>
       </div>
+
+      <Dialog
+        open={sessionToDelete !== null}
+        onClose={() => setSessionToDelete(null)}
+        aria-labelledby="delete-dialog-title"
+        aria-describedby="delete-dialog-description"
+        PaperProps={{
+          style: {
+            borderRadius: 16,
+            padding: 8,
+          }
+        }}
+      >
+        <DialogTitle id="delete-dialog-title" style={{ fontWeight: 700, color: 'var(--color-surface-900)' }}>
+          {t('agentTriage.deleteSessionConfirmTitle', 'Xóa phiên chat?')}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-dialog-description" style={{ color: 'var(--color-surface-700)' }}>
+            {t('agentTriage.deleteSessionConfirm', 'Bạn có chắc chắn muốn xóa phiên chat này không? Hành động này không thể hoàn tác.')}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions style={{ padding: '0 24px 16px' }}>
+          <Button 
+            onClick={() => setSessionToDelete(null)} 
+            style={{ color: 'var(--color-surface-600)', fontWeight: 600, textTransform: 'none' }}
+          >
+            {t('common.cancel', 'Hủy')}
+          </Button>
+          <Button 
+            onClick={() => void confirmDeleteSession()} 
+            disabled={isDeleting}
+            variant="contained" 
+            style={{ 
+              background: 'var(--color-danger-600, #dc2626)', 
+              color: '#ffffff', 
+              fontWeight: 600, 
+              borderRadius: 8,
+              boxShadow: 'none',
+              textTransform: 'none'
+            }}
+          >
+            {isDeleting ? t('common.deleting', 'Đang xóa...') : t('common.delete', 'Xóa')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </section>
   )
 }

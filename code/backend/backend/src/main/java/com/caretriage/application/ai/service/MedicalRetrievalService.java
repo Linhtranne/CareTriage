@@ -8,6 +8,8 @@ import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.store.embedding.EmbeddingMatch;
 import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.EmbeddingSearchRequest;
+import dev.langchain4j.store.embedding.EmbeddingSearchResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -30,6 +32,7 @@ public class MedicalRetrievalService implements ClinicalRetriever {
     private final EmbeddingStore<TextSegment> embeddingStore;
 
     @Override
+    @SuppressWarnings("java:S3776")
     public List<ClinicalEvidence> retrieveRelevantInfo(String patientSymptomText) {
         if (!langChain4jConfig.getRag().isEnabled()) {
             log.info("RAG is disabled in configuration. Returning empty evidence.");
@@ -45,10 +48,14 @@ public class MedicalRetrievalService implements ClinicalRetriever {
         try {
             Embedding queryEmbedding = embeddingModel.embed(patientSymptomText).content();
             LangChain4jConfig.RagProperties rag = langChain4jConfig.getRag();
-            List<EmbeddingMatch<TextSegment>> matches = embeddingStore.findRelevant(
-                    queryEmbedding,
-                    rag.getMaxResults(),
-                    rag.getMinRelevanceScore());
+            EmbeddingSearchRequest request = EmbeddingSearchRequest.builder()
+                    .queryEmbedding(queryEmbedding)
+                    .maxResults(rag.getMaxResults())
+                    .minScore(rag.getMinRelevanceScore())
+                    .build();
+            
+            EmbeddingSearchResult<TextSegment> result = embeddingStore.search(request);
+            List<EmbeddingMatch<TextSegment>> matches = result.matches();
 
             if (matches == null || matches.isEmpty()) {
                 log.info("No relevant clinical evidence found for the query.");
@@ -62,21 +69,19 @@ public class MedicalRetrievalService implements ClinicalRetriever {
 
             for (EmbeddingMatch<TextSegment> match : matches) {
                 TextSegment segment = match.embedded();
-                if (segment == null) continue;
+                if (segment != null) {
+                    ClinicalEvidence evidence = toEvidence(segment, match.score());
+                    if (passesGovernance(evidence, rag)) {
+                        String content = evidence.content();
+                        if (accumulatedChars + content.length() > rag.getMaxContextCharacters()) {
+                            log.info("RAG context budget limit reached ({} chars). Truncating remaining results.", accumulatedChars);
+                            break;
+                        }
 
-                ClinicalEvidence evidence = toEvidence(segment, match.score());
-                if (!passesGovernance(evidence, rag)) {
-                    continue;
+                        evidenceList.add(evidence);
+                        accumulatedChars += content.length();
+                    }
                 }
-
-                String content = evidence.content();
-                if (accumulatedChars + content.length() > rag.getMaxContextCharacters()) {
-                    log.info("RAG context budget limit reached ({} chars). Truncating remaining results.", accumulatedChars);
-                    break;
-                }
-
-                evidenceList.add(evidence);
-                accumulatedChars += content.length();
             }
 
             log.info("Retrieved {} governed clinical evidence segments.", evidenceList.size());
@@ -89,28 +94,28 @@ public class MedicalRetrievalService implements ClinicalRetriever {
     }
 
     private ClinicalEvidence toEvidence(TextSegment segment, double score) {
-        String evidenceId = segment.metadata().get("chunk_id");
+        String evidenceId = segment.metadata().getString("chunk_id");
         if (evidenceId == null) {
-            evidenceId = "doc-" + Math.abs(segment.text().hashCode());
+            evidenceId = "doc-" + (segment.text().hashCode() & Integer.MAX_VALUE);
         }
         return new ClinicalEvidence(
                 evidenceId,
-                segment.metadata().get("source_id"),
-                segment.metadata().get("source_title"),
-                segment.metadata().get("source_url"),
+                segment.metadata().getString("source_id"),
+                segment.metadata().getString("source_title"),
+                segment.metadata().getString("source_url"),
                 segment.text(),
                 score,
-                segment.metadata().get("corpus_version"),
-                segment.metadata().get("medical_specialty"),
-                segment.metadata().get("published_at"),
-                defaultIfBlank(segment.metadata().get("source_type"), "guideline"),
-                defaultIfBlank(segment.metadata().get("publisher"), "CareTriage Clinical Corpus"),
-                defaultIfBlank(segment.metadata().get("language"), "vi"),
-                segment.metadata().get("section"),
-                segment.metadata().get("integrity_hash"),
-                segment.metadata().get("reviewed_at"),
-                segment.metadata().get("expires_at"),
-                Boolean.parseBoolean(defaultIfBlank(segment.metadata().get("phi_safe"), "false"))
+                segment.metadata().getString("corpus_version"),
+                segment.metadata().getString("medical_specialty"),
+                segment.metadata().getString("published_at"),
+                defaultIfBlank(segment.metadata().getString("source_type"), "guideline"),
+                defaultIfBlank(segment.metadata().getString("publisher"), "CareTriage Clinical Corpus"),
+                defaultIfBlank(segment.metadata().getString("language"), "vi"),
+                segment.metadata().getString("section"),
+                segment.metadata().getString("integrity_hash"),
+                segment.metadata().getString("reviewed_at"),
+                segment.metadata().getString("expires_at"),
+                Boolean.parseBoolean(defaultIfBlank(segment.metadata().getString("phi_safe"), "false"))
         );
     }
 

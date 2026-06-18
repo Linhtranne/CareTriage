@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.application.dto.response.AdminDashboardOperationalKpisResponse;
 import com.caretriage.application.dto.response.AdminDashboardResponse;
 import com.caretriage.application.dto.response.AppointmentTrendPointResponse;
@@ -24,6 +26,7 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AdminDashboardServiceImpl implements AdminDashboardService {
 
@@ -277,3 +280,5 @@ public class AdminDashboardServiceImpl implements AdminDashboardService {
         }
     }
 }
+
+

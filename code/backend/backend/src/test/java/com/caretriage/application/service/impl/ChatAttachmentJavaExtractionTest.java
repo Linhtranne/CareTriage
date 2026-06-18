@@ -1,6 +1,6 @@
 package com.caretriage.application.service.impl;
 
-import com.caretriage.application.ai.model.MedicalExtractionResult;
+// import com.caretriage.application.ai.model.MedicalExtractionResult;
 import com.caretriage.application.ai.service.DocumentExtractionService;
 import com.caretriage.application.dto.ChatAttachmentDTO;
 import com.caretriage.domain.entity.ChatAttachment;
@@ -13,7 +13,7 @@ import com.caretriage.domain.repository.ChatSessionRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
+// import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;

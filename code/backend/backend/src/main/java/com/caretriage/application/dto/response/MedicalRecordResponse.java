@@ -28,5 +28,6 @@ public class MedicalRecordResponse {
     private String notes;
     private String vitalSigns;
     private LocalDate followUpDate;
+    private String triagePriority;
     private LocalDateTime createdAt;
 }

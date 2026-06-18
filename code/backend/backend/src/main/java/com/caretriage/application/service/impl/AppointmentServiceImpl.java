@@ -193,6 +193,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AppointmentResponse> getPatientAppointments(Long patientId, String status) {
         List<Appointment> appointments;
 
@@ -215,6 +216,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AppointmentResponse> getDoctorAppointments(Long doctorId, LocalDate date, String status) {
         List<Appointment> appointments;
 
@@ -237,6 +239,24 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public List<AppointmentResponse> getAllAppointmentsForAdmin(LocalDate date, String status, Boolean isExternal) {
+        List<Appointment> allAppointments = appointmentRepository.findAllByOrderByAppointmentDateDesc();
+        
+        return allAppointments.stream()
+            .filter(a -> date == null || a.getAppointmentDate().equals(date))
+            .filter(a -> status == null || status.isEmpty() || a.getStatus().name().equalsIgnoreCase(status))
+            .filter(a -> {
+                if (isExternal == null) return true;
+                if (isExternal) return a.getExternalDoctor() != null;
+                return a.getDoctor() != null;
+            })
+            .map(this::mapToResponse)
+            .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<AppointmentResponse> getDoctorTodayAppointments(Long doctorId) {
         List<Appointment> appointments = appointmentRepository
                 .findByDoctorIdAndAppointmentDate(doctorId, LocalDate.now());
@@ -293,6 +313,35 @@ public class AppointmentServiceImpl implements AppointmentService {
         Appointment saved = appointmentRepository.save(appointment);
         publishAppointmentStatusChanged(saved.getId(), saved.getTriageTicketId(), previousStatus, saved.getStatus());
         log.info("Appointment status updated: ID={}, {} -> {}", appointmentId, appointment.getStatus(), newStatus);
+        return mapToResponse(saved);
+    }
+
+    @Override
+    @Transactional
+    public AppointmentResponse updateAppointmentStatusByAdmin(Long appointmentId, UpdateAppointmentStatusRequest request) {
+        Appointment appointment = appointmentRepository.findById(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn"));
+
+        AppointmentStatus newStatus;
+        try {
+            newStatus = AppointmentStatus.valueOf(request.getStatus().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException("Trạng thái không hợp lệ: " + request.getStatus());
+        }
+
+        AppointmentStatus previousStatus = appointment.getStatus();
+        appointment.setStatus(newStatus);
+        if (request.getNotes() != null) {
+            if (newStatus == AppointmentStatus.CANCELLED) {
+                appointment.setCancellationReason(request.getNotes());
+            } else {
+                appointment.setNotes(request.getNotes());
+            }
+        }
+
+        Appointment saved = appointmentRepository.save(appointment);
+        publishAppointmentStatusChanged(saved.getId(), saved.getTriageTicketId(), previousStatus, saved.getStatus());
+        log.info("Appointment status updated by Admin: ID={}, {} -> {}", appointmentId, previousStatus, newStatus);
         return mapToResponse(saved);
     }
 
@@ -421,6 +470,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public AppointmentResponse getAppointmentById(Long appointmentId, String userEmail) {
         Appointment appointment = appointmentRepository.findById(appointmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy lịch hẹn"));
@@ -480,6 +530,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                 .triageTicketId(appointment.getTriageTicketId())
                 .createdAt(appointment.getCreatedAt())
                 .updatedAt(appointment.getUpdatedAt());
+
+        if (appointment.getTriageTicketId() != null) {
+            triageTicketRepository.findById(appointment.getTriageTicketId())
+                    .ifPresent(ticket -> builder.triagePriority(ticket.getPriority() != null ? ticket.getPriority().name() : null));
+        }
 
         if (appointment.getPatient() != null) {
             builder.patientId(appointment.getPatient().getId())

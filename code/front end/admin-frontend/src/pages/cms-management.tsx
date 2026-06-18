@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+/* eslint-disable no-magic-numbers */
+import React, { useState, useEffect } from 'react'
 import {
   Box, Container, Typography, TextField, Button, Grid,
   Paper, Stack, Alert, CircularProgress, Tabs, Tab,
@@ -9,15 +10,33 @@ import {
   SettingsSuggest, Web, ViewQuilt 
 } from '@mui/icons-material'
 import landingApi from '../services/landing-service'
+import { useTranslation } from 'react-i18next'
+import { ADMIN_CONSTANTS } from '../constants/admin-constants'
+
+interface ContentField {
+  key: string;
+  label: string;
+  multiline: boolean;
+  rows?: number;
+}
+
+interface ContentSection {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  desc: string;
+  fields: ContentField[];
+}
 
 export default function CMSManagement() {
-  const [lang, setLang] = useState('vi')
-  const [content, setContent] = useState({})
-  const [loading, setLoading] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
+  const { t } = useTranslation()
+  const [lang, setLang] = useState<string>('vi')
+  const [content, setContent] = useState<Record<string, string>>({})
+  const [loading, setLoading] = useState<boolean>(false)
+  const [saving, setSaving] = useState<boolean>(false)
+  const [message, setMessage] = useState<string>('')
 
-  const fetchContent = async (l) => {
+  const fetchContent = async (l: string) => {
     setLoading(true)
     try {
       const res = await landingApi.getContent(l)
@@ -42,75 +61,74 @@ export default function CMSManagement() {
     setMessage('')
     try {
       await landingApi.updateContent(content, lang)
-      setMessage('Cập nhật nội dung thành công!')
-      setTimeout(() => setMessage(''), 5000)
+      setMessage(t('cms.success', 'Cập nhật nội dung thành công!'))
+      setTimeout(() => setMessage(''), ADMIN_CONSTANTS.SNACKBAR_DURATION)
     } catch {
-      setMessage('Lỗi khi cập nhật nội dung.')
+      setMessage(t('cms.error', 'Lỗi khi cập nhật nội dung.'))
     } finally {
       setSaving(false)
     }
   }
 
-  const updateField = (key, val) => {
-    setContent({ ...content, [key]: val })
+  const updateField = (key: string, val: string) => {
+    setContent((prev) => ({ ...prev, [key]: val }))
   }
 
-  const sections = [
+  const sections: ContentSection[] = [
     { 
       id: 'hero', 
       label: 'Hero Section', 
       icon: <Dashboard />,
-      desc: 'Cấu hình tiêu đề chính, phụ và nút kêu gọi hành động ở đầu trang.',
+      desc: t('cms.hero.desc', 'Cấu hình tiêu đề chính, phụ và nút kêu gọi hành động ở đầu trang.'),
       fields: [
-        { key: 'title', label: 'Tiêu đề chính', multiline: false },
-        { key: 'subtitle', label: 'Tiêu đề phụ', multiline: false },
-        { key: 'description', label: 'Mô tả chi tiết', multiline: true, rows: 3 },
-        { key: 'action', label: 'Nhãn nút hành động', multiline: false },
+        { key: 'title', label: t('cms.hero.title', 'Tiêu đề chính'), multiline: false },
+        { key: 'subtitle', label: t('cms.hero.subtitle', 'Tiêu đề phụ'), multiline: false },
+        { key: 'description', label: t('cms.hero.description', 'Mô tả chi tiết'), multiline: true, rows: 3 },
+        { key: 'action', label: t('cms.hero.action', 'Nhãn nút hành động'), multiline: false },
       ]
     },
     { 
       id: 'problems', 
-      label: 'Vấn đề & Thách thức', 
+      label: t('cms.problems.label', 'Vấn đề & Thách thức'), 
       icon: <SettingsSuggest />,
-      desc: 'Nội dung mô tả các khó khăn của hệ thống y tế hiện tại.',
+      desc: t('cms.problems.desc', 'Nội dung mô tả các khó khăn của hệ thống y tế hiện tại.'),
       fields: [
-        { key: 'title', label: 'Tiêu đề section', multiline: false },
-        { key: 'subtitle', label: 'Mô tả ngắn', multiline: true, rows: 2 },
+        { key: 'title', label: t('cms.section.title', 'Tiêu đề section'), multiline: false },
+        { key: 'subtitle', label: t('cms.section.subtitle', 'Mô tả ngắn'), multiline: true, rows: 2 },
       ]
     },
     { 
       id: 'solutions', 
-      label: 'Giải pháp CareTriage', 
+      label: t('cms.solutions.label', 'Giải pháp CareTriage'), 
       icon: <ViewQuilt />,
-      desc: 'Giới thiệu các tính năng và giá trị cốt lõi của ứng dụng.',
+      desc: t('cms.solutions.desc', 'Giới thiệu các tính năng và giá trị cốt lõi của ứng dụng.'),
       fields: [
-        { key: 'title', label: 'Tiêu đề section', multiline: false },
-        { key: 'subtitle', label: 'Mô tả ngắn', multiline: true, rows: 2 },
+        { key: 'title', label: t('cms.section.title', 'Tiêu đề section'), multiline: false },
+        { key: 'subtitle', label: t('cms.section.subtitle', 'Mô tả ngắn'), multiline: true, rows: 2 },
       ]
     },
     { 
       id: 'departments', 
-      label: 'Danh mục Chuyên khoa', 
+      label: t('cms.departments.label', 'Danh mục Chuyên khoa'), 
       icon: <Web />,
-      desc: 'Tiêu đề và giới thiệu cho phần danh sách các chuyên khoa.',
+      desc: t('cms.departments.desc', 'Tiêu đề và giới thiệu cho phần danh sách các chuyên khoa.'),
       fields: [
-        { key: 'title', label: 'Tiêu đề section', multiline: false },
-        { key: 'subtitle', label: 'Mô tả ngắn', multiline: true, rows: 2 },
+        { key: 'title', label: t('cms.section.title', 'Tiêu đề section'), multiline: false },
+        { key: 'subtitle', label: t('cms.section.subtitle', 'Mô tả ngắn'), multiline: true, rows: 2 },
       ]
     }
   ]
 
   return (
     <Container maxWidth="lg" sx={{ py: 4, position: 'relative', zIndex: 1 }}>
-      {/* ── Header ────────────────────────────────────────────────── */}
       <Box sx={{ mb: 5 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" spacing={3}>
           <Box>
             <Typography variant="h3" sx={{ fontWeight: 900, color: 'text.primary', mb: 1, letterSpacing: '-0.02em' }}>
-              Content Management
+              {t('cms.header.title', 'Content Management')}
             </Typography>
             <Typography variant="body1" color="text.secondary" sx={{ fontWeight: 500 }}>
-              Tùy chỉnh nội dung hiển thị trên Landing Page của CareTriage
+              {t('cms.header.subtitle', 'Tùy chỉnh nội dung hiển thị trên Landing Page của CareTriage')}
             </Typography>
           </Box>
           
@@ -118,22 +136,20 @@ export default function CMSManagement() {
             elevation={0}
             sx={{ 
               p: 0.5, 
-              borderRadius: '16px', 
-              bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid color-mix(in srgb, var(--color-primary-500) 15%, transparent)',
+              borderRadius: 4, 
+              bgcolor: 'background.paper',
               display: 'flex',
               alignItems: 'center'
             }}
           >
             <Tabs 
               value={lang} 
-              onChange={(e, v) => setLang(v)}
+              onChange={(_, v) => setLang(v)}
               sx={{
                 minHeight: 44,
-                '& .MuiTabs-indicator': { height: '100%', borderRadius: '12px', zIndex: 0, bgcolor: 'primary.main', opacity: 0.1 },
+                '& .MuiTabs-indicator': { height: '100%', borderRadius: 3, zIndex: 0, bgcolor: 'primary.main', opacity: 0.1 },
                 '& .MuiTab-root': { 
-                  minHeight: 44, borderRadius: '12px', zIndex: 1, px: 3,
+                  minHeight: 44, borderRadius: 3, zIndex: 1, px: 3,
                   fontWeight: 700, transition: 'all 0.2s',
                   '&.Mui-selected': { color: 'primary.main' }
                 }
@@ -151,7 +167,7 @@ export default function CMSManagement() {
           <Alert 
             severity={message.includes('Lỗi') ? 'error' : 'success'} 
             variant="filled"
-            sx={{ mb: 4, borderRadius: '16px', fontWeight: 600, boxShadow: '0 8px 24px rgba(0,0,0,0.08)' }}
+            sx={{ mb: 4, borderRadius: 4, fontWeight: 600, boxShadow: 1 }}
           >
             {message}
           </Alert>
@@ -161,8 +177,8 @@ export default function CMSManagement() {
       {loading ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', py: 15, gap: 2 }}>
           <CircularProgress size={50} thickness={4} sx={{ color: 'primary.main' }} />
-          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, animate: 'pulse 1.5s infinite' }}>
-            Đang tải dữ liệu...
+          <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+            {t('common.loading', 'Đang tải dữ liệu...')}
           </Typography>
         </Box>
       ) : (
@@ -172,22 +188,22 @@ export default function CMSManagement() {
               <Card 
                 elevation={0}
                 sx={{ 
-                  borderRadius: '24px', 
-                  border: '1px solid color-mix(in srgb, var(--color-primary-500) 8%, transparent)',
-                  background: 'color-mix(in srgb, var(--color-surface-50) 70%, transparent)',
-                  backdropFilter: 'blur(20px)',
+                  borderRadius: 6, 
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
                   transition: 'all 0.3s ease',
                   '&:hover': {
-                    boxShadow: '0 12px 40px rgba(0,0,0,0.04)',
-                    borderColor: 'color-mix(in srgb, var(--color-primary-500) 20%, transparent)'
+                    boxShadow: 3,
+                    borderColor: 'primary.main'
                   }
                 }}
               >
                 <CardContent sx={{ p: 4 }}>
                   <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 1 }}>
                     <Box sx={{ 
-                      p: 1, borderRadius: '12px', 
-                      bgcolor: 'color-mix(in srgb, var(--color-primary-500) 10%, transparent)', color: 'primary.main',
+                      p: 1, borderRadius: 3, 
+                      bgcolor: 'primary.light', color: 'primary.main',
                       display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}>
                       {section.icon}
@@ -210,22 +226,12 @@ export default function CMSManagement() {
                           </Typography>
                           <TextField 
                             fullWidth 
-                            placeholder={`Nhập ${field.label.toLowerCase()}...`}
+                            placeholder={`${t('common.enter', 'Nhập')} ${field.label.toLowerCase()}...`}
                             value={content[fullKey] || ''}
                             onChange={(e) => updateField(fullKey, e.target.value)}
                             multiline={field.multiline}
                             rows={field.rows || 1}
                             variant="outlined"
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                borderRadius: '16px',
-                                bgcolor: 'color-mix(in srgb, var(--color-surface-50) 80%, transparent)',
-                                transition: 'all 0.2s',
-                                '& fieldset': { borderColor: 'rgba(0,0,0,0.08)' },
-                                '&:hover fieldset': { borderColor: 'color-mix(in srgb, var(--color-primary-500) 30%, transparent)' },
-                                '&.Mui-focused fieldset': { borderWidth: '2px', borderColor: 'primary.main' }
-                              }
-                            }}
                           />
                         </Grid>
                       )
@@ -238,7 +244,6 @@ export default function CMSManagement() {
         </Grid>
       )}
 
-      {/* ── Sticky Action Bar ─────────────────────────────────────── */}
       <Box sx={{ 
         position: 'sticky', 
         bottom: 30, 
@@ -251,23 +256,23 @@ export default function CMSManagement() {
           elevation={20}
           sx={{ 
             px: 4, py: 2, 
-            borderRadius: '100px', 
-            bgcolor: 'rgba(15, 23, 42, 0.9)', 
-            backdropFilter: 'blur(16px)',
+            borderRadius: 25, 
+            bgcolor: 'background.paper', 
             display: 'flex',
             gap: 2,
-            border: '1px solid color-mix(in srgb, var(--color-surface-50) 10%, transparent)'
+            border: 1,
+            borderColor: 'divider'
           }}
         >
           <Button 
             variant="text" 
             startIcon={<Refresh />} 
             onClick={() => fetchContent(lang)}
-            sx={{ color: 'color-mix(in srgb, var(--color-surface-50) 70%, transparent)', borderRadius: '100px', px: 3, '&:hover': { color: '#fff', bgcolor: 'color-mix(in srgb, var(--color-surface-50) 5%, transparent)' } }}
+            sx={{ borderRadius: 25, px: 3 }}
           >
-            Làm mới
+            {t('common.refresh', 'Làm mới')}
           </Button>
-          <Divider orientation="vertical" flexItem sx={{ bgcolor: 'color-mix(in srgb, var(--color-surface-50) 10%, transparent)', my: 1 }} />
+          <Divider orientation="vertical" flexItem sx={{ my: 1 }} />
           <Button 
             variant="contained" 
             size="large" 
@@ -276,27 +281,14 @@ export default function CMSManagement() {
             disabled={saving || loading}
             sx={{ 
               px: 6, 
-              borderRadius: '100px',
-              bgcolor: 'var(--color-primary-500)',
+              borderRadius: 25,
               fontWeight: 800,
-              boxShadow: '0 8px 24px color-mix(in srgb, var(--color-primary-500) 30%, transparent)',
-              '&:hover': { bgcolor: 'var(--color-primary-600)', boxShadow: '0 12px 32px color-mix(in srgb, var(--color-primary-500) 40%, transparent)' },
-              '&.Mui-disabled': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 10%, transparent)', color: 'color-mix(in srgb, var(--color-surface-50) 30%, transparent)' }
             }}
           >
-            {saving ? 'Đang lưu...' : 'Lưu tất cả thay đổi'}
+            {saving ? t('common.saving', 'Đang lưu...') : t('common.saveAll', 'Lưu tất cả thay đổi')}
           </Button>
         </Paper>
       </Box>
-
-      {/* Global CSS for minor refinements */}
-      <style>{`
-        @keyframes pulse {
-          0% { opacity: 0.6; }
-          50% { opacity: 1; }
-          100% { opacity: 0.6; }
-        }
-      `}</style>
     </Container>
   )
 }

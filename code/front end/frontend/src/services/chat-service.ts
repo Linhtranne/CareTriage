@@ -90,14 +90,6 @@ const chatApi = {
     return res.data;
   },
 
-  getOrCreateSession: async (): Promise<ChatSessionDTO> => {
-    const res = await axiosClient.get('/api/v1/chat/sessions/active');
-    if (res.data?.id) {
-      return res.data;
-    }
-    return chatApi.createSession();
-  },
-
 
 
   streamMessage: async (
@@ -173,6 +165,10 @@ const chatApi = {
       return res.data;
     }
     return [];
+  },
+
+  deleteSession: async (sessionId: number): Promise<void> => {
+    await axiosClient.delete(`/api/v1/chat/sessions/${sessionId}`);
   }
 };
 

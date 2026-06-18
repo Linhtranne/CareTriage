@@ -2,10 +2,10 @@ package com.caretriage.presentation.controller;
 
 import com.caretriage.domain.entity.ChatSession;
 import com.caretriage.application.service.ChatService;
-import com.caretriage.application.service.AiClientService;
 import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.domain.repository.ChatSessionRepository;
 import com.caretriage.domain.entity.User;
+import com.caretriage.infrastructure.ai.config.LangChain4jConfig;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -13,6 +13,7 @@ import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 
 import com.caretriage.application.dto.ChatAttachmentDTO;
@@ -25,6 +26,7 @@ import com.caretriage.application.service.impl.ChatTurnReconciliationService;
 import com.caretriage.shared.exception.ResourceNotFoundException;
 import com.caretriage.shared.exception.ConflictException;
 import org.springframework.http.HttpStatus;
+import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
 import org.springframework.http.MediaType;
@@ -38,7 +40,7 @@ public class ChatSessionController {
     private final ChatService chatService;
     private final UserRepository userRepository;
     private final ChatSessionRepository chatSessionRepository;
-    private final AiClientService aiClientService;
+    private final LangChain4jConfig langChain4jConfig;
     private final ChatTurnRepository chatTurnRepository;
     private final ChatTurnReconciliationService chatTurnReconciliationService;
 
@@ -46,10 +48,13 @@ public class ChatSessionController {
 
     @GetMapping("/health/ai")
     public ResponseEntity<Map<String, Object>> getAiHealth() {
-        boolean isUp = aiClientService.checkHealth();
+        // Java AI runtime (LangChain4j) health: check if model is configured
+        String modelName = langChain4jConfig.getGemini().getModelName();
+        boolean isConfigured = modelName != null && !modelName.isBlank();
         Map<String, Object> response = new HashMap<>();
-        response.put("status", isUp ? "UP" : "DOWN");
-        response.put("service", "caretriage-ai-service");
+        response.put("status", isConfigured ? "UP" : "DOWN");
+        response.put("runtime", "java");
+        response.put("model", isConfigured ? modelName : "not-configured");
         return ResponseEntity.ok(response);
     }
 
@@ -321,6 +326,7 @@ public class ChatSessionController {
     }
 
     @GetMapping("/sessions/active")
+    @Transactional(readOnly = true)
     public ResponseEntity<ChatSessionDTO> getActiveSession(
             @AuthenticationPrincipal UserDetails userDetails) {
         User user = userRepository.findByEmail(userDetails.getUsername())
@@ -335,6 +341,25 @@ public class ChatSessionController {
                 .orElse(null);
 
         return ResponseEntity.ok(activeSession);
+    }
+
+    @GetMapping("/sessions/search")
+    public ResponseEntity<List<ChatSessionDTO>> searchSessions(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam String query) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MSG));
+        return ResponseEntity.ok(chatService.searchSessions(user.getId(), query));
+    }
+
+    @DeleteMapping("/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @PathVariable Long sessionId) {
+        User user = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new RuntimeException(USER_NOT_FOUND_MSG));
+        chatService.deleteSession(user.getId(), sessionId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/sessions")

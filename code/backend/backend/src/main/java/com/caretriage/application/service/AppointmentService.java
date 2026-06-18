@@ -24,9 +24,13 @@ public interface AppointmentService {
 
     AppointmentResponse updateAppointmentStatus(Long appointmentId, Long doctorId, UpdateAppointmentStatusRequest request);
 
+    AppointmentResponse updateAppointmentStatusByAdmin(Long appointmentId, UpdateAppointmentStatusRequest request);
+
     List<TimeSlotResponse> getAvailableSlots(Long doctorId, LocalDate date);
 
     AppointmentResponse getAppointmentById(Long appointmentId, String userEmail);
 
     AppointmentResponse createAppointmentFromTicket(Long doctorId, CreateAppointmentFromTicketRequest request);
+    
+    List<AppointmentResponse> getAllAppointmentsForAdmin(LocalDate date, String status, Boolean isExternal);
 }

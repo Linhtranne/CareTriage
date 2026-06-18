@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.application.dto.AiSseFinalPayload;
 import com.caretriage.application.dto.PersistedEventPayload;
 import com.caretriage.domain.entity.ChatTurn;
@@ -13,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class ChatTurnReconciliationService {
 
@@ -105,7 +108,6 @@ public class ChatTurnReconciliationService {
             return ReconcileResult.ok(persistedPayload);
         } else {
             ChatTurn updatedTurn = chatTurnRepository.findById(turnDbId).orElseThrow();
-            PersistedEventPayload payload = PersistedEventPayload.fromJson(updatedTurn.getPersistedPayload());
             return ReconcileResult.failed("Ticket creation failed: " + updatedTurn.getTicketStatus());
         }
     }
@@ -187,3 +189,5 @@ public class ChatTurnReconciliationService {
         }
     }
 }
+
+

@@ -10,7 +10,7 @@ import useAuthStore, { getHighestPriorityLandingPage } from '../../store/auth-st
 import type { RegisterPayload } from '../../types'
 
 // Interactive Particle Visualizer (Canvas API)
-function InteractiveParticles({ color = 'oklch(68% 0.145 172)' }) {
+function InteractiveParticles({ color = '#00b48e' }) {
   const canvasRef = useRef(null)
 
   useEffect(() => {
@@ -263,7 +263,7 @@ export default function Register() {
         py: 4,
       }}
     >
-      <InteractiveParticles color="oklch(68% 0.145 172)" />
+      <InteractiveParticles color="#00b48e" />
 
       {/* Massive Typography on the left */}
       <Box

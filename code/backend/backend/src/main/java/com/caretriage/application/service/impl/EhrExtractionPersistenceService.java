@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class EhrExtractionPersistenceService {
@@ -250,3 +251,4 @@ public class EhrExtractionPersistenceService {
                 .build();
     }
 }
+

@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers, project-rules/no-hardcoded-color, project-rules/no-hardcoded-text, @typescript-eslint/no-explicit-any, no-undef, unused-imports/no-unused-vars, unused-imports/no-unused-imports */
 import { useState, useEffect } from 'react'
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,

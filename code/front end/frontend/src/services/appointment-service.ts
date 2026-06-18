@@ -5,7 +5,7 @@ const appointmentApi = {
     return axiosClient.post('/api/v1/appointments', data);
   },
   
-  getMyAppointments: (status) => {
+  getMyAppointments: (status?: string) => {
     const params = status ? { status } : {};
     return axiosClient.get('/api/v1/appointments/my', { params });
   },

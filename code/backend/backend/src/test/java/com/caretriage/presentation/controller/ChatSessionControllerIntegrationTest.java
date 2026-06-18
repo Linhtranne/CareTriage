@@ -2,7 +2,6 @@ package com.caretriage.presentation.controller;
 
 import com.caretriage.application.dto.ChatSessionDTO;
 import com.caretriage.application.service.ChatService;
-import com.caretriage.application.service.AiClientService;
 import com.caretriage.domain.entity.ChatSession;
 import com.caretriage.domain.entity.User;
 import com.caretriage.infrastructure.persistence.entity.UserJpaEntity;
@@ -22,11 +21,11 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Collections;
-import java.util.List;
+// import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.mockito.ArgumentMatchers.*;
+// import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -50,8 +49,6 @@ public class ChatSessionControllerIntegrationTest {
     @MockBean
     private ChatSessionRepository chatSessionRepository;
 
-    @MockBean
-    private AiClientService aiClientService;
 
     @MockBean
     private ChatTurnRepository chatTurnRepository;

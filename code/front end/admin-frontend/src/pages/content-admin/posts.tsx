@@ -1,19 +1,21 @@
 import { Box, Typography, Button } from '@mui/material'
+import { useTranslation } from 'react-i18next'
 import useAuthStore from '../../store/auth-store'
 
 export default function ContentManagement() {
   const { logout, user } = useAuthStore()
+  const { t } = useTranslation()
 
   return (
-    <Box sx={{ p: 4, minHeight: '100vh', bgcolor: '#0f172a', color: '#f8fafc' }}>
+    <Box sx={{ p: 4, minHeight: '100vh', bgcolor: 'background.default', color: 'text.primary' }}>
       <Typography variant="h3" sx={{ fontWeight: 700, mb: 2 }}>
-        Content Management
+        {t('contentAdmin.title', 'Content Management')}
       </Typography>
-      <Typography variant="body1" sx={{ mb: 4, color: '#94a3b8' }}>
-        Xin chào Content Admin {user?.fullName || ''}!
+      <Typography variant="body1" sx={{ mb: 4, color: 'text.secondary' }}>
+        {t('common.hello', 'Xin chào')} {t('role.contentAdmin', 'Content Admin')} {user?.fullName ?? ''}!
       </Typography>
       <Button variant="outlined" color="error" onClick={logout}>
-        Đăng xuất
+        {t('common.logout', 'Đăng xuất')}
       </Button>
     </Box>
   )

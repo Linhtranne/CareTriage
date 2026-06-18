@@ -32,8 +32,12 @@ public class Appointment {
     private UserJpaEntity patient;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor_id", nullable = false)
+    @JoinColumn(name = "doctor_id")
     private UserJpaEntity doctor;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "external_doctor_id")
+    private com.caretriage.domain.entity.external.ExternalDoctor externalDoctor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "department_id")

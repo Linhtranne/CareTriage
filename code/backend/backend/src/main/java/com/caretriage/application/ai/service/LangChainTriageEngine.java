@@ -11,7 +11,6 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.ChatMessage;
-import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.output.Response;
 import lombok.RequiredArgsConstructor;
@@ -41,29 +40,45 @@ public class LangChainTriageEngine implements TriageAiEngine {
     private static final int MAX_CONCURRENT_CLASSIFICATIONS = 4;
     private static final int MAX_QUEUED_CLASSIFICATIONS = 100;
 
-    private final ChatLanguageModel chatLanguageModel;
+    private static final String EVENT_KEY = "event";
+    private static final String CONTENT_KEY = "content";
+    private static final String TURN_ID_KEY = "turn_id";
+    private static final String CONTRACT_VERSION_KEY = "contract_version";
+    private static final String REPLY_KEY = "reply";
+    private static final String INTAKE_COMPLETE_KEY = "intake_complete";
+    private static final String RED_FLAG_DETECTED_KEY = "red_flag_detected";
+    private static final String MISSING_INFORMATION_KEY = "missing_information";
+    private static final String CLASSIFICATION_STATUS_KEY = "classification_status";
+    private static final String CLASSIFICATION_ERROR_CODE_KEY = "classification_error_code";
+    private static final String TRIAGE_RESULT_KEY = "triage_result";
+    private static final String EVENT_FINAL = "final";
+    private static final String DEFAULT_DEPT = "Nội tổng quát";
+    private static final String DEFAULT_DEPT_CODE = "GENERAL_INTERNAL_MEDICINE";
+
+
     private final StreamingChatLanguageModel streamingChatLanguageModel;
     private final TriageClassifier triageClassifier;
     private final com.caretriage.application.ai.port.ClinicalRetriever clinicalRetriever;
     private final RagContextBuilder ragContextBuilder;
     private final CitationValidator citationValidator;
-    private final com.caretriage.infrastructure.ai.config.LangChain4jConfig langChain4jConfig;
     private final Scheduler classificationScheduler = Schedulers.newBoundedElastic(
             MAX_CONCURRENT_CLASSIFICATIONS,
             MAX_QUEUED_CLASSIFICATIONS,
             "triage-classification");
 
-    private static final Map<String, String> DEPARTMENT_WHITELIST_MAP = Map.of(
-        "Nội tổng quát", "GENERAL_INTERNAL_MEDICINE",
-        "Tai Mũi Họng", "ENT",
-        "Tim mạch", "CARDIOLOGY",
-        "Nhi khoa", "PEDIATRICS",
-        "Sản phụ khoa", "OBGYN",
-        "Da liễu", "DERMATOLOGY",
-        "Tiêu hóa", "GASTROENTEROLOGY",
-        "Cơ xương khớp", "ORTHOPEDICS",
-        "Thần kinh", "NEUROLOGY",
-        "Cấp cứu", "EMERGENCY"
+    private static final Map<String, String> DEPARTMENT_WHITELIST_MAP = Map.ofEntries(
+        Map.entry(DEFAULT_DEPT, DEFAULT_DEPT_CODE),
+        Map.entry("Tai Mũi Họng", "ENT"),
+        Map.entry("Tim mạch", "CARDIOLOGY"),
+        Map.entry("Nhi khoa", "PEDIATRICS"),
+        Map.entry("Sản phụ khoa", "OBGYN"),
+        Map.entry("Da liễu", "DERMATOLOGY"),
+        Map.entry("Tiêu hóa", "GASTROENTEROLOGY"),
+        Map.entry("Cơ xương khớp", "ORTHOPEDICS"),
+        Map.entry("Thần kinh", "NEUROLOGY"),
+        Map.entry("Cấp cứu", "EMERGENCY"),
+        Map.entry("Răng Hàm Mặt", "DENTISTRY"),
+        Map.entry("Nha khoa", "DENTISTRY")
     );
 
     @Override
@@ -91,7 +106,7 @@ public class LangChainTriageEngine implements TriageAiEngine {
         try {
             evidenceList = clinicalRetriever.retrieveRelevantInfo(request.getCurrentMessage());
         } catch (Exception e) {
-            log.error("RAG retrieval failed: {}", e.getMessage());
+            log.error("RAG retrieval failed: {}", e.getClass().getSimpleName());
             ragFailed = true;
         }
 
@@ -105,7 +120,7 @@ public class LangChainTriageEngine implements TriageAiEngine {
             TriageClassificationResult classificationResult = triageClassifier.classify(conversationContext, ragContext);
             return mapToTriageClassification(classificationResult);
         } catch (Exception e) {
-            log.error("Classification failed: {}", e.getMessage(), e);
+            log.error("Classification failed: {}", e.getClass().getSimpleName(), e);
             return buildDegradedClassification(null);
         }
     }
@@ -154,10 +169,10 @@ public class LangChainTriageEngine implements TriageAiEngine {
                 if (token != null) {
                     streamedReply.append(token);
                     Map<String, Object> event = new HashMap<>();
-                    event.put("event", "token");
+                    event.put(EVENT_KEY, "token");
                     event.put("sequence", sequence++);
-                    event.put("content", token);
-                    event.put("turn_id", request.getTurnId());
+                    event.put(CONTENT_KEY, token);
+                    event.put(TURN_ID_KEY, request.getTurnId());
                     sink.tryEmitNext(event);
                 }
             }
@@ -181,14 +196,14 @@ public class LangChainTriageEngine implements TriageAiEngine {
 
             @Override
             public void onError(Throwable error) {
-                log.error("LLM Phase A streaming failed for turn {}: {}", request.getTurnId(), error.getMessage(), error);
+                log.error("LLM Phase A streaming failed for turn {}: {}", request.getTurnId(), error.getClass().getSimpleName());
                 emitError("LLM_PHASE_A_FAILED", "Xin lỗi, hệ thống AI đang gặp sự cố. Vui lòng thử lại.");
               }
 
               private void emitError(String errorCode, String message) {
                   Map<String, Object> errorEvent = new HashMap<>();
-                  errorEvent.put("event", "error");
-                  errorEvent.put("turn_id", request.getTurnId());
+                  errorEvent.put(EVENT_KEY, "error");
+                  errorEvent.put(TURN_ID_KEY, request.getTurnId());
                   errorEvent.put("code", errorCode);
                   errorEvent.put("message", message);
                   errorEvent.put("retryable", true);
@@ -202,20 +217,20 @@ public class LangChainTriageEngine implements TriageAiEngine {
 
     private Flux<Map<String, Object>> emitRedFlagEvents(String turnId, PolicyResult redFlagResult) {
         Map<String, Object> tokenEvent = new HashMap<>();
-        tokenEvent.put("event", "token");
-        tokenEvent.put("turn_id", turnId);
+        tokenEvent.put(EVENT_KEY, "token");
+        tokenEvent.put(TURN_ID_KEY, turnId);
         tokenEvent.put("sequence", 1);
-        tokenEvent.put("content", redFlagResult.getReplyMsg());
+        tokenEvent.put(CONTENT_KEY, redFlagResult.getReplyMsg());
 
         Map<String, Object> finalPayload = new HashMap<>();
-        finalPayload.put("contract_version", "1");
-        finalPayload.put("turn_id", turnId);
-        finalPayload.put("reply", redFlagResult.getReplyMsg());
-        finalPayload.put("intake_complete", true);
-        finalPayload.put("red_flag_detected", true);
-        finalPayload.put("missing_information", Collections.emptyList());
-        finalPayload.put("classification_status", "OK");
-        finalPayload.put("classification_error_code", null);
+        finalPayload.put(CONTRACT_VERSION_KEY, "1");
+        finalPayload.put(TURN_ID_KEY, turnId);
+        finalPayload.put(REPLY_KEY, redFlagResult.getReplyMsg());
+        finalPayload.put(INTAKE_COMPLETE_KEY, true);
+        finalPayload.put(RED_FLAG_DETECTED_KEY, true);
+        finalPayload.put(MISSING_INFORMATION_KEY, Collections.emptyList());
+        finalPayload.put(CLASSIFICATION_STATUS_KEY, "OK");
+        finalPayload.put(CLASSIFICATION_ERROR_CODE_KEY, null);
 
         TriageResultDetail raw = redFlagResult.getTriageResult();
         Map<String, Object> triageResult = new HashMap<>();
@@ -227,11 +242,11 @@ public class LangChainTriageEngine implements TriageAiEngine {
         triageResult.put("suggested_actions", raw.getSuggestedActions());
         triageResult.put("clinical_reasoning_summary", raw.getClinicalReasoningSummary() != null ? raw.getClinicalReasoningSummary() : "Deterministic red flag rule triggered.");
         triageResult.put("summary", raw.getSummary() != null ? raw.getSummary() : "Emergency warning triggered by reported symptoms.");
-        triageResult.put("red_flag_detected", true);
-        finalPayload.put("triage_result", triageResult);
+        triageResult.put(RED_FLAG_DETECTED_KEY, true);
+        finalPayload.put(TRIAGE_RESULT_KEY, triageResult);
 
         Map<String, Object> finalEvent = new HashMap<>();
-        finalEvent.put("event", "final");
+        finalEvent.put(EVENT_KEY, EVENT_FINAL);
         finalEvent.putAll(finalPayload);
 
         return Flux.just(tokenEvent, finalEvent);
@@ -245,7 +260,7 @@ public class LangChainTriageEngine implements TriageAiEngine {
         for (int i = startIdx; i < history.size(); i++) {
             Map<String, Object> item = history.get(i);
             String role = "user".equalsIgnoreCase(String.valueOf(item.get("role"))) ? "Patient" : "Assistant";
-            String content = String.valueOf(item.getOrDefault("content", ""));
+            String content = String.valueOf(item.getOrDefault(CONTENT_KEY, ""));
             if (content.length() > 1000) {
                 content = content.substring(0, 1000);
             }
@@ -269,9 +284,11 @@ public class LangChainTriageEngine implements TriageAiEngine {
         return "HISTORY:\n" + String.join("\n", conversationLines)
                 + "\n\nCURRENT MESSAGE: " + request.getCurrentMessage() + "\n\n"
                 + evidenceSection + "\n\n"
-                + "Reply conversationally in Vietnamese. Ask only the next necessary "
-                + "question, or conclude with a doctor/specialist recommendation when "
-                + "symptom, onset, and severity are clear.";
+                + "Trả lời bằng tiếng Việt cho bệnh nhân. Nếu thông tin đã đủ để định hướng chuyên khoa, "
+                + "hãy kết luận rõ chuyên khoa cần khám, ví dụ: \"khoa Răng Hàm Mặt\" hoặc \"bác sĩ nha khoa\", "
+                + "và nói rằng hệ thống sẽ chuyển sang bước đặt lịch với bác sĩ phù hợp. "
+                + "Không liệt kê tên bác sĩ cụ thể trong câu trả lời chat; danh sách bác sĩ sẽ do bước đặt lịch hiển thị. "
+                + "Chỉ hỏi thêm 1 câu ngắn nếu thật sự chưa thể chọn chuyên khoa an toàn.";
     }
 
     private String formatHistory(List<Map<String, Object>> history, String currentMessage) {
@@ -279,7 +296,7 @@ public class LangChainTriageEngine implements TriageAiEngine {
         if (history != null) {
             for (Map<String, Object> item : history) {
                 String role = "user".equalsIgnoreCase(String.valueOf(item.get("role"))) ? "Patient" : "Assistant";
-                String content = String.valueOf(item.getOrDefault("content", ""));
+                String content = String.valueOf(item.getOrDefault(CONTENT_KEY, ""));
                 conversationLines.add(role + ": " + content);
             }
         }
@@ -287,24 +304,25 @@ public class LangChainTriageEngine implements TriageAiEngine {
         return String.join("\n", conversationLines);
     }
 
+    @SuppressWarnings("java:S3776")
     private Map<String, Object> buildFinalOkEvent(String turnId, String replyText, TriageClassificationResult res) {
         Map<String, Object> event = new HashMap<>();
-        event.put("event", "final");
-        event.put("contract_version", "1");
-        event.put("turn_id", turnId);
-        event.put("reply", replyText);
+        event.put(EVENT_KEY, EVENT_FINAL);
+        event.put(CONTRACT_VERSION_KEY, "1");
+        event.put(TURN_ID_KEY, turnId);
+        event.put(REPLY_KEY, replyText);
 
         boolean intakeComplete = res.intakeComplete() && res.suggestedDepartment() != null;
-        event.put("intake_complete", intakeComplete);
-        event.put("red_flag_detected", res.redFlagDetected() || res.infectionControl());
-        event.put("missing_information", intakeComplete ? Collections.emptyList() : res.missingInformation());
-        event.put("classification_status", "OK");
-        event.put("classification_error_code", null);
+        event.put(INTAKE_COMPLETE_KEY, intakeComplete);
+        event.put(RED_FLAG_DETECTED_KEY, res.redFlagDetected() || res.infectionControl());
+        event.put(MISSING_INFORMATION_KEY, intakeComplete ? Collections.emptyList() : res.missingInformation());
+        event.put(CLASSIFICATION_STATUS_KEY, "OK");
+        event.put(CLASSIFICATION_ERROR_CODE_KEY, null);
 
         if (intakeComplete) {
             String deptName = res.suggestedDepartment();
-            String deptCode = DEPARTMENT_WHITELIST_MAP.getOrDefault(deptName, "GENERAL_INTERNAL_MEDICINE");
-            String mappedDeptName = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? deptName : "Nội tổng quát";
+            String deptCode = DEPARTMENT_WHITELIST_MAP.getOrDefault(deptName, DEFAULT_DEPT_CODE);
+            String mappedDeptName = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? deptName : DEFAULT_DEPT;
             String mappingStatus = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? "MATCHED" : "LOW_CONFIDENCE_FALLBACK";
 
             Map<String, Object> triageResult = new HashMap<>();
@@ -317,11 +335,11 @@ public class LangChainTriageEngine implements TriageAiEngine {
             triageResult.put("department_mapping_status", mappingStatus);
             triageResult.put("clinical_reasoning_summary", res.clinicalReasoningSummary() != null ? res.clinicalReasoningSummary() : "");
             triageResult.put("summary", res.summary() != null ? res.summary() : "");
-            triageResult.put("red_flag_detected", res.redFlagDetected() || res.infectionControl());
+            triageResult.put(RED_FLAG_DETECTED_KEY, res.redFlagDetected() || res.infectionControl());
 
-            event.put("triage_result", triageResult);
+            event.put(TRIAGE_RESULT_KEY, triageResult);
         } else {
-            event.put("triage_result", null);
+            event.put(TRIAGE_RESULT_KEY, null);
         }
 
         return event;
@@ -329,16 +347,16 @@ public class LangChainTriageEngine implements TriageAiEngine {
 
     private Map<String, Object> buildFinalDegradedEvent(String turnId, String replyText, String errorCode) {
         Map<String, Object> event = new HashMap<>();
-        event.put("event", "final");
-        event.put("contract_version", "1");
-        event.put("turn_id", turnId);
-        event.put("reply", replyText);
-        event.put("intake_complete", false);
-        event.put("red_flag_detected", false);
-        event.put("missing_information", Collections.emptyList());
-        event.put("classification_status", "DEGRADED");
-        event.put("classification_error_code", errorCode);
-        event.put("triage_result", null);
+        event.put(EVENT_KEY, EVENT_FINAL);
+        event.put(CONTRACT_VERSION_KEY, "1");
+        event.put(TURN_ID_KEY, turnId);
+        event.put(REPLY_KEY, replyText);
+        event.put(INTAKE_COMPLETE_KEY, false);
+        event.put(RED_FLAG_DETECTED_KEY, false);
+        event.put(MISSING_INFORMATION_KEY, Collections.emptyList());
+        event.put(CLASSIFICATION_STATUS_KEY, "DEGRADED");
+        event.put(CLASSIFICATION_ERROR_CODE_KEY, errorCode);
+        event.put(TRIAGE_RESULT_KEY, null);
         return event;
     }
 
@@ -347,8 +365,8 @@ public class LangChainTriageEngine implements TriageAiEngine {
         TriageResultDetail triageResult = null;
         if (intakeComplete) {
             String deptName = res.suggestedDepartment();
-            String deptCode = DEPARTMENT_WHITELIST_MAP.getOrDefault(deptName, "GENERAL_INTERNAL_MEDICINE");
-            String mappedDeptName = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? deptName : "Nội tổng quát";
+            String deptCode = DEPARTMENT_WHITELIST_MAP.getOrDefault(deptName, DEFAULT_DEPT_CODE);
+            String mappedDeptName = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? deptName : DEFAULT_DEPT;
             String mappingStatus = DEPARTMENT_WHITELIST_MAP.containsKey(deptName) ? "MATCHED" : "LOW_CONFIDENCE_FALLBACK";
 
             triageResult = TriageResultDetail.builder()
@@ -402,6 +420,10 @@ public class LangChainTriageEngine implements TriageAiEngine {
                 .subscribeOn(classificationScheduler)
                 .timeout(CLASSIFICATION_TIMEOUT)
                 .map(result -> buildValidatedFinalEvent(request.getTurnId(), finalReplyText, result, evidence))
+                .switchIfEmpty(Mono.defer(() -> Mono.just(buildFinalDegradedEvent(
+                        request.getTurnId(),
+                        finalReplyText,
+                        "LLM_PHASE_B_EMPTY"))))
                 .onErrorReturn(buildFinalDegradedEvent(
                         request.getTurnId(),
                         finalReplyText,
@@ -417,7 +439,7 @@ public class LangChainTriageEngine implements TriageAiEngine {
                 .subscribe(
                         finalOrHeartbeatEvent -> {
                             sink.tryEmitNext(finalOrHeartbeatEvent);
-                            if ("final".equals(finalOrHeartbeatEvent.get("event"))) {
+                            if (EVENT_FINAL.equals(finalOrHeartbeatEvent.get(EVENT_KEY))) {
                                 sink.tryEmitComplete();
                             }
                         },
@@ -428,13 +450,14 @@ public class LangChainTriageEngine implements TriageAiEngine {
                                     finalReplyText,
                                     "INTERNAL_STREAM_ERROR"));
                             sink.tryEmitComplete();
-                        });
+                        },
+                        sink::tryEmitComplete);
     }
 
     private Map<String, Object> buildHeartbeatEvent(String turnId, String phase) {
         Map<String, Object> event = new HashMap<>();
-        event.put("event", "heartbeat");
-        event.put("turn_id", turnId);
+        event.put(EVENT_KEY, "heartbeat");
+        event.put(TURN_ID_KEY, turnId);
         event.put("phase", phase);
         return event;
     }

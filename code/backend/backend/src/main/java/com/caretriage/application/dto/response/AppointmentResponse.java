@@ -34,6 +34,7 @@ public class AppointmentResponse {
     private String notes;
     private String cancellationReason;
     private UUID triageTicketId;
+    private String triagePriority;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

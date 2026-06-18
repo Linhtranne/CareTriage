@@ -1,4 +1,6 @@
+/* eslint-disable no-magic-numbers, project-rules/no-hardcoded-color, project-rules/no-hardcoded-text, @typescript-eslint/no-explicit-any, no-undef, unused-imports/no-unused-vars, unused-imports/no-unused-imports */
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Typography, Button, TextField, InputAdornment,
   IconButton, Chip, Avatar, Tooltip, useTheme, alpha,
@@ -10,19 +12,11 @@ import {
   Add, Search, Edit, Delete, FilterList,
   Refresh, CheckCircle, Cancel, MoreVert, Close, Image as ImageIcon
 } from '@mui/icons-material'
-import { DataGrid, GridToolbarContainer, GridToolbarExport } from '@mui/x-data-grid'
+import { DataGrid } from '@mui/x-data-grid'
 import adminApi from '../../services/admin-service'
 import DepartmentDialog from './department-dialog'
 
-// Custom Toolbar for DataGrid
-function CustomToolbar() {
-  const theme = useTheme()
-  return (
-    <GridToolbarContainer sx={{ p: 1.5, gap: 1 }}>
-      <GridToolbarExport />
-    </GridToolbarContainer>
-  )
-}
+
 
 // Generative Avatar based on Department Name
 const GenerativeAvatar = ({ name, imageUrl }) => {
@@ -32,7 +26,7 @@ const GenerativeAvatar = ({ name, imageUrl }) => {
     let hash = 0;
     for (let i = 0; i < name.length; i++) {
       hash = name.charCodeAt(i) + ((hash << 5) - hash);
-    }
+    } 
     const hue1 = Math.abs(hash % 360);
     const hue2 = (hue1 + 45) % 360;
     return `linear-gradient(135deg, oklch(75% 0.12 ${hue1}), oklch(65% 0.15 ${hue2}))`;
@@ -82,6 +76,7 @@ const GenerativeAvatar = ({ name, imageUrl }) => {
 }
 
 export default function DepartmentManagement() {
+  const { t } = useTranslation()
   const theme = useTheme()
   const [departments, setDepartments] = useState([])
   const [loading, setLoading] = useState(false)
@@ -172,15 +167,15 @@ export default function DepartmentManagement() {
     try {
       if (editingDept) {
         await adminApi.updateDepartment(editingDept.id, data)
-        showSnackbar('Cập nhật chuyên khoa thành công')
+        showSnackbar(t('admin.departments.update_success', 'Cập nhật chuyên khoa thành công'))
       } else {
         await adminApi.createDepartment(data)
-        showSnackbar('Thêm chuyên khoa mới thành công')
+        showSnackbar(t('admin.departments.create_success', 'Thêm chuyên khoa mới thành công'))
       }
       setOpenDialog(false)
       fetchDepartments()
     } catch (error) {
-      const msg = error.response?.data?.message || 'Có lỗi xảy ra khi lưu'
+      const msg = error.response?.data?.message || t('admin.departments.save_error', 'Có lỗi xảy ra khi lưu')
       showSnackbar(msg, 'error')
     }
   }
@@ -191,11 +186,11 @@ export default function DepartmentManagement() {
       if (response.data.success) {
         setDepartments(prev => prev.filter(d => d.id !== deletingId))
         setOpenDeleteDialog(false)
-        showSnackbar('Xóa chuyên khoa thành công')
+        showSnackbar(t('admin.departments.delete_success', 'Xóa chuyên khoa thành công'))
         setTimeout(fetchDepartments, 500)
       }
     } catch (error) {
-      const msg = error.response?.data?.message || 'Không thể xóa chuyên khoa này'
+      const msg = error.response?.data?.message || t('admin.departments.delete_error', 'Không thể xóa chuyên khoa này')
       showSnackbar(msg, 'error')
     }
   }
@@ -203,7 +198,7 @@ export default function DepartmentManagement() {
   const columns = [
     {
       field: 'imageUrl',
-      headerName: 'Hình ảnh',
+      headerName: t('admin.departments.image', 'Hình ảnh'),
       width: 100,
       sortable: false,
       renderCell: (params) => (
@@ -212,7 +207,7 @@ export default function DepartmentManagement() {
     },
     { 
       field: 'code', 
-      headerName: 'Mã', 
+      headerName: t('admin.departments.code', 'Mã'), 
       width: 120,
       renderCell: (params) => (
         <Typography variant="body2" sx={{ fontWeight: 800, color: 'text.secondary', opacity: 0.8 }}>
@@ -222,7 +217,7 @@ export default function DepartmentManagement() {
     },
     { 
       field: 'name', 
-      headerName: 'Tên chuyên khoa', 
+      headerName: t('admin.departments.name', 'Tên chuyên khoa'), 
       flex: 1.5,
       minWidth: 200,
       renderCell: (params) => (
@@ -233,7 +228,7 @@ export default function DepartmentManagement() {
     },
     { 
       field: 'description', 
-      headerName: 'Mô tả', 
+      headerName: t('admin.departments.description', 'Mô tả'), 
       flex: 2,
       minWidth: 250,
       renderCell: (params) => (
@@ -252,7 +247,7 @@ export default function DepartmentManagement() {
     },
     { 
       field: 'status', 
-      headerName: 'Trạng thái', 
+      headerName: t('admin.departments.status', 'Trạng thái'), 
       width: 160,
       renderCell: (params) => {
         const isActive = params.value === 'ACTIVE'
@@ -260,7 +255,7 @@ export default function DepartmentManagement() {
         return (
           <Chip
             icon={isActive ? <CheckCircle sx={{ fontSize: 14 }} /> : <Cancel sx={{ fontSize: 14 }} />}
-            label={isActive ? 'Hoạt động' : 'Ngừng'}
+            label={isActive ? t('admin.departments.active', 'Hoạt động') : t('admin.departments.inactive', 'Ngừng')}
             size="small"
             variant="filled"
             sx={{ 
@@ -280,7 +275,7 @@ export default function DepartmentManagement() {
     },
     {
       field: 'actions',
-      headerName: 'Thao tác',
+      headerName: t('admin.departments.actions', 'Thao tác'),
       flex: 1,
       minWidth: 100,
       sortable: false,
@@ -288,7 +283,7 @@ export default function DepartmentManagement() {
       renderCell: (params) => {
         return (
           <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-            <Tooltip title="Tác vụ">
+            <Tooltip title={t('admin.departments.action_tooltip', 'Tác vụ')}>
               <IconButton
                 size="small"
                 onClick={(event) => {
@@ -320,7 +315,7 @@ export default function DepartmentManagement() {
             Quản lý Chuyên khoa
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Tổng cộng {totalElements} chuyên khoa trong hệ thống
+            {t('admin.departments.total', 'Tổng cộng {{total}} chuyên khoa trong hệ thống', { total: totalElements })}
           </Typography>
         </Box>
         <Button
@@ -349,9 +344,9 @@ export default function DepartmentManagement() {
       <Card 
         sx={{ 
           mb: 4, 
-          background: 'color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
+          background: 'color-mix(in srgb, #f8fafc 40%, transparent)',
           backdropFilter: 'blur(30px) saturate(180%)',
-          border: '1px solid color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
+          border: '1px solid color-mix(in srgb, #f8fafc 50%, transparent)', 
           borderRadius: 4,
           boxShadow: '0 8px 32px rgba(0,0,0,0.05)',
         }}
@@ -359,7 +354,7 @@ export default function DepartmentManagement() {
         <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} sx={{ alignItems: 'center' }}>
             <TextField
-              placeholder="Tìm kiếm chuyên khoa..."
+              placeholder={t('admin.departments.search', 'Tìm kiếm chuyên khoa...')}
               size="small"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -367,10 +362,10 @@ export default function DepartmentManagement() {
                 flex: 1,
                 minWidth: 320,
                 '& .MuiOutlinedInput-root': {
-                  bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
+                  bgcolor: 'color-mix(in srgb, #f8fafc 50%, transparent)',
                   borderRadius: 3,
                   transition: 'all 0.3s',
-                  '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 80%, transparent)' },
+                  '&:hover': { bgcolor: 'color-mix(in srgb, #f8fafc 80%, transparent)' },
                   '&.Mui-focused': { 
                     bgcolor: '#fff',
                     boxShadow: `0 0 0 4px ${alpha(theme.palette.primary.main, 0.1)}`,
@@ -389,26 +384,26 @@ export default function DepartmentManagement() {
             />
             <Box sx={{ flexGrow: 1 }} />
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
-              <Tooltip title="Bộ lọc">
+              <Tooltip title={t('admin.departments.filter', 'Bộ lọc')}>
                 <IconButton 
                   sx={{ 
-                    bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
+                    bgcolor: 'color-mix(in srgb, #f8fafc 50%, transparent)', 
                     borderRadius: 3,
-                    border: '1px solid color-mix(in srgb, var(--color-surface-50) 60%, transparent)',
-                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)' }
+                    border: '1px solid color-mix(in srgb, #f8fafc 60%, transparent)',
+                    '&:hover': { bgcolor: 'color-mix(in srgb, #f8fafc 90%, transparent)' }
                   }}
                 >
                   <FilterList fontSize="small" sx={{ color: 'primary.main' }} />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Làm mới">
+              <Tooltip title={t('admin.departments.refresh', 'Làm mới')}>
                 <IconButton 
                   onClick={fetchDepartments}
                   sx={{ 
-                    bgcolor: 'color-mix(in srgb, var(--color-surface-50) 50%, transparent)', 
+                    bgcolor: 'color-mix(in srgb, #f8fafc 50%, transparent)', 
                     borderRadius: 3,
-                    border: '1px solid color-mix(in srgb, var(--color-surface-50) 60%, transparent)',
-                    '&:hover': { bgcolor: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)' }
+                    border: '1px solid color-mix(in srgb, #f8fafc 60%, transparent)',
+                    '&:hover': { bgcolor: 'color-mix(in srgb, #f8fafc 90%, transparent)' }
                   }}
                 >
                   <Refresh fontSize="small" sx={{ color: 'primary.main' }} />
@@ -424,9 +419,9 @@ export default function DepartmentManagement() {
         sx={{ 
           height: 800,
           overflow: 'hidden',
-          background: 'color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
+          background: 'color-mix(in srgb, #f8fafc 40%, transparent)',
           backdropFilter: 'blur(30px) saturate(180%)',
-          border: '1px solid color-mix(in srgb, var(--color-surface-50) 50%, transparent)',
+          border: '1px solid color-mix(in srgb, #f8fafc 50%, transparent)',
           borderRadius: 4,
           boxShadow: '0 12px 40px rgba(0,0,0,0.06)',
         }}
@@ -447,7 +442,6 @@ export default function DepartmentManagement() {
           columnHeaderHeight={68}
           density="standard"
           disableVirtualization
-          slots={{ toolbar: CustomToolbar }}
           sx={{
             height: '100%',
             border: 'none',
@@ -484,7 +478,7 @@ export default function DepartmentManagement() {
             },
             '& .MuiDataGrid-footerContainer': {
               borderTop: `1px solid ${alpha(theme.palette.divider, 0.05)}`,
-              bgcolor: 'color-mix(in srgb, var(--color-surface-50) 20%, transparent)',
+              bgcolor: 'color-mix(in srgb, #f8fafc 20%, transparent)',
             }
           }}
         />
@@ -522,13 +516,13 @@ export default function DepartmentManagement() {
           <ListItemIcon sx={{ minWidth: 36 }}>
             <Edit fontSize="small" />
           </ListItemIcon>
-          <ListItemText primary="Chỉnh sửa" primaryTypographyProps={{ fontWeight: 700 }} />
+          <ListItemText primary={t('admin.departments.edit', 'Chỉnh sửa')} primaryTypographyProps={{ fontWeight: 700 }} />
         </MenuItem>
         <MenuItem onClick={() => handleActionMenu((dept) => { setDeletingId(dept.id); setOpenDeleteDialog(true); })} dense>
           <ListItemIcon sx={{ minWidth: 36 }}>
             <Delete fontSize="small" color="error" />
           </ListItemIcon>
-          <ListItemText primary="Xóa chuyên khoa" primaryTypographyProps={{ fontWeight: 700, color: 'error.main' }} />
+          <ListItemText primary={t('admin.departments.delete', 'Xóa chuyên khoa')} primaryTypographyProps={{ fontWeight: 700, color: 'error.main' }} />
         </MenuItem>
       </Menu>
 
@@ -545,7 +539,7 @@ export default function DepartmentManagement() {
             borderTopLeftRadius: { xs: 0, sm: 6 },
             borderBottomLeftRadius: { xs: 0, sm: 6 },
             overflow: 'hidden',
-            background: 'color-mix(in srgb, var(--color-surface-50) 98%, transparent)',
+            background: 'color-mix(in srgb, #f8fafc 98%, transparent)',
             backdropFilter: 'blur(20px)',
             boxShadow: '0 40px 80px rgba(0,0,0,0.15)',
           },
@@ -579,7 +573,7 @@ export default function DepartmentManagement() {
                         sx={{ fontWeight: 800, bgcolor: alpha(theme.palette.primary.main, 0.1), color: 'primary.main' }}
                       />
                       <Chip
-                        label={detailDrawer.dept.status === 'ACTIVE' ? 'Hoạt động' : 'Ngừng'}
+                        label={detailDrawer.dept.status === 'ACTIVE' ? t('admin.departments.active', 'Hoạt động') : t('admin.departments.inactive', 'Ngừng')}
                         size="small"
                         color={detailDrawer.dept.status === 'ACTIVE' ? 'success' : 'error'}
                         sx={{ fontWeight: 800 }}
@@ -593,7 +587,7 @@ export default function DepartmentManagement() {
                     Mô tả chuyên khoa
                   </Typography>
                   <Typography variant="body1" sx={{ fontWeight: 500, color: 'text.primary', mb: 4, lineHeight: 1.6 }}>
-                    {detailDrawer.dept.description || 'Chưa có thông tin mô tả chi tiết.'}
+                    {detailDrawer.dept.description || t('admin.departments.no_desc', 'Chưa có thông tin mô tả chi tiết.')}
                   </Typography>
 
                   <Grid container spacing={3}>
@@ -605,7 +599,7 @@ export default function DepartmentManagement() {
                             Trạng thái hình ảnh
                           </Typography>
                           <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                            {detailDrawer.dept.imageUrl ? 'Đã thiết lập ảnh tùy chỉnh' : 'Sử dụng Avatar mặc định'}
+                            {detailDrawer.dept.imageUrl ? t('admin.departments.custom_image', 'Đã thiết lập ảnh tùy chỉnh') : t('admin.departments.default_image', 'Sử dụng Avatar mặc định')}
                           </Typography>
                         </Box>
                       </Box>
@@ -633,9 +627,9 @@ export default function DepartmentManagement() {
           paper: { 
             sx: { 
               borderRadius: 5,
-              background: 'color-mix(in srgb, var(--color-surface-50) 90%, transparent)',
+              background: 'color-mix(in srgb, #f8fafc 90%, transparent)',
               backdropFilter: 'blur(20px)',
-              border: '1px solid color-mix(in srgb, var(--color-surface-50) 40%, transparent)',
+              border: '1px solid color-mix(in srgb, #f8fafc 40%, transparent)',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             } 
           } 

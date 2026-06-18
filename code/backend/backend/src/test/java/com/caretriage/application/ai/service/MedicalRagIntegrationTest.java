@@ -4,7 +4,7 @@ import com.caretriage.application.ai.model.ClinicalEvidence;
 import com.caretriage.application.ai.port.ClinicalRetriever;
 import com.caretriage.application.ai.model.TriageAiRequest;
 import com.caretriage.application.ai.model.TriageClassification;
-import com.caretriage.application.ai.model.TriageClassificationResult;
+// import com.caretriage.application.ai.model.TriageClassificationResult;
 import com.caretriage.infrastructure.ai.config.LangChain4jConfig;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.ChatLanguageModel;
@@ -17,7 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Flux;
+// import reactor.core.publisher.Flux;
 
 import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
@@ -25,10 +25,10 @@ import java.security.MessageDigest;
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+// import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
+// import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -44,7 +44,6 @@ public class MedicalRagIntegrationTest {
     private MedicalRetrievalService retrievalService;
     private RagContextBuilder ragContextBuilder;
     private CitationValidator citationValidator;
-    private LangChainTriageEngine engine;
 
     @Mock
     private ChatLanguageModel chatLanguageModel;
@@ -72,15 +71,6 @@ public class MedicalRagIntegrationTest {
 
         ingestionService = new MedicalCorpusIngestionService(config, embeddingModel, embeddingStore, chunker);
         retrievalService = new MedicalRetrievalService(config, embeddingModel, embeddingStore);
-        engine = new LangChainTriageEngine(
-                chatLanguageModel,
-                streamingChatLanguageModel,
-                triageClassifier,
-                retrievalService,
-                ragContextBuilder,
-                citationValidator,
-                config
-        );
     }
 
     @Test
@@ -187,13 +177,11 @@ public class MedicalRagIntegrationTest {
                 .thenThrow(new RuntimeException("Simulated Embedding Store failure"));
 
         LangChainTriageEngine failingEngine = new LangChainTriageEngine(
-                chatLanguageModel,
                 streamingChatLanguageModel,
                 triageClassifier,
                 failingRetriever,
                 ragContextBuilder,
-                citationValidator,
-                config
+                citationValidator
         );
 
         TriageAiRequest request = TriageAiRequest.builder()

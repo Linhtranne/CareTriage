@@ -14,8 +14,9 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class AppointmentRequest {
 
-    @NotNull(message = "Doctor ID is required")
     private Long doctorId;
+
+    private Long externalDoctorId;
 
     private Long departmentId;
 

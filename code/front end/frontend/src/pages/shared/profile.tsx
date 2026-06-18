@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -510,8 +510,8 @@ const Profile = () => {
             <Grid size={12} >
               <Typography variant="h5" sx={{ fontWeight: 950, color: 'oklch(65% 0.15 160)', mb: 4, textTransform: 'uppercase' }}>{t('profile.account_section')}</Typography>
               <Grid container spacing={4}>
-                <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} error={fieldErrors.fullName} /></Grid>
-                <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} error={fieldErrors.phone} /></Grid>
+                <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<PersonIcon />} label={t('profile.full_name')} name="fullName" value={editForm?.fullName || ''} onChange={handleInputChange} error={!!fieldErrors.fullName} helperText={fieldErrors.fullName} /></Grid>
+                <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<PhoneIcon />} label={t('profile.phone')} name="phone" value={editForm?.phone || ''} onChange={handleInputChange} error={!!fieldErrors.phone} helperText={fieldErrors.phone} /></Grid>
               </Grid>
             </Grid>
             <Grid size={12} >
@@ -519,8 +519,8 @@ const Profile = () => {
               <Grid container spacing={4}>
                 {isPatient && (
                   <>
-                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<CakeIcon />} label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} error={fieldErrors.dateOfBirth} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} error={fieldErrors.gender} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<CakeIcon />} label={t('profile.dob')} name="dateOfBirth" type="date" value={editForm?.dateOfBirth || ''} onChange={handleInputChange} error={!!fieldErrors.dateOfBirth} helperText={fieldErrors.dateOfBirth} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<GenderIcon />} label={t('profile.gender')} name="gender" value={editForm?.gender || ''} onChange={handleInputChange} error={!!fieldErrors.gender} helperText={fieldErrors.gender} /></Grid>
                     <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<BloodTypeIcon />} label={t('profile.blood_type')} name="bloodType" value={editForm?.bloodType || ''} onChange={handleInputChange} /></Grid>
                     <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<CardIcon />} label={t('profile.insurance_number')} name="insuranceNumber" value={editForm?.insuranceNumber || ''} onChange={handleInputChange} /></Grid>
                     <Grid size={12} >
@@ -540,8 +540,8 @@ const Profile = () => {
                 )}
                 {isDoctor && (
                   <>
-                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} error={fieldErrors.specialization} /></Grid>
-                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} error={fieldErrors.hospitalName} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<SpecializationIcon />} label={t('profile.specialization')} name="specialization" value={editForm?.specialization || ''} onChange={handleInputChange} error={!!fieldErrors.specialization} helperText={fieldErrors.specialization} /></Grid>
+                    <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<BusinessIcon />} label={t('profile.hospital')} name="hospitalName" value={editForm?.hospitalName || ''} onChange={handleInputChange} error={!!fieldErrors.hospitalName} helperText={fieldErrors.hospitalName} /></Grid>
                     <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<ExperienceIcon />} label={t('profile.experience')} name="experienceYears" type="number" value={editForm?.experienceYears || ''} onChange={handleInputChange} /></Grid>
                     <Grid size={{ xs: 12, sm: 6 }} ><CustomTextField icon={<SchoolIcon />} label={t('profile.degrees')} name="degrees" value={editForm?.degrees || ''} onChange={handleInputChange} /></Grid>
                     <Grid size={12} ><CustomTextField icon={<BioIcon />} label={t('profile.bio')} name="bio" value={editForm?.bio || ''} onChange={handleInputChange} multiline minRows={3} /></Grid>

@@ -6,16 +6,15 @@ import com.caretriage.domain.repository.*;
 import com.caretriage.application.service.impl.EHRServiceImpl;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
+// import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 
-import java.lang.reflect.Method;
-import java.time.LocalDate;
+// import java.lang.reflect.Method;
+// import java.time.LocalDate;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -47,14 +46,26 @@ class EHRSearchTest {
     private EHRServiceImpl ehrService;
 
     @Test
-    void searchPatients_emptyCriteria_returnsEmpty() {
+    @SuppressWarnings("unchecked")
+    void searchPatients_emptyCriteria_returnsAllPatientsWithNotes() {
         EHRDto.SearchCriteria criteria = EHRDto.SearchCriteria.builder().build();
         assertTrue(criteria.isEmpty());
-        
+
+        User patient = new User();
+        patient.setId(1L);
+        patient.setFullName("Test Patient");
+        patient.setEmail("test@example.com");
+
+        Page<User> page = mock(Page.class);
+        when(page.getContent()).thenReturn(List.of(patient));
+        when(userRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.infrastructure.persistence.entity.UserJpaEntity>>any(), any(Pageable.class))).thenReturn(page);
+        when(clinicalNoteRepository.countByPatientId(1L)).thenReturn(2L);
+
         List<EHRDto.PatientSearchResultDto> results = ehrService.searchPatients(criteria, 0, 20);
-        
-        assertTrue(results.isEmpty());
-        verify(userRepository, never()).findAll(any(Specification.class), any(Pageable.class));
+
+        assertFalse(results.isEmpty());
+        assertEquals(1, results.size());
+        assertEquals("Test Patient", results.get(0).getPatientName());
     }
 
     @Test
@@ -100,7 +111,7 @@ class EHRSearchTest {
         
         Page<User> page = mock(Page.class);
         when(page.getContent()).thenReturn(List.of(patient));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+        when(userRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.infrastructure.persistence.entity.UserJpaEntity>>any(), any(Pageable.class))).thenReturn(page);
         when(clinicalNoteRepository.countByPatientId(1L)).thenReturn(5L);
         
         List<EHRDto.PatientSearchResultDto> results = ehrService.searchPatients(criteria, 0, 20);
@@ -146,7 +157,7 @@ class EHRSearchTest {
 
         Page<User> page = mock(Page.class);
         when(page.getContent()).thenReturn(List.of(patient));
-        when(userRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+        when(userRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.infrastructure.persistence.entity.UserJpaEntity>>any(), any(Pageable.class))).thenReturn(page);
         when(clinicalNoteRepository.countByPatientId(1L)).thenReturn(5L);
 
         // Mock repositories

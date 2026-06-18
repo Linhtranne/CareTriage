@@ -4,7 +4,6 @@ import com.caretriage.application.dto.response.ApiResponse;
 import com.caretriage.application.dto.request.DoctorDepartmentRequest;
 import com.caretriage.application.dto.response.DepartmentResponse;
 import com.caretriage.application.dto.response.DoctorPublicResponse;
-import com.caretriage.application.dto.response.DoctorResponse;
 import com.caretriage.application.dto.response.PagedResponse;
 import com.caretriage.application.dto.response.TimeSlotResponse;
 import com.caretriage.application.dto.response.DoctorPatientResponse;

@@ -1,6 +1,6 @@
 package com.caretriage.infrastructure.persistence.entity;
 
-import com.caretriage.domain.entity.*;
+// import com.caretriage.domain.entity.*;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;

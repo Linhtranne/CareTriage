@@ -1,6 +1,6 @@
 package com.caretriage.application.service;
 
-import org.springframework.web.multipart.MultipartFile;
+// import org.springframework.web.multipart.MultipartFile;
 
 public interface FirebaseStorageService {
     /**

@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.application.dto.request.LoginRequest;
 import com.caretriage.application.dto.request.RegisterRequest;
 import com.caretriage.application.dto.response.AuthResponse;
@@ -22,6 +24,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class AuthServiceImpl implements AuthService {
 
@@ -160,3 +163,5 @@ public class AuthServiceImpl implements AuthService {
                 .build();
     }
 }
+
+

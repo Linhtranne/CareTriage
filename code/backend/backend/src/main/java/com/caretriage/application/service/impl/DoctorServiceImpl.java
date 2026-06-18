@@ -3,7 +3,6 @@ package com.caretriage.application.service.impl;
 import com.caretriage.application.dto.request.DoctorDepartmentRequest;
 import com.caretriage.application.dto.response.DepartmentResponse;
 import com.caretriage.application.dto.response.DoctorPublicResponse;
-import com.caretriage.application.dto.response.DoctorResponse;
 import com.caretriage.application.dto.response.PagedResponse;
 import com.caretriage.application.dto.response.TimeSlotResponse;
 import com.caretriage.application.dto.response.DoctorPatientResponse;
@@ -39,14 +38,13 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@SuppressWarnings("java:S3776")
 public class DoctorServiceImpl implements DoctorService {
 
     private final DoctorProfileRepository doctorProfileRepository;
@@ -82,7 +80,7 @@ public class DoctorServiceImpl implements DoctorService {
 
         return doctorProfile.getDepartments().stream()
                 .map(this::mapToDepartmentResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -107,7 +105,7 @@ public class DoctorServiceImpl implements DoctorService {
 
         List<DoctorPublicResponse> content = doctorPage.getContent().stream()
                 .map(this::mapToPublicResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         return PagedResponse.<DoctorPublicResponse>builder()
                 .content(content)
@@ -149,22 +147,7 @@ public class DoctorServiceImpl implements DoctorService {
                 .build();
     }
 
-    private DoctorResponse mapToDoctorResponse(DoctorProfile d) {
-        return DoctorResponse.builder()
-                .id(d.getUser().getId())
-                .fullName(d.getUser().getFullName())
-                .email(d.getUser().getEmail())
-                .phone(d.getUser().getPhone())
-                .avatarUrl(d.getUser().getAvatarUrl())
-                .bio(d.getBio())
-                .specialization(d.getSpecialization())
-                .experienceYears(d.getExperienceYears())
-                .hospitalName(d.getHospitalName())
-                .departments(d.getDepartments().stream()
-                        .map(this::mapToDepartmentResponse)
-                        .collect(Collectors.toList()))
-                .build();
-    }
+
 
     private DoctorPublicResponse mapToPublicResponse(DoctorProfile d) {
         return DoctorPublicResponse.builder()
@@ -177,7 +160,7 @@ public class DoctorServiceImpl implements DoctorService {
                 .hospitalName(d.getHospitalName())
                 .departments(d.getDepartments().stream()
                         .map(this::mapToDepartmentResponse)
-                        .collect(Collectors.toList()))
+                        .toList())
                 .build();
     }
 
@@ -289,7 +272,7 @@ public class DoctorServiceImpl implements DoctorService {
                     .latestTicketStatus(latestTicketStatus)
                     .lastInteractionAt(lastInteractionAt)
                     .build();
-        }).collect(Collectors.toList());
+        }).toList();
 
         return PagedResponse.<DoctorPatientResponse>builder()
                 .content(content)
@@ -341,19 +324,19 @@ public class DoctorServiceImpl implements DoctorService {
         List<AppointmentResponse> recentAppts = appts.stream()
                 .limit(5)
                 .map(this::mapToAppointmentResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         List<MedicalRecord> meds = medicalRecordRepository.findByDoctorIdAndPatientIdOrderByCreatedAtDesc(doctorId, patientId);
         List<MedicalRecordResponse> recentMeds = meds.stream()
                 .limit(5)
                 .map(this::mapToMedicalRecordResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         List<TriageTicket> tickets = triageTicketRepository.findByTriageOfficerIdAndRequesterIdOrderByCreatedAtDesc(doctorId, patientId);
         List<TriageTicketResponse> recentTickets = tickets.stream()
                 .limit(5)
                 .map(this::mapToTriageTicketResponse)
-                .collect(Collectors.toList());
+                .toList();
 
         long completedAppts = appointmentRepository.countByDoctorIdAndPatientIdAndStatusCompleted(doctorId, patientId);
         long activeTickets = triageTicketRepository.countActiveTicketsByDoctorAndPatient(doctorId, patientId);
@@ -416,34 +399,35 @@ public class DoctorServiceImpl implements DoctorService {
                 .build();
     }
 
-    private MedicalRecordResponse mapToMedicalRecordResponse(MedicalRecord record) {
+    private MedicalRecordResponse mapToMedicalRecordResponse(MedicalRecord medRecord) {
         String spec = null;
-        if (record.getDoctor() != null && record.getDoctor().getDoctorProfile() != null) {
-            spec = record.getDoctor().getDoctorProfile().getSpecialization();
+        if (medRecord.getDoctor() != null && medRecord.getDoctor().getDoctorProfile() != null) {
+            spec = medRecord.getDoctor().getDoctorProfile().getSpecialization();
         }
 
         String deptName = null;
-        if (record.getAppointment() != null && record.getAppointment().getDepartment() != null) {
-            deptName = record.getAppointment().getDepartment().getName();
+        if (medRecord.getAppointment() != null && medRecord.getAppointment().getDepartment() != null) {
+            deptName = medRecord.getAppointment().getDepartment().getName();
         }
 
         return MedicalRecordResponse.builder()
-                .id(record.getId())
-                .appointmentId(record.getAppointment() != null ? record.getAppointment().getId() : null)
-                .patientId(record.getPatient().getId())
-                .patientName(record.getPatient().getFullName())
-                .doctorId(record.getDoctor().getId())
-                .doctorName(record.getDoctor().getFullName())
+                .id(medRecord.getId())
+                .appointmentId(medRecord.getAppointment() != null ? medRecord.getAppointment().getId() : null)
+                .patientId(medRecord.getPatient().getId())
+                .patientName(medRecord.getPatient().getFullName())
+                .doctorId(medRecord.getDoctor().getId())
+                .doctorName(medRecord.getDoctor().getFullName())
                 .doctorSpecialization(spec)
                 .departmentName(deptName)
-                .symptoms(record.getSymptoms())
-                .diagnosis(record.getDiagnosis())
-                .treatmentPlan(record.getTreatmentPlan())
-                .prescription(record.getPrescription())
-                .notes(record.getNotes())
-                .vitalSigns(record.getVitalSigns())
-                .followUpDate(record.getFollowUpDate())
-                .createdAt(record.getCreatedAt())
+                .symptoms(medRecord.getSymptoms())
+                .diagnosis(medRecord.getDiagnosis())
+                .treatmentPlan(medRecord.getTreatmentPlan())
+                .prescription(medRecord.getPrescription())
+                .notes(medRecord.getNotes())
+                .vitalSigns(medRecord.getVitalSigns())
+                .followUpDate(medRecord.getFollowUpDate())
+                .triagePriority(medRecord.getTriagePriority())
+                .createdAt(medRecord.getCreatedAt())
                 .build();
     }
 

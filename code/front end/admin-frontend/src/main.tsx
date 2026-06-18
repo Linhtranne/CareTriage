@@ -1,7 +1,8 @@
-import { StrictMode } from 'react'
+﻿import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './styles/global.css'
 import App from './app'
+import './i18n'
 
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import theme from './styles/theme'
@@ -20,3 +21,4 @@ createRoot(rootElement).render(
     </ThemeProvider>
   </StrictMode>,
 )
+

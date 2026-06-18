@@ -11,7 +11,8 @@ import com.caretriage.shared.exception.BusinessException;
 import com.caretriage.domain.repository.AppointmentRepository;
 import com.caretriage.domain.repository.MedicalRecordRepository;
 import com.caretriage.domain.repository.UserRepository;
-import com.caretriage.application.service.AiClientService;
+import com.caretriage.domain.repository.TriageTicketRepository;
+
 import com.caretriage.application.service.MedicalRecordService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,8 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
     private final MedicalRecordRepository medicalRecordRepository;
     private final AppointmentRepository appointmentRepository;
     private final UserRepository userRepository;
-    private final AiClientService aiClientService;
+    private final TriageTicketRepository triageTicketRepository;
+
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
@@ -55,6 +57,13 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
             throw new AccessDeniedException("Bạn không có quyền tạo hồ sơ cho ca khám này");
         }
 
+        String priority = null;
+        if (appointment.getTriageTicketId() != null) {
+            priority = triageTicketRepository.findById(appointment.getTriageTicketId())
+                    .map(ticket -> ticket.getPriority().name())
+                    .orElse(null);
+        }
+
         MedicalRecord record = MedicalRecord.builder()
                 .appointment(appointment)
                 .patient(appointment.getPatient())
@@ -66,6 +75,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
                 .notes(request.getNotes())
                 .vitalSigns(request.getVitalSigns())
                 .followUpDate(request.getFollowUpDate())
+                .triagePriority(priority)
                 .build();
 
         // Auto-complete appointment if it's not already
@@ -84,13 +94,6 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
         MedicalRecord saved = medicalRecordRepository.save(record);
         log.info("Medical record created: ID={}, Patient={}, Doctor={}", saved.getId(), appointment.getPatient().getFullName(), doctor.getFullName());
         
-        // Trigger background AI research for this diagnosis
-        try {
-            String researchQuery = String.format("%s symptoms: %s", saved.getDiagnosis(), saved.getSymptoms());
-            aiClientService.triggerResearch(saved.getPatient().getId(), researchQuery);
-        } catch (RuntimeException e) {
-            log.error("Failed to trigger background research: {}", e.getMessage());
-        }
 
         return mapToResponse(saved);
     }
@@ -153,6 +156,7 @@ public class MedicalRecordServiceImpl implements MedicalRecordService {
                 .notes(record.getNotes() != null ? HtmlUtils.htmlEscape(record.getNotes()) : null)
                 .vitalSigns(record.getVitalSigns() != null ? HtmlUtils.htmlEscape(record.getVitalSigns()) : null)
                 .followUpDate(record.getFollowUpDate())
+                .triagePriority(record.getTriagePriority())
                 .createdAt(record.getCreatedAt())
                 .build();
     }

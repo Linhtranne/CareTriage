@@ -10,7 +10,6 @@ import com.caretriage.domain.repository.ChatMessageRepository;
 import com.caretriage.domain.repository.ChatTurnRepository;
 import com.caretriage.domain.repository.UserRepository;
 import com.caretriage.infrastructure.persistence.repository.UserJpaRepository;
-import com.caretriage.application.service.AiClientService;
 import com.caretriage.application.ai.port.TriageAiEngine;
 import com.caretriage.application.ai.model.TriageAiRequest;
 import com.caretriage.infrastructure.security.JwtTokenProvider;
@@ -80,8 +79,6 @@ public class ChatIdempotencyIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    @MockBean
-    private AiClientService aiClientService;
     
     @MockBean
     private TriageAiEngine triageAiEngine;

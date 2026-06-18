@@ -58,6 +58,21 @@ public class MedicalRecord {
     @Column(name = "follow_up_date")
     private LocalDate followUpDate;
 
+    @Column(name = "triage_ticket_id")
+    private String triageTicketId;
+
+    @Column(name = "triage_priority", length = 50)
+    private String triagePriority;
+
+    @Column(name = "triage_severity", length = 50)
+    private String triageSeverity;
+
+    @Column(name = "ai_summary_snapshot", columnDefinition = "TEXT")
+    private String aiSummarySnapshot;
+
+    @Column(name = "triage_review_snapshot", columnDefinition = "TEXT")
+    private String triageReviewSnapshot;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

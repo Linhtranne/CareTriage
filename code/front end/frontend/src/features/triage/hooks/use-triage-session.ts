@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+﻿import { useState, useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import chatApi from '../../../services/chat-service';
@@ -35,10 +35,11 @@ export function useTriageSession() {
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       role: 'assistant',
-      content: 'Chào bạn, tôi là Trợ lý AI CareTriage. Vui lòng mô tả triệu chứng bạn đang gặp phải.'
+      content: 'ChÃ o báº¡n, tÃ´i lÃ  Trá»£ lÃ½ AI CareTriage. Vui lÃ²ng mÃ´ táº£ triá»‡u chá»©ng báº¡n Ä‘ang gáº·p pháº£i.'
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastTurnId, setLastTurnId] = useState<string | null>(null);
   const [ticketStatus, setTicketStatus] = useState<string | null>(null);
@@ -56,17 +57,17 @@ export function useTriageSession() {
 
     const normalized = content.toLowerCase();
     const hasReferral =
-      normalized.includes('nên sớm đến gặp bác sĩ') ||
-      normalized.includes('nên đến gặp bác sĩ') ||
-      normalized.includes('nên gặp bác sĩ') ||
-      normalized.includes('cần được bác sĩ') ||
-      normalized.includes('cần được thăm khám') ||
-      normalized.includes('chuyên khoa') ||
-      normalized.includes('được kiểm tra trực tiếp');
+      normalized.includes('nÃªn sá»›m Ä‘áº¿n gáº·p bÃ¡c sÄ©') ||
+      normalized.includes('nÃªn Ä‘áº¿n gáº·p bÃ¡c sÄ©') ||
+      normalized.includes('nÃªn gáº·p bÃ¡c sÄ©') ||
+      normalized.includes('cáº§n Ä‘Æ°á»£c bÃ¡c sÄ©') ||
+      normalized.includes('cáº§n Ä‘Æ°á»£c thÄƒm khÃ¡m') ||
+      normalized.includes('chuyÃªn khoa') ||
+      normalized.includes('Ä‘Æ°á»£c kiá»ƒm tra trá»±c tiáº¿p');
     const hasClosing =
-      normalized.includes('chúc bạn sớm khỏe') ||
-      normalized.includes('điều trị phù hợp') ||
-      normalized.includes('chẩn đoán chính xác');
+      normalized.includes('chÃºc báº¡n sá»›m khá»e') ||
+      normalized.includes('Ä‘iá»u trá»‹ phÃ¹ há»£p') ||
+      normalized.includes('cháº©n Ä‘oÃ¡n chÃ­nh xÃ¡c');
 
     return hasReferral && hasClosing;
   }, []);
@@ -163,6 +164,7 @@ export function useTriageSession() {
     try {
       let assistantContent = '';
       let activeSessionId = sessionId;
+      let finalTriageContext: any = null;
       const tokens: { [seq: number]: string } = {};
 
       await chatApi.streamMessage(sessionId, content, turnId, (event) => {
@@ -180,24 +182,35 @@ export function useTriageSession() {
           assistantContent = sortedSeqs.map(seq => tokens[seq]).join('');
           
           setMessages(prev => {
-            if (!prev.some(m => m.turnId === turnId)) {
+            if (!prev.some(m => m.turnId === turnId && m.role === 'assistant')) {
               return [...prev, { role: 'assistant', content: assistantContent, turnId }];
             }
-            return prev.map(m => m.turnId === turnId ? { ...m, content: assistantContent } : m);
+            return prev.map(m => (m.turnId === turnId && m.role === 'assistant') ? { ...m, content: assistantContent } : m);
           });
         }
 
         if (event.event === 'final') {
           assistantContent = event.reply || assistantContent;
           setMessages(prev => {
-            if (!prev.some(m => m.turnId === turnId)) {
+            if (!prev.some(m => m.turnId === turnId && m.role === 'assistant')) {
               return [...prev, { role: 'assistant', content: assistantContent, turnId }];
             }
-            return prev.map(m => m.turnId === turnId ? { ...m, content: assistantContent } : m);
+            return prev.map(m => (m.turnId === turnId && m.role === 'assistant') ? { ...m, content: assistantContent } : m);
           });
 
           const isEmergency = event.red_flag_detected;
           const intakeComplete = event.intake_complete;
+          const departmentName = event.triage_result?.suggested_department_name;
+          finalTriageContext = {
+            intakeComplete,
+            redFlagDetected: isEmergency || false,
+            urgencyLevel: event.triage_result?.urgency_level,
+            departmentName,
+            departmentCode: event.triage_result?.suggested_department_code,
+            triageResult: event.triage_result,
+            missingInformation: event.missing_information || [],
+            aiSummary: event.triage_result?.summary || event.triage_result?.clinical_reasoning_summary || assistantContent,
+          };
 
           setProgressState(prev => ({
             ...prev,
@@ -206,7 +219,9 @@ export function useTriageSession() {
             urgencyLevel: toTriageUrgencyLevel(
               event.triage_result?.urgency_level
             ),
-            missingInformation: event.missing_information || []
+            missingInformation: event.missing_information || [],
+            // Persist the AI-recommended department so UI can build booking CTA
+            ...(departmentName ? { suggestedDepartment: departmentName } : {})
           }));
 
           if (isEmergency) {
@@ -216,6 +231,9 @@ export function useTriageSession() {
           } else {
             setOrbState('collecting');
           }
+
+          // Unlock input immediately after receiving the final AI reply.
+          setIsLoading(false);
         }
 
         if (event.event === 'persisted') {
@@ -226,18 +244,25 @@ export function useTriageSession() {
               state: {
                 fromTriage: true,
                 ticketNumber: event.ticket_id || `TRIAGE-${activeSessionId}`,
-                departmentName: event.specialty_name || progressState.suggestedDepartment || 'Nội tổng quát',
-                reason: assistantContent
+                reason: assistantContent,
+                ticketId: event.ticket_id || null,
+                specialtyCode: event.specialty_code || finalTriageContext?.departmentCode || null,
+                departmentName: event.specialty_name || finalTriageContext?.departmentName || progressState.suggestedDepartment || 'Ná»™i tá»•ng quÃ¡t',
+                urgencyLevel: finalTriageContext?.urgencyLevel || 'MEDIUM',
+                triageResult: finalTriageContext?.triageResult || null,
+                aiSummarySnapshot: finalTriageContext?.aiSummary || assistantContent
               }
             });
-          } else if (event.ticket_status === 'NOT_NEEDED') {
-            setOrbState('collecting');
           }
+          // NOT_NEEDED: intake is done but no ticket was auto-created.
+          // Keep orbState='ready' so the booking CTA stays visible.
         }
 
         if (event.event === 'error') {
           setError(event.message || t('agentTriage.errorFallback', copy.errorFallback));
           setOrbState('collecting');
+          // Unlock input immediately on error â€” stream may never close cleanly.
+          setIsLoading(false);
         }
       });
 
@@ -286,7 +311,7 @@ export function useTriageSession() {
           state: {
             fromTriage: true,
             ticketNumber: event.ticket_id || `TRIAGE-${sessionId}`,
-            departmentName: event.specialty_name || progressState.suggestedDepartment || 'Nội tổng quát',
+            departmentName: event.specialty_name || progressState.suggestedDepartment || 'Ná»™i tá»•ng quÃ¡t',
             reason: assistantMsg ? assistantMsg.content : ''
           }
         });
@@ -296,13 +321,13 @@ export function useTriageSession() {
           redFlagDetected: event.red_flag_detected || false
         }));
         if (event.ticket_status === 'FAILED_PERMANENT') {
-          setError('Khởi tạo lịch hẹn thất bại vĩnh viễn. Vui lòng liên hệ bộ phận hỗ trợ khách hàng.');
+          setError('Khá»Ÿi táº¡o lá»‹ch háº¹n tháº¥t báº¡i vÄ©nh viá»…n. Vui lÃ²ng liÃªn há»‡ bá»™ pháº­n há»— trá»£ khÃ¡ch hÃ ng.');
         } else {
-          setError('Khởi tạo lịch hẹn thất bại. Bạn có thể nhấn thử lại.');
+          setError('Khá»Ÿi táº¡o lá»‹ch háº¹n tháº¥t báº¡i. Báº¡n cÃ³ thá»ƒ nháº¥n thá»­ láº¡i.');
         }
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Lỗi kết nối tạo lịch hẹn.');
+      setError(err instanceof Error ? err.message : 'Lá»—i káº¿t ná»‘i táº¡o lá»‹ch háº¹n.');
     } finally {
       setIsLoading(false);
     }
@@ -321,7 +346,9 @@ export function useTriageSession() {
       urgencyLevel: 'LOW',
       missingInformation: []
     });
-    setIsLoading(true);
+    // Use a separate loading flag so the chat input/typing indicator
+    // are not affected while history is being fetched.
+    setIsLoadingHistory(true);
 
     try {
       const parsedId = parseInt(ticketId, 10);
@@ -349,7 +376,7 @@ export function useTriageSession() {
     } catch (err) {
       setError(err instanceof Error ? err.message : t('agentTriage.errorFallback', copy.errorFallback));
     } finally {
-      setIsLoading(false);
+      setIsLoadingHistory(false);
     }
   }, [copy.errorFallback, inferIntakeCompleteFromReply, markIntakeComplete, t, updateProgressFromMetadata]);
 
@@ -368,7 +395,7 @@ export function useTriageSession() {
     setMessages([
       {
         role: 'assistant',
-        content: 'Chào bạn, tôi là Trợ lý AI CareTriage. Vui lòng mô tả triệu chứng bạn đang gặp phải.'
+        content: 'ChÃ o báº¡n, tÃ´i lÃ  Trá»£ lÃ½ AI CareTriage. Vui lÃ²ng mÃ´ táº£ triá»‡u chá»©ng báº¡n Ä‘ang gáº·p pháº£i.'
       }
     ]);
   }, []);
@@ -377,6 +404,7 @@ export function useTriageSession() {
     sessionId,
     messages,
     isLoading,
+    isLoadingHistory,
     error,
     orbState,
     progressState,

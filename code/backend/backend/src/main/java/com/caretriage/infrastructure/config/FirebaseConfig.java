@@ -47,7 +47,7 @@ public class FirebaseConfig {
                 log.info("Firebase has been initialized successfully");
             }
         } catch (IOException e) {
-            log.error("Error initializing Firebase: {}", e.getMessage());
+            log.error("Error initializing Firebase: {}", e.getClass().getSimpleName());
         }
     }
 }

@@ -1,7 +1,7 @@
 import axios, { InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import useAuthStore from '../store/auth-store'
 
-const REQUEST_TIMEOUT_MS = 15000
+const REQUEST_TIMEOUT_MS = 60000
 const UNAUTHORIZED_STATUS = 401
 
 interface CustomAxiosRequestConfig extends InternalAxiosRequestConfig {

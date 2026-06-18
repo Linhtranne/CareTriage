@@ -24,6 +24,7 @@ public interface ChatService {
     ChatAttachmentDTO uploadAttachment(Long userId, Long sessionId, MultipartFile file);
     List<ChatSessionDTO> getUserSessions(Long userId);
     List<ChatSessionDTO> searchSessions(Long userId, String query);
+    void deleteSession(Long userId, Long sessionId);
     
     
 

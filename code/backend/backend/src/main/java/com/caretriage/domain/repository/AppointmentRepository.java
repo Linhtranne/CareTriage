@@ -74,4 +74,6 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
            "GROUP BY a.appointmentDate ORDER BY a.appointmentDate ASC")
     List<Object[]> countAppointmentsByDateBetween(@Param("startDate") LocalDate startDate,
                                                    @Param("endDate") LocalDate endDate);
+
+    List<Appointment> findAllByOrderByAppointmentDateDesc();
 }

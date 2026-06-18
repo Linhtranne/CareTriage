@@ -1,8 +1,6 @@
 package com.caretriage.presentation.controller;
 
 import com.caretriage.application.dto.ChatMessageDTO;
-import com.caretriage.domain.entity.ChatMessage;
-import com.caretriage.application.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -10,7 +8,6 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.util.HtmlUtils;
 
 import java.security.Principal;
 
@@ -18,12 +15,7 @@ import java.security.Principal;
 @Controller
 @RequiredArgsConstructor
 public class ChatWebSocketController {
-
-    private final ChatService chatService;
     private final SimpMessagingTemplate messagingTemplate;
-    private final com.caretriage.domain.repository.UserRepository userRepository;
-    private final com.caretriage.infrastructure.security.ChatAuthorizationService chatAuthorizationService;
-    private final com.caretriage.infrastructure.security.WebSocketRateLimiter rateLimiter;
 
     @org.springframework.beans.factory.annotation.Value("${app.chat.max-message-length:4000}")
     private int maxMessageLength;

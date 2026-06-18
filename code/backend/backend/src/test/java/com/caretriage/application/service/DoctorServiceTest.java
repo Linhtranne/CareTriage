@@ -1,13 +1,13 @@
 package com.caretriage.application.service;
 
 import com.caretriage.application.dto.response.DoctorPublicResponse;
-import com.caretriage.application.dto.response.DoctorResponse;
+// import com.caretriage.application.dto.response.DoctorResponse;
 import com.caretriage.application.dto.response.PagedResponse;
 import com.caretriage.domain.entity.Department;
 import com.caretriage.domain.entity.DoctorProfile;
 import com.caretriage.domain.repository.DepartmentRepository;
 import com.caretriage.domain.repository.DoctorProfileRepository;
-import com.caretriage.application.service.AppointmentService;
+// import com.caretriage.application.service.AppointmentService;
 import com.caretriage.application.service.impl.DoctorServiceImpl;
 import com.caretriage.infrastructure.persistence.entity.UserJpaEntity;
 import com.caretriage.shared.exception.ResourceNotFoundException;
@@ -20,7 +20,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.jpa.domain.Specification;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -76,20 +75,20 @@ public class DoctorServiceTest {
     @Test
     void getPublicDoctors_All_Success() {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
-        when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
+        when(doctorProfileRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.domain.entity.DoctorProfile>>any(), any(PageRequest.class))).thenReturn(page);
 
         PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(null, null, 0, 10);
 
         assertNotNull(response);
         assertEquals(1, response.getContent().size());
         assertEquals("Dr. John Doe", response.getContent().get(0).getFullName());
-        verify(doctorProfileRepository, times(1)).findAll(any(Specification.class), any(PageRequest.class));
+        verify(doctorProfileRepository, times(1)).findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.domain.entity.DoctorProfile>>any(), any(PageRequest.class));
     }
 
     @Test
     void getPublicDoctors_FilterByDepartment_Success() {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
-        when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
+        when(doctorProfileRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.domain.entity.DoctorProfile>>any(), any(PageRequest.class))).thenReturn(page);
 
         PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(1L, null, 0, 10);
 
@@ -101,7 +100,7 @@ public class DoctorServiceTest {
     @Test
     void getPublicDoctors_SearchByName_Success() {
         Page<DoctorProfile> page = new PageImpl<>(Collections.singletonList(doctorProfile));
-        when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
+        when(doctorProfileRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.domain.entity.DoctorProfile>>any(), any(PageRequest.class))).thenReturn(page);
 
         PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(null, "John", 0, 10);
 
@@ -113,7 +112,7 @@ public class DoctorServiceTest {
     @Test
     void getPublicDoctors_NoResults_Success() {
         Page<DoctorProfile> page = new PageImpl<>(Collections.emptyList());
-        when(doctorProfileRepository.findAll(any(Specification.class), any(PageRequest.class))).thenReturn(page);
+        when(doctorProfileRepository.findAll(org.mockito.Mockito.<org.springframework.data.jpa.domain.Specification<com.caretriage.domain.entity.DoctorProfile>>any(), any(PageRequest.class))).thenReturn(page);
 
         PagedResponse<DoctorPublicResponse> response = doctorService.getPublicDoctors(999L, "NonExistent", 0, 10);
 

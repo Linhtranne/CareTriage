@@ -1,6 +1,8 @@
 import { Box, Typography, useTheme, useMediaQuery } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Star, MapPin, Briefcase } from 'lucide-react'
+import publicApi from '../../services/public-service'
 import TriageStateOrb from '../../features/triage/components/triage-state-orb'
 import AgentConversationPanel from '../../features/triage/components/agent-conversation-panel'
 import TrustFooter from '../../components/base/trust-footer'
@@ -11,6 +13,95 @@ import { useTranslation } from 'react-i18next'
 import { AGENT_COPY_KEYS, AGENT_FALLBACK_COPY, AGENT_FALLBACK_COPY_VI } from '../../features/agent-session/constants/agent-copy'
 import { TRIAGE_COPY_KEYS, TRIAGE_FALLBACK_COPY, TRIAGE_FALLBACK_COPY_VI } from '../../features/triage/constants/triage-copy'
 import { useTriageSession } from '../../features/triage/hooks/use-triage-session'
+
+function MiniDoctorList({ department, urgencyLevel, reason, onSelectDoctor }: { department?: string, urgencyLevel?: string, reason: string, onSelectDoctor: (doc: any) => void }) {
+  const [docs, setDocs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!department) return
+    let isMounted = true
+    const fetchDocs = async () => {
+      try {
+        const res = await publicApi.getRecommendedDoctors({
+          symptoms: reason,
+          department: department,
+          severity: urgencyLevel || 'LOW',
+          triageTicketId: null
+        })
+        if (isMounted) setDocs(res.data?.recommendations?.slice(0, 3) || [])
+      } catch (err) {
+        console.error(err)
+      } finally {
+        if (isMounted) setLoading(false)
+      }
+    }
+    fetchDocs()
+    return () => { isMounted = false }
+  }, [department, urgencyLevel, reason])
+
+  if (!department) return null
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+        <span className="animate-spin rounded-full border-2 border-primary-200 border-t-primary-600 h-6 w-6"></span>
+      </Box>
+    )
+  }
+  if (docs.length === 0) return null
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {docs.map(doc => (
+        <div
+          key={doc.id}
+          onClick={() => onSelectDoctor(doc)}
+          style={{
+            display: 'flex',
+            padding: '12px 14px',
+            background: 'var(--color-surface-50)',
+            borderRadius: 12,
+            border: '1px solid var(--color-surface-200)',
+            gap: 12,
+            cursor: 'pointer',
+            transition: 'all 0.2s'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-primary-300)'
+            e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.04)'
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = 'var(--color-surface-200)'
+            e.currentTarget.style.boxShadow = 'none'
+          }}
+        >
+          <div style={{ width: 48, height: 48, borderRadius: 24, background: 'var(--color-primary-100)', overflow: 'hidden', flexShrink: 0 }}>
+             <img src={doc.avatarUrl || 'https://i.pravatar.cc/150?u=' + doc.id} alt={doc.fullName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h4 style={{ margin: '0 0 4px', fontSize: 14, fontWeight: 700, color: 'var(--color-surface-900)' }}>{doc.fullName}</h4>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, color: 'var(--color-surface-500)', fontSize: 12 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Star size={12} style={{ color: '#fbbf24', fill: '#fbbf24' }} /> {doc.rating || '4.9'}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Briefcase size={12} /> {doc.experienceYears || 5} năm KN
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--color-surface-500)', fontSize: 12, marginTop: 4 }}>
+              <MapPin size={12} /> <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{doc.clinicAddress || 'Phòng khám CareTriage'}</span>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+             <button style={{ background: 'var(--color-primary-50)', color: 'var(--color-primary-700)', border: 'none', borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+               Chọn
+             </button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 /**
  * Phase 1 Patient Triage Route.
@@ -26,7 +117,8 @@ export default function TriagePage() {
   const { 
     sessionId,
     messages, 
-    isLoading, 
+    isLoading,
+    isLoadingHistory,
     error, 
     orbState, 
     progressState,
@@ -130,6 +222,7 @@ export default function TriagePage() {
             <AgentConversationPanel 
               messages={messages}
               isLoading={isLoading}
+              isLoadingHistory={isLoadingHistory}
               error={error}
               onSendMessage={sendMessage}
               onRetry={retryLastMessage}
@@ -140,6 +233,119 @@ export default function TriagePage() {
               isEmergency={isEmergency}
               sessionId={sessionId}
             >
+              {/* Booking CTA — shown when AI has completed intake */}
+              {orbState === 'ready' && progressState.intakeComplete && (
+                <div
+                  style={{
+                    animation: 'bubbleIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both',
+                    background: 'linear-gradient(135deg, var(--color-primary-50) 0%, oklch(97% 0.025 165) 100%)',
+                    border: '1.5px solid var(--color-primary-200)',
+                    borderRadius: 20,
+                    boxShadow: '0 4px 24px oklch(65% 0.15 165 / 0.10)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 14,
+                    marginTop: 20,
+                    maxWidth: 720,
+                    padding: '20px 24px 22px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <span
+                      style={{
+                        alignItems: 'center',
+                        background: 'var(--color-primary-100)',
+                        borderRadius: 12,
+                        color: 'var(--color-primary-700)',
+                        display: 'flex',
+                        flexShrink: 0,
+                        height: 44,
+                        justifyContent: 'center',
+                        width: 44,
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                        <line x1="16" y1="2" x2="16" y2="6"/>
+                        <line x1="8" y1="2" x2="8" y2="6"/>
+                        <line x1="3" y1="10" x2="21" y2="10"/>
+                        <polyline points="9 16 11 18 15 14"/>
+                      </svg>
+                    </span>
+                    <div>
+                      <p style={{ color: 'var(--color-primary-800)', fontWeight: 850, fontSize: 14, margin: 0, lineHeight: 1.4 }}>
+                        {progressState.suggestedDepartment
+                          ? `Danh sách bác sĩ ${progressState.suggestedDepartment} được đề xuất`
+                          : 'Danh sách bác sĩ được đề xuất'}
+                      </p>
+                      <p style={{ color: 'var(--color-primary-600)', fontSize: 13, margin: '3px 0 0', lineHeight: 1.5 }}>
+                        Hệ thống đã chọn lọc các bác sĩ phù hợp nhất dựa trên triệu chứng của bạn.
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {/* Fetch and Render Mini Doctor List */}
+                  <MiniDoctorList 
+                    department={progressState.suggestedDepartment} 
+                    urgencyLevel={progressState.urgencyLevel}
+                    reason={messages.filter(m => m.role === 'assistant').slice(-1)[0]?.content || ''}
+                    onSelectDoctor={(doc) => {
+                       navigate('/patient/appointments/book-appointment', {
+                         state: {
+                           fromTriage: true,
+                           departmentName: progressState.suggestedDepartment || 'Nội tổng quát',
+                           reason: messages.filter(m => m.role === 'assistant').slice(-1)[0]?.content || '',
+                           prefillDoctorId: doc.isExternal ? null : doc.id,
+                           prefillExternalDoctorId: doc.isExternal ? doc.id : null,
+                           isExternal: doc.isExternal,
+                           doctorName: doc.fullName
+                         }
+                       })
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      navigate('/patient/appointments/book-appointment', {
+                        state: {
+                          fromTriage: true,
+                          departmentName: progressState.suggestedDepartment || 'Nội tổng quát',
+                          reason: messages.filter(m => m.role === 'assistant').slice(-1)[0]?.content || ''
+                        }
+                      })
+                    }
+                    style={{
+                      alignItems: 'center',
+                      background: 'var(--color-primary-600)',
+                      border: 0,
+                      borderRadius: 14,
+                      color: 'var(--color-surface-50)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      fontWeight: 850,
+                      fontSize: 14,
+                      gap: 8,
+                      justifyContent: 'center',
+                      minHeight: 48,
+                      padding: '12px 24px',
+                      transition: 'opacity 0.2s, transform 0.15s',
+                      width: '100%',
+                    }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '0.88'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(-1px)'; }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.opacity = '1'; (e.currentTarget as HTMLButtonElement).style.transform = 'translateY(0)'; }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                      <line x1="16" y1="2" x2="16" y2="6"/>
+                      <line x1="8" y1="2" x2="8" y2="6"/>
+                      <line x1="3" y1="10" x2="21" y2="10"/>
+                      <polyline points="9 16 11 18 15 14"/>
+                    </svg>
+                    Xem tất cả bác sĩ và Đặt lịch hẹn
+                  </button>
+                </div>
+              )}
               {ticketStatus === 'FAILED_RETRYABLE' && (
                 <div
                   className="mt-5 text-sm"

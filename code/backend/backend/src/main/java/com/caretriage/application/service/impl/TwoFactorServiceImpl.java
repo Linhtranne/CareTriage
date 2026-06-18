@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.domain.entity.User;
 import com.caretriage.application.service.EmailService;
 import com.caretriage.application.service.TwoFactorService;
@@ -16,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 public class TwoFactorServiceImpl implements TwoFactorService {
 
@@ -53,3 +56,5 @@ public class TwoFactorServiceImpl implements TwoFactorService {
         otpStorage.remove(email);
     }
 }
+
+

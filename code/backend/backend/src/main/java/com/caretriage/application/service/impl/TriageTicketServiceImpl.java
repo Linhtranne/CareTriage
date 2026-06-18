@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Slf4j
 public class TriageTicketServiceImpl implements TriageTicketService {
@@ -38,7 +39,6 @@ public class TriageTicketServiceImpl implements TriageTicketService {
     private final UserRepository userRepository;
     private final TicketCategoryRepository ticketCategoryRepository;
     private final ObjectMapper objectMapper;
-    private final com.caretriage.domain.repository.ChatSessionRepository chatSessionRepository;
     private final com.caretriage.domain.repository.ChatMessageRepository chatMessageRepository;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -130,7 +130,6 @@ public class TriageTicketServiceImpl implements TriageTicketService {
 
     @Override
     public PagedResponse<TriageTicketResponse> listMyTickets(Long requesterUserId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
         List<TriageTicketResponse> all = triageTicketRepository.findByRequesterIdOrderByCreatedAtDesc(requesterUserId)
                 .stream()
                 .map(this::toResponse)

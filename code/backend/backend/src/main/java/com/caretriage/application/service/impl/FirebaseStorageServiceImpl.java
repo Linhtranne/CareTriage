@@ -1,5 +1,7 @@
 package com.caretriage.application.service.impl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.caretriage.application.service.FirebaseStorageService;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.UUID;
 
 @Service
+@Transactional(readOnly = true)
 @Slf4j
 public class FirebaseStorageServiceImpl implements FirebaseStorageService {
 
@@ -24,7 +27,7 @@ public class FirebaseStorageServiceImpl implements FirebaseStorageService {
             
             Bucket bucket = StorageClient.getInstance().bucket(bucketName);
             
-            Blob blob = bucket.create(fileName, content, contentType);
+            bucket.create(fileName, content, contentType);
             
             return String.format("https://firebasestorage.googleapis.com/v0/b/%s/o/%s?alt=media", 
                 bucketName, fileName.replace("/", "%2F"));
@@ -57,3 +60,5 @@ public class FirebaseStorageServiceImpl implements FirebaseStorageService {
         }
     }
 }
+
+

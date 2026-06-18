@@ -1,10 +1,10 @@
 package com.caretriage.application.ai.service;
 
 import com.caretriage.application.ai.model.TriageAiRequest;
-import com.caretriage.application.ai.model.TriageClassification;
+// import com.caretriage.application.ai.model.TriageClassification;
 import com.caretriage.application.ai.model.TriageClassificationResult;
-import com.caretriage.application.ai.model.PolicyResult;
-import com.caretriage.application.ai.model.TriageResultDetail;
+// import com.caretriage.application.ai.model.PolicyResult;
+// import com.caretriage.application.ai.model.TriageResultDetail;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
@@ -16,14 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
-import reactor.core.publisher.Flux;
+// import reactor.core.publisher.Flux;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -43,20 +42,17 @@ public class JavaTriagePipelineParityTest {
 
     private final RagContextBuilder ragContextBuilder = new RagContextBuilder();
     private final CitationValidator citationValidator = new CitationValidator();
-    private final com.caretriage.infrastructure.ai.config.LangChain4jConfig config = new com.caretriage.infrastructure.ai.config.LangChain4jConfig();
 
     private LangChainTriageEngine engine;
 
     @BeforeEach
     void setUp() {
         engine = new LangChainTriageEngine(
-                chatLanguageModel,
                 streamingChatLanguageModel,
                 triageClassifier,
                 clinicalRetriever,
                 ragContextBuilder,
-                citationValidator,
-                config
+                citationValidator
         );
     }
 
@@ -93,6 +89,7 @@ public class JavaTriagePipelineParityTest {
         assertThat(finalEvent.get("intake_complete")).isEqualTo(true);
         assertThat(finalEvent.get("red_flag_detected")).isEqualTo(true);
         
+        @SuppressWarnings("unchecked")
         Map<String, Object> triageResult = (Map<String, Object>) finalEvent.get("triage_result");
         assertThat(triageResult).isNotNull();
         assertThat(triageResult.get("suggested_department_code")).isEqualTo("EMERGENCY");
@@ -119,7 +116,7 @@ public class JavaTriagePipelineParityTest {
             handler.onNext("chứng.");
             handler.onComplete(Response.from(AiMessage.from("Tôi hiểu triệu chứng.")));
             return null;
-        }).when(streamingChatLanguageModel).generate(anyList(), any(StreamingResponseHandler.class));
+        }).when(streamingChatLanguageModel).generate(anyList(), org.mockito.ArgumentMatchers.any());
 
         // Mock Phase B (classification)
         TriageClassificationResult mockClassify = new TriageClassificationResult(
@@ -158,6 +155,7 @@ public class JavaTriagePipelineParityTest {
         assertThat(finalEvent.get("red_flag_detected")).isEqualTo(false);
         assertThat(finalEvent.get("classification_status")).isEqualTo("OK");
         
+        @SuppressWarnings("unchecked")
         Map<String, Object> triageResult = (Map<String, Object>) finalEvent.get("triage_result");
         assertThat(triageResult).isNotNull();
         assertThat(triageResult.get("suggested_department_code")).isEqualTo("NEUROLOGY");
@@ -183,7 +181,7 @@ public class JavaTriagePipelineParityTest {
             handler.onNext("Tôi hiểu.");
             handler.onComplete(Response.from(AiMessage.from("Tôi hiểu.")));
             return null;
-        }).when(streamingChatLanguageModel).generate(anyList(), any(StreamingResponseHandler.class));
+        }).when(streamingChatLanguageModel).generate(anyList(), org.mockito.ArgumentMatchers.any());
 
         // Mock Phase B fails with exception
         when(triageClassifier.classify(anyString(), anyString())).thenThrow(new RuntimeException("LLM Timeout"));
@@ -220,7 +218,7 @@ public class JavaTriagePipelineParityTest {
             handler.onNext("Advice [doc-hallucinated]");
             handler.onComplete(Response.from(AiMessage.from("Advice [doc-hallucinated]")));
             return null;
-        }).when(streamingChatLanguageModel).generate(anyList(), any(StreamingResponseHandler.class));
+        }).when(streamingChatLanguageModel).generate(anyList(), org.mockito.ArgumentMatchers.any());
         when(triageClassifier.classify(anyString(), anyString())).thenReturn(new TriageClassificationResult(
                 false,
                 false,
